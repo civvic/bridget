@@ -1,0 +1,8 @@
+{
+    // "ignore": [
+    //     "**"
+    // ]
+    "reportWildcardImportFromLibrary": "none",
+    "exclude": [
+    ]
+}
