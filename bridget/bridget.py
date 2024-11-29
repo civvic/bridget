@@ -263,7 +263,7 @@ class BridgeBase:
             try: cts = to_xml(rt)
             except: pass
         if cts:
-            dhdl = DisplayId()
+            dhdl = DisplayId(**kwargs)
             dhdl.display(cts)
 
     def _response(self, req:dict[str, Any]): return request2response(self._cli, req)
