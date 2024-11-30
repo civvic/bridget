@@ -42,7 +42,6 @@ from httpx import Response
 from IPython.display import display
 from IPython.display import DisplayHandle
 from IPython.display import HTML
-from IPython.display import Markdown
 
 
 # %% ../nbs/22_bridget.ipynb 7
@@ -54,6 +53,7 @@ import bridget
 from .helpers import cleanupwidgets
 from .helpers import id_gen
 from .helpers import nb_app
+from .helpers import pops_
 from .helpers import pretty_repr
 from .helpers import read_vfile
 from .htmx import swap
@@ -250,7 +250,7 @@ class BridgeBase:
         super().__init__(*args, **kwargs)
     
     def __call__(self, rt:Bridgeable='', method='GET', req=None, **kwargs):
-        "Display FastHTML objects, routes or requests in notebook cells."
+        "Display FastHTML components, routes or requests in notebook cells."
         if isinstance(rt, FT) or hasattr(rt, '__ft__'): cts = to_xml(rt)  # type: ignore
         elif hasattr(rt, '__html__'): cts = rt.__html__()  # type: ignore
         else:
@@ -263,8 +263,11 @@ class BridgeBase:
             try: cts = to_xml(rt)
             except: pass
         if cts:
-            dhdl = DisplayId(**kwargs)
-            dhdl.display(cts)
+            display_id, update = kwargs.pop('display_id', None), kwargs.pop('update', False)
+            dhdl = display_id if isinstance(display_id, DisplayId) else DisplayId(display_id=display_id)
+            if display_id and update: dhdl.update(cts)
+            else: dhdl.display(cts)
+            return None if dhdl is display_id else dhdl
 
     def _response(self, req:dict[str, Any]): return request2response(self._cli, req)
     
@@ -299,7 +302,7 @@ class BridgeBase:
 FC.patch_to(BridgeBase)(swap)
 
 
-# %% ../nbs/22_bridget.ipynb 89
+# %% ../nbs/22_bridget.ipynb 92
 class Bridget(BridgeBase, anywidget.AnyWidget):
     "Bridge this notebook kernel and front-end, intercepting HTMX Ajax requests."
     _esm = _BUNDLER_PATH / 'bridget.js'
@@ -365,7 +368,7 @@ class Bridget(BridgeBase, anywidget.AnyWidget):
 
 
 
-# %% ../nbs/22_bridget.ipynb 92
+# %% ../nbs/22_bridget.ipynb 95
 def get_app(setup_scripts=False, app=None, appkw:dict[str, Any]={}, **cfargs) -> tuple[FastHTML, Bridget, MethodType]: 
     bridge_cfg.update(**cfargs)
     if setup_scripts: bridget_scripts(True)
