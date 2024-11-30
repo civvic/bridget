@@ -9,21 +9,19 @@ from __future__ import annotations
 # %% auto 0
 __all__ = ['SwapStyleT', 'swap']
 
-# %% ../nbs/21_htmx.ipynb 4
+# %% ../nbs/21_htmx.ipynb
 from typing import Literal
 from typing import TypeAlias
 
-
-# %% ../nbs/21_htmx.ipynb 6
-from .helpers import update_
+from olio.common import update_
 
 
-# %% ../nbs/21_htmx.ipynb 20
+# %% ../nbs/21_htmx.ipynb
 SwapStyleT: TypeAlias = Literal['innerHTML','outerHTML','testContent','beforebegin','afterbegin',
                         'beforeend','afterend','delete','none']
 
 
-# %% ../nbs/21_htmx.ipynb 21
+# %% ../nbs/21_htmx.ipynb
 def swap(self, 
         target, 
         content, 

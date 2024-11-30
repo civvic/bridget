@@ -11,7 +11,7 @@ __all__ = ['bridge_cfg', 'Bridgeable', 'Config', 'BridgeCfg', 'ScriptsDetails', 
            'autoid', 'DisplayId', 'request2httpx_request', 'HasFT', 'HasHTML', 'request2response',
            'httpx_response_to_json', 'BridgeBase', 'Bridget', 'get_app']
 
-# %% ../nbs/22_bridget.ipynb 6
+# %% ../nbs/22_bridget.ipynb
 import dataclasses
 import inspect
 import time
@@ -44,16 +44,15 @@ from IPython.display import DisplayHandle
 from IPython.display import HTML
 
 
-# %% ../nbs/22_bridget.ipynb 7
-from fasthtml.components import Div, Details, Summary, B, Pre
+# %% ../nbs/22_bridget.ipynb
+from fasthtml.components import Div, Details, Summary, B, Pre, Span
 
 
-# %% ../nbs/22_bridget.ipynb 8
+# %% ../nbs/22_bridget.ipynb
 import bridget
 from .helpers import cleanupwidgets
 from .helpers import id_gen
 from .helpers import nb_app
-from .helpers import pops_
 from .helpers import pretty_repr
 from .helpers import read_vfile
 from .htmx import swap
@@ -63,20 +62,20 @@ from .route_provider import APIRouterB
 from .route_provider import RoutesProviderP
 
 
-# %% ../nbs/22_bridget.ipynb 12
+# %% ../nbs/22_bridget.ipynb
 DEBUG = True
 new_id = id_gen()
 IDISPLAY = display
 
 
-# %% ../nbs/22_bridget.ipynb 17
+# %% ../nbs/22_bridget.ipynb
 _BUNDLER_PATH = Path() if __name__ == "__main__" else Path(inspect.getfile(bridget)).parent
 
 
-# %% ../nbs/22_bridget.ipynb 19
+# %% ../nbs/22_bridget.ipynb
 _n = '\n'
 
-# %% ../nbs/22_bridget.ipynb 22
+# %% ../nbs/22_bridget.ipynb
 class Config:
     def update(self, **kwargs):
         for k,v in kwargs.items(): 
@@ -92,7 +91,7 @@ class Config:
         for k,v in old.items(): setattr(self, k, v)
 
 
-# %% ../nbs/22_bridget.ipynb 24
+# %% ../nbs/22_bridget.ipynb
 @dataclasses.dataclass
 class BridgeCfg(Config):
     auto_show: bool = False
@@ -104,7 +103,7 @@ class BridgeCfg(Config):
 bridge_cfg = BridgeCfg()
 
 
-# %% ../nbs/22_bridget.ipynb 29
+# %% ../nbs/22_bridget.ipynb
 @FC.patch
 def _repr_mimebundle_(self: FT, include=None, exclude=None):
     mb = {'text/plain': repr(self)}
@@ -113,13 +112,13 @@ def _repr_mimebundle_(self: FT, include=None, exclude=None):
     return mb
 
 
-# %% ../nbs/22_bridget.ipynb 30
+# %% ../nbs/22_bridget.ipynb
 @FC.patch
 def _ipython_display_(self: FT):
     IDISPLAY(self._repr_mimebundle_(), raw=True, display_id=bridge_cfg.current_did)
 
 
-# %% ../nbs/22_bridget.ipynb 37
+# %% ../nbs/22_bridget.ipynb
 class ScriptsDetails:
     def __init__(self, scs, title='Loaded scripts', open=True): 
         self.scs = scs; self.title = title; self.open = open
@@ -142,7 +141,7 @@ def bridget_scripts(load=False):
     return scs
 
 
-# %% ../nbs/22_bridget.ipynb 42
+# %% ../nbs/22_bridget.ipynb
 # if typing.TYPE_CHECKING:
 class ClientP(Protocol):
     def get(self, url: str, **kwargs) -> Response: ...
@@ -153,7 +152,7 @@ class ClientP(Protocol):
     def options(self, url: str, **kwargs) -> Response: ...
 
 
-# %% ../nbs/22_bridget.ipynb 44
+# %% ../nbs/22_bridget.ipynb
 @FC.delegates(ft_html, keep=True)  # type: ignore
 def Script(code:str="", **kwargs)->FT:
     "A Script tag that doesn't escape its code"
@@ -165,7 +164,7 @@ def Style(*c, **kwargs)->FT:
     return ft_html('style', tuple(NotStr(FC.ifnone(read_vfile(_), _)) for _ in c), **kwargs)
 
 
-# %% ../nbs/22_bridget.ipynb 52
+# %% ../nbs/22_bridget.ipynb
 __autoid_scr = '''
 //debugger;
 me().attribute('id', 'output-{0}').classAdd('bridge');
@@ -176,7 +175,7 @@ def autoid(idx=None):
     return Script(__autoid_scr.format(idx), id=idx), idx
 
 
-# %% ../nbs/22_bridget.ipynb 56
+# %% ../nbs/22_bridget.ipynb
 class DisplayId(DisplayHandle):
     def __init__(self, display_id=None):
         super().__init__(display_id or new_id())
@@ -196,7 +195,7 @@ class DisplayId(DisplayHandle):
         return self._contents
 
 
-# %% ../nbs/22_bridget.ipynb 66
+# %% ../nbs/22_bridget.ipynb
 def request2httpx_request(cli:AsyncClient, http_request: dict[str, Any]) -> Request:
     r = http_request
     return cli.build_request(r['method'], r['url'], 
@@ -204,7 +203,7 @@ def request2httpx_request(cli:AsyncClient, http_request: dict[str, Any]) -> Requ
         content=r['body'] if 'body' in r else None, timeout=None)
 
 
-# %% ../nbs/22_bridget.ipynb 67
+# %% ../nbs/22_bridget.ipynb
 class HasFT(Protocol): 
     def __ft__(self) -> Any: ...
 class HasHTML(Protocol):
@@ -238,7 +237,7 @@ def httpx_response_to_json(response: Response) -> dict[str, Any]:
     return json_response
 
 
-# %% ../nbs/22_bridget.ipynb 70
+# %% ../nbs/22_bridget.ipynb
 class BridgeBase:
     "A simple wrapper around `FastHTML` and `Client`."
 
@@ -302,7 +301,7 @@ class BridgeBase:
 FC.patch_to(BridgeBase)(swap)
 
 
-# %% ../nbs/22_bridget.ipynb 92
+# %% ../nbs/22_bridget.ipynb
 class Bridget(BridgeBase, anywidget.AnyWidget):
     "Bridge this notebook kernel and front-end, intercepting HTMX Ajax requests."
     _esm = _BUNDLER_PATH / 'bridget.js'
@@ -368,7 +367,7 @@ class Bridget(BridgeBase, anywidget.AnyWidget):
 
 
 
-# %% ../nbs/22_bridget.ipynb 95
+# %% ../nbs/22_bridget.ipynb
 def get_app(setup_scripts=False, app=None, appkw:dict[str, Any]={}, **cfargs) -> tuple[FastHTML, Bridget, MethodType]: 
     bridge_cfg.update(**cfargs)
     if setup_scripts: bridget_scripts(True)

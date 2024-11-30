@@ -6,10 +6,10 @@
 from __future__ import annotations
 
 # %% auto 0
-__all__ = ['Singleling', 'pops_', 'pops_values_', 'gets', 'update_', 'cleanupwidgets', 'pretty_repr', 'rich_display', 'CLog',
-           'kounter', 'simple_id', 'id_gen', 'find', 'read_vfile', 'nb_app']
+__all__ = ['Singleling', 'cleanupwidgets', 'pretty_repr', 'rich_display', 'CLog', 'kounter', 'simple_id', 'id_gen', 'find',
+           'read_vfile', 'nb_app']
 
-# %% ../nbs/01_helpers.ipynb 4
+# %% ../nbs/01_helpers.ipynb
 import json
 import os
 import sys
@@ -19,7 +19,6 @@ from inspect import Parameter
 from typing import Any
 from typing import DefaultDict
 from typing import Hashable
-from typing import Iterable
 from typing import Mapping
 from typing import overload
 from typing import Sequence
@@ -30,7 +29,7 @@ from IPython.display import display
 from IPython.display import DisplayHandle
 
 
-# %% ../nbs/01_helpers.ipynb 11
+# %% ../nbs/01_helpers.ipynb
 class Singleling:
     def __new__(cls, *args, **kwargs):
         if '__instance__' not in cls.__dict__: cls.__instance__ = super().__new__(cls, *args, **kwargs)
@@ -41,34 +40,7 @@ class Singleling:
         setattr(type(self), 'setup', FC.noop)
 
 
-# %% ../nbs/01_helpers.ipynb 15
-def pops_(d: dict, *ks: Hashable) -> dict:
-    "Pop existing `ks` items from `d` in-place into a dictionary."
-    return {k:d.pop(k) for k in ks if k in d}
-
-
-# %% ../nbs/01_helpers.ipynb 18
-def pops_values_(d: dict, *ks: Hashable) -> tuple:
-    "Pop existing `ks` items from `d` in-place into a tuple of values or `Parameter.empty` for missing keys."
-    return tuple(d.pop(k, Parameter.empty) for k in ks)
-
-
-# %% ../nbs/01_helpers.ipynb 21
-def gets(d: Mapping, *ks: Hashable):
-    "Fetches `ks` values, or `Parameter.empty` for missing keys, from `d` into a tuple."
-    return tuple(d.get(k, Parameter.empty) for k in ks)  # type: ignore
-
-
-# %% ../nbs/01_helpers.ipynb 24
-def update_(d:dict|None=None, /, empty_value=None, **kwargs):
-    "Update `d` in-place with `kwargs` whose values aren't `empty_value`"
-    d = d if d is not None else {}
-    for k, v in kwargs.items():
-        if v is not empty_value: d[k] = v
-    return d
-
-
-# %% ../nbs/01_helpers.ipynb 28
+# %% ../nbs/01_helpers.ipynb
 def _get_globals(mod: str):
     if hasattr(sys, '_getframe'):
         glb = sys._getframe(2).f_globals
@@ -77,7 +49,7 @@ def _get_globals(mod: str):
     return glb
 
 
-# %% ../nbs/01_helpers.ipynb 31
+# %% ../nbs/01_helpers.ipynb
 def cleanupwidgets(*ws, mod: str|None=None, clear=True):
     from IPython.display import clear_output
     glb = _get_globals(mod or __name__)
@@ -89,7 +61,7 @@ def cleanupwidgets(*ws, mod: str|None=None, clear=True):
             except: pass
 
 
-# %% ../nbs/01_helpers.ipynb 36
+# %% ../nbs/01_helpers.ipynb
 @overload
 def pretty_repr(*o, html:bool=True, text:bool=False, **kwargs) -> str: ...
 @overload
@@ -103,7 +75,7 @@ def pretty_repr(*o, html:bool=True, text:bool=True, **kwargs) -> dict[str, str]|
     return d if len(d) > 1 else tuple(d.values())[0]
 
 
-# %% ../nbs/01_helpers.ipynb 38
+# %% ../nbs/01_helpers.ipynb
 def rich_display(*o, dhdl: DisplayHandle|None=None):
     if not o: return
     vv:tuple[str, ...] = tuple(FC.flatten([_.items() for _ in map(pretty_repr, o)]))  # type: ignore
@@ -112,18 +84,18 @@ def rich_display(*o, dhdl: DisplayHandle|None=None):
     else: display(dd, raw=True)
 
 
-# %% ../nbs/01_helpers.ipynb 42
+# %% ../nbs/01_helpers.ipynb
 def CLog(*o):
     return f"<script>console.log({','.join(map(repr, o))})</script>"
 
 
-# %% ../nbs/01_helpers.ipynb 45
+# %% ../nbs/01_helpers.ipynb
 class kounter:
     def __init__(self): self.d = DefaultDict(int)
     def __call__(self, k): d = self.d; d[k] += 1; return self.d[k]
 
 
-# %% ../nbs/01_helpers.ipynb 48
+# %% ../nbs/01_helpers.ipynb
 def simple_id():
     return 'b'+hexlify(os.urandom(16), '-', 4).decode('ascii')
 
@@ -134,7 +106,7 @@ def id_gen():
         return f"{type(o).__name__}_{id(o) if isinstance(o, Hashable) else kntr(type(o).__name__)}"
     return _
 
-# %% ../nbs/01_helpers.ipynb 58
+# %% ../nbs/01_helpers.ipynb
 _II = isinstance
 def _at(d: Mapping|Sequence, k: str) -> Any:
     return d[k] if _II(d, Mapping) else d[int(k)] if _II(d, Sequence) and not _II(d, (str, bytes)) else None
@@ -146,7 +118,7 @@ def find(key_path: str, j: Mapping|Sequence|str|bytes|bytearray, default:Any=Par
         raise e
 
 
-# %% ../nbs/01_helpers.ipynb 61
+# %% ../nbs/01_helpers.ipynb
 def read_vfile(cts:str)->str|None:
     import anywidget
     from anywidget._file_contents import _VIRTUAL_FILES
@@ -155,7 +127,7 @@ def read_vfile(cts:str)->str|None:
             return fn.contents
 
 
-# %% ../nbs/01_helpers.ipynb 63
+# %% ../nbs/01_helpers.ipynb
 @FC.delegates(FastHTML)  # type: ignore
 def nb_app(**kwargs):
     from starlette.middleware.cors import CORSMiddleware
