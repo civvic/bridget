@@ -35,7 +35,7 @@ new_id = id_gen()
 
 # %% ../nbs/20_route_provider.ipynb 21
 class APIRouterB(APIRouter):
-    routes: list  # mostly here to make type-checkers happy
+    routes: list  # here to make type-checkers happy
     idx: str = '' # Instance identifier
     to: str = ''  # Base path for routes
     name: str = '' # Router name
@@ -104,7 +104,7 @@ def add_routes(self: FastHTML,
     "Register routes from a provider into a FastHTML app"
     if isinstance(prov, APIRouterB):
         is_ar, ar = True, prov
-        if not mount: prov.to_app(self); return prov
+        if not mount and ar.routes: prov.to_app(self); return prov
     else:
         is_ar, ar = False, _ar_from_provider(prov, name)
         setattr(prov, 'ar', ar)
@@ -119,7 +119,7 @@ def add_routes(self: FastHTML,
         # a property can't have to()
         if not is_ar and not isinstance(getattr(cls, args[0].__name__), property):
             setattr(prov, args[0].__name__, lf)
-    if mount: 
+    if mount and ar.routes: 
         self.mount(path, rapp, name=name)
     return ar
 
