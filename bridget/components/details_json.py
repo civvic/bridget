@@ -9,13 +9,13 @@ from __future__ import annotations
 # %% auto 0
 __all__ = ['Val', 'NameVal', 'DetailsJSON']
 
-# %% ../../nbs/30_details_json.ipynb 4
+# %% ../../nbs/30_details_json.ipynb
 from typing import Any
 from typing import Literal
 from typing import Mapping
 
 
-# %% ../../nbs/30_details_json.ipynb 5
+# %% ../../nbs/30_details_json.ipynb
 from ..bridget import _n
 from ..bridget import bridge_cfg
 from ..bridget import Bridget
@@ -25,11 +25,11 @@ from ..route_provider import ar
 from ..route_provider import RoutesProvider
 
 
-# %% ../../nbs/30_details_json.ipynb 6
+# %% ../../nbs/30_details_json.ipynb
 from fasthtml.components import Details, Summary, Ul, Li, Span
 
 
-# %% ../../nbs/30_details_json.ipynb 22
+# %% ../../nbs/30_details_json.ipynb
 def Val(v): 
     c = (
         'null' if v is None else 
@@ -53,7 +53,7 @@ class DetailsJSON(RoutesProvider):
 
     @ar('/{dp:path}', methods='get', name='get')
     def __call__(self, dp:str='', all:bool=False): 
-        try: d = find(dp, self.o, '/') if dp else self.o
+        try: d = find(dp, self.o, sep='/') if dp else self.o
         except Exception: return None
         return self.__ft__(dp, d, all)
     
