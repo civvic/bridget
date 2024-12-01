@@ -7,7 +7,7 @@ from __future__ import annotations
 
 # %% auto 0
 __all__ = ['Singleling', 'cleanupwidgets', 'pretty_repr', 'rich_display', 'CLog', 'kounter', 'simple_id', 'id_gen', 'find',
-           'read_vfile', 'nb_app']
+           'read_vfile', 'Script', 'Style', 'nb_app']
 
 # %% ../nbs/01_helpers.ipynb
 import json
@@ -24,10 +24,16 @@ from typing import overload
 from typing import Sequence
 
 import fastcore.all as FC
+from fastcore.xml import FT
+from fastcore.xml import NotStr
+from fasthtml.basics import ft_html
 from fasthtml.core import FastHTML
 from IPython.display import display
 from IPython.display import DisplayHandle
 
+
+# %% ../nbs/01_helpers.ipynb
+_n = '\n'
 
 # %% ../nbs/01_helpers.ipynb
 class Singleling:
@@ -125,6 +131,18 @@ def read_vfile(cts:str)->str|None:
     if cts.startswith('vfile:'):
         if fn := _VIRTUAL_FILES.get(cts, None):
             return fn.contents
+
+
+# %% ../nbs/01_helpers.ipynb
+@FC.delegates(ft_html, keep=True)  # type: ignore
+def Script(code:str="", **kwargs)->FT:
+    "A Script tag that doesn't escape its code"
+    return ft_html('script', (_n, NotStr(FC.ifnone(read_vfile(code), code))), **kwargs)
+
+@FC.delegates(ft_html, keep=True)  # type: ignore
+def Style(*c, **kwargs)->FT:
+    "A Style tag that doesn't escape its code"
+    return ft_html('style', tuple(NotStr(FC.ifnone(read_vfile(_), _)) for _ in c), **kwargs)
 
 
 # %% ../nbs/01_helpers.ipynb

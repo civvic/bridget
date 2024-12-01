@@ -7,9 +7,9 @@ from __future__ import annotations
 
 
 # %% auto 0
-__all__ = ['bridge_cfg', 'Bridgeable', 'Config', 'BridgeCfg', 'ScriptsDetails', 'bridget_scripts', 'ClientP', 'Script', 'Style',
-           'autoid', 'DisplayId', 'request2httpx_request', 'HasFT', 'HasHTML', 'request2response',
-           'httpx_response_to_json', 'BridgeBase', 'Bridget', 'get_app']
+__all__ = ['bridge_cfg', 'Bridgeable', 'BridgeCfg', 'ScriptsDetails', 'bridget_scripts', 'ClientP', 'autoid', 'DisplayId',
+           'request2httpx_request', 'HasFT', 'HasHTML', 'request2response', 'httpx_response_to_json', 'BridgeBase',
+           'Bridget', 'get_app']
 
 # %% ../nbs/22_bridget.ipynb
 import dataclasses
@@ -42,6 +42,7 @@ from httpx import Response
 from IPython.display import display
 from IPython.display import DisplayHandle
 from IPython.display import HTML
+from olio.common import Config
 
 
 # %% ../nbs/22_bridget.ipynb
@@ -55,6 +56,8 @@ from .helpers import id_gen
 from .helpers import nb_app
 from .helpers import pretty_repr
 from .helpers import read_vfile
+from .helpers import Script
+from .helpers import Style
 from .htmx import swap
 from .htmx import SwapStyleT
 from .route_provider import add_routes
@@ -74,22 +77,6 @@ _BUNDLER_PATH = Path() if __name__ == "__main__" else Path(inspect.getfile(bridg
 
 # %% ../nbs/22_bridget.ipynb
 _n = '\n'
-
-# %% ../nbs/22_bridget.ipynb
-class Config:
-    def update(self, **kwargs):
-        for k,v in kwargs.items(): 
-            try: setattr(self, k, v)
-            except AttributeError: pass
-    def show(self): print(vars(self))
-    @contextmanager
-    def __call__(self, **kwargs):
-        vv = vars(self)
-        old = {k:vv[k] for k in kwargs if k in vv}
-        for k,v in kwargs.items(): setattr(self, k, v)
-        yield
-        for k,v in old.items(): setattr(self, k, v)
-
 
 # %% ../nbs/22_bridget.ipynb
 @dataclasses.dataclass
@@ -150,18 +137,6 @@ class ClientP(Protocol):
     def put(self, url: str, **kwargs) -> Response: ...
     def patch(self, url: str, **kwargs) -> Response: ...
     def options(self, url: str, **kwargs) -> Response: ...
-
-
-# %% ../nbs/22_bridget.ipynb
-@FC.delegates(ft_html, keep=True)  # type: ignore
-def Script(code:str="", **kwargs)->FT:
-    "A Script tag that doesn't escape its code"
-    return ft_html('script', (_n, NotStr(FC.ifnone(read_vfile(code), code))), **kwargs)
-
-@FC.delegates(ft_html, keep=True)  # type: ignore
-def Style(*c, **kwargs)->FT:
-    "A Style tag that doesn't escape its code"
-    return ft_html('style', tuple(NotStr(FC.ifnone(read_vfile(_), _)) for _ in c), **kwargs)
 
 
 # %% ../nbs/22_bridget.ipynb
