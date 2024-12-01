@@ -7,15 +7,13 @@ from __future__ import annotations
 
 
 # %% auto 0
-__all__ = ['bridge_cfg', 'Bridgeable', 'BridgeCfg', 'ScriptsDetails', 'bridget_scripts', 'ClientP', 'autoid', 'DisplayId',
-           'request2httpx_request', 'HasFT', 'HasHTML', 'request2response', 'httpx_response_to_json', 'BridgeBase',
-           'Bridget', 'get_app']
+__all__ = ['bridge_cfg', 'Bridgeable', 'BridgeCfg', 'ScriptsDetails', 'bridget_scripts', 'ClientP', 'request2httpx_request',
+           'HasFT', 'HasHTML', 'request2response', 'httpx_response_to_json', 'BridgeBase', 'Bridget', 'get_app']
 
 # %% ../nbs/22_bridget.ipynb
 import dataclasses
 import inspect
 import time
-from contextlib import contextmanager
 from pathlib import Path
 from types import MethodType
 from typing import Any
@@ -31,7 +29,6 @@ from fastcore.xml import escape
 from fastcore.xml import FT
 from fastcore.xml import NotStr
 from fastcore.xml import to_xml
-from fasthtml.basics import ft_html
 from fasthtml.core import Client
 from fasthtml.core import FastHTML
 from httpx import ASGITransport
@@ -40,7 +37,6 @@ from httpx import codes
 from httpx import Request
 from httpx import Response
 from IPython.display import display
-from IPython.display import DisplayHandle
 from IPython.display import HTML
 from olio.common import Config
 
@@ -51,11 +47,11 @@ from fasthtml.components import Div, Details, Summary, B, Pre, Span
 
 # %% ../nbs/22_bridget.ipynb
 import bridget
+from .cell_display import DisplayId
 from .helpers import cleanupwidgets
 from .helpers import id_gen
 from .helpers import nb_app
 from .helpers import pretty_repr
-from .helpers import read_vfile
 from .helpers import Script
 from .helpers import Style
 from .htmx import swap
@@ -137,37 +133,6 @@ class ClientP(Protocol):
     def put(self, url: str, **kwargs) -> Response: ...
     def patch(self, url: str, **kwargs) -> Response: ...
     def options(self, url: str, **kwargs) -> Response: ...
-
-
-# %% ../nbs/22_bridget.ipynb
-__autoid_scr = '''
-//debugger;
-me().attribute('id', 'output-{0}').classAdd('bridge');
-setTimeout(el => {{ el.remove(); }}, 100, me('#{0}'))
-'''
-def autoid(idx=None):
-    idx = idx or new_id()
-    return Script(__autoid_scr.format(idx), id=idx), idx
-
-
-# %% ../nbs/22_bridget.ipynb
-class DisplayId(DisplayHandle):
-    def __init__(self, display_id=None):
-        super().__init__(display_id or new_id())
-        self._contents = None
-        self._sc = to_xml(autoid(self.display_id)[0]) if bridge_cfg.auto_id else ''
-
-    def display(self, obj='', **kwargs):
-        from IPython.display import display
-        self._contents = str(obj)
-        display(HTML(self._contents + self._sc), display_id=self.display_id, **kwargs)
-
-    def update(self, obj='', **kwargs):
-        kwargs['update'] = True
-        self.display(obj, **kwargs)
-
-    def contents(self):
-        return self._contents
 
 
 # %% ../nbs/22_bridget.ipynb
