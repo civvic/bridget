@@ -7,9 +7,10 @@ from __future__ import annotations
 
 
 # %% auto 0
-__all__ = ['autoid', 'DisplayId']
+__all__ = ['observer_scr', 'marker_scr', 'DisplayId']
 
 # %% ../nbs/15_cell_display.ipynb
+from fastcore.xml import to_xml
 from IPython.display import DisplayHandle
 from IPython.display import HTML
 
@@ -24,14 +25,60 @@ new_id = id_gen()
 
 
 # %% ../nbs/15_cell_display.ipynb
-__autoid_scr = '''
-//debugger;
-me().attribute('id', 'output-{0}').classAdd('bridge');
-setTimeout(el => {{ el.remove(); }}, 100, me('#{0}'))
-'''
-def autoid(idx=None):
-    idx = idx or new_id()
-    return Script(__autoid_scr.format(idx), id=idx), idx
+observer_scr = Script('''
+// debugger;
+if (!window.bridgetObserver) {
+    console.log('bridgetObserver not found, creating');
+    const sels = ['.output', '.jp-Cell-outputArea']
+    window.bridgetObserver ??= new MutationObserver(recs => { // Allow 1 observer.
+        // console.log('MutationObserver triggered, records', recs.length);
+        for (const r of recs) {
+            if (r.addedNodes.length < 1 || !sels.some(sel => r.target.matches(sel))) continue;
+            // console.log('record', r);
+            for (const n of r.addedNodes) {
+                if (n.nodeType === 1) requestAnimationFrame(() => {
+                    if (window.htmx) {
+                        htmx.process(n);
+                        console.log('Processed output node', n);
+                    }
+                })
+            }
+        }
+    });
+    window.bridgetObserver.observe(document.body, {childList: true, subtree: true});
+} else {
+    console.log('bridgetObserver already exists, skipping');
+}
+''')
+
+
+# %% ../nbs/15_cell_display.ipynb
+marker_scr = Script('''
+// debugger;
+if (!customElements.get('brt-mark')) {
+    class BridgetMarker extends HTMLElement {
+        connectedCallback() {
+            const pel = this.parentElement;
+            if (pel) {
+                const bridgetId = this.getAttribute('id');
+                if (bridgetId) {
+                    if (!pel.hasAttribute('data-brt-id')) pel.setAttribute('data-brt-id', bridgetId);
+                    console.log('bridget marker set', bridgetId);
+                    this.remove();
+                }
+            }
+        }
+    }
+    customElements.define('brt-mark', BridgetMarker);
+    console.log('brt-mark defined');
+} else {
+    console.log('brt-mark is already defined');
+}
+''')
+
+
+# %% ../nbs/15_cell_display.ipynb
+from fasthtml.components import Brt_Mark
 
 
 # %% ../nbs/15_cell_display.ipynb
@@ -39,13 +86,14 @@ class DisplayId(DisplayHandle):
     def __init__(self, display_id=None):
         super().__init__(display_id or new_id())
         self._contents = None
-        self._sc = ''
+        # self._sc = ''
         # self._sc = to_xml(autoid(self.display_id)[0]) if bridge_cfg.auto_id else ''
+        self._marker = to_xml(Brt_Mark(id=self.display_id))
 
     def display(self, obj='', **kwargs):
         from IPython.display import display
         self._contents = str(obj)
-        display(HTML(self._contents + self._sc), display_id=self.display_id, **kwargs)
+        display(HTML(self._contents + self._marker), display_id=self.display_id, **kwargs)
 
     def update(self, obj='', **kwargs):
         kwargs['update'] = True
