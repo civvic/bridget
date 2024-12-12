@@ -13,11 +13,16 @@ const _summ_stl = `
 </style>
 `;
 
+function _truncate(str, maxLength = 100) {
+  return str.length > maxLength ? str.substring(0, maxLength) + '...' : str;
+}
+
 // Summary of the notebook state (for debugging)
 function _summaryHTML(message) {
   return message.data.map((cell, idx) => `
     <div class="cell-info">
       <strong>Cell ${idx}</strong> (${cell.kind}, index: ${cell.index})
+      <div class="cell-text">Source: ${JSON.stringify(_truncate(cell.text))}</div>
       ${(cell.outputs && cell.outputs.length) ? `
         <div class="output-info">
           Outputs: ${cell.outputs.map((out) => `
@@ -42,10 +47,10 @@ function renderNBState(message, element) {
     const updateClass = message.changeType === "notebookUpdate" ? "update-flash" : "";
     const stateJSON = JSON.stringify(message);
     element.innerHTML = `
+      <div class="timestamp">Last updated: ${message.timestamp}</div>
       ${_summ_stl}
-      <details id="notebook-state" class="${updateClass}" open>
+      <details id="notebook-state" class="${updateClass}">
         <summary><strong>Cells:</strong></summary>
-        <div class="timestamp">Last updated: ${message.timestamp}</div>
         ${_summaryHTML(message)}
       </details>
       <script id="notebook-state-json" type="application/json">${stateJSON}</script>

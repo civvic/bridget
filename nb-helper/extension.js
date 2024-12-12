@@ -36,6 +36,7 @@ function getCellsData() {
 	return editor.notebook.getCells().map((cell) => ({
 		kind: cell.kind,
 		index: cell.index,
+		text: cell.document.getText(),
 		outputs: cell.outputs.map((output) => ({
 			id: output.id,
 			items: output.items.map((item) => ({
