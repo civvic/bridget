@@ -4,6 +4,8 @@ const vscode = require('vscode');
 
 // ---- Utils ----
 
+let debounceTimer = null;
+
 let monitors = new Map();  // notebook.uri -> true
 
 function setMonitor(notebook) {
@@ -120,6 +122,24 @@ function activate(context) {
         change.outputs // Cell outputs changed
     );
     if (hasContentChanges || hasCellChanges) {
+      // If change is only document content, debounce
+      const isOnlyContentChange = event.cellChanges.every(
+        (change) => change.document && !change.outputs
+      );
+
+      if (isOnlyContentChange) {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          const state = getCellsData();
+          messaging.postMessage({
+            type: "state",
+            data: state,
+            changeType: "notebookUpdate",
+          });
+        }, 1000); // 1 second delay
+        return;
+      }
+
       const state = getCellsData();
       messaging.postMessage({
         type: "state",
