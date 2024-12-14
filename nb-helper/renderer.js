@@ -1,23 +1,64 @@
 // This script runs in the notebook output webview
 debugger;
 
+/** @typedef {import('vscode-notebook-renderer').ActivationFunction} ActivationFunction */
+/** @typedef {import('vscode-notebook-renderer').OutputItem} OutputItem */
+/** @typedef {import('vscode-notebook-renderer').RenderContext} RenderContext */
+/** @typedef {import('vscode-notebook-renderer').NotebookRendererScript} NotebookRendererScript */
+
+/** @typedef {Object} StateMessage
+ * @property {'state'} type
+ * @property {'notebookUpdate' | 'initial'} changeType
+ * @property {Array<CellData>} data
+ */
+
+/** @typedef {Object} ErrorMessage
+ * @property {'error'} type
+ * @property {string} message
+ */
+
+/** @typedef {Object} DeregisterMessage
+ * @property {'deregister'} type
+ * @property {string} outputId
+ */
+
+/** @typedef {Object} CellData
+ * @property {1 | 2} kind - 1: markdown, 2: code
+ * @property {number} index
+ * @property {string} text
+ * @property {Array<OutputData>} outputs
+ */ 
+
+/** @typedef {Object} OutputData
+ * @property {string} id
+ * @property {Array<{mime: string}>} items
+*/ 
+
+
 const _summ_stl = `
 <style>
-  .update-flash { animation: flash 0.5s ease-out; }
-  @keyframes flash {
-    0% { background-color: pink; }
-    100% { background-color: transparent; }
+.update-flash { animation: flash 0.5s ease-out; }
+@keyframes flash {
+  0% { background-color: pink; }
+  100% { background-color: transparent; }
   }
   .cell-info { margin-bottom: 1em; }
   .output-info { margin-left: 2em; }
-</style>
-`;
-
+  </style>
+  `;
+  
+/** @param {string} str
+ * @param {number} [maxLength=100]
+ * @returns {string}
+ */
 function _truncate(str, maxLength = 100) {
-  return str.length > maxLength ? str.substring(0, maxLength) + '...' : str;
+  return str.length > maxLength ? str.substring(0, maxLength) + "..." : str;
 }
 
-// Summary of the notebook state (for debugging)
+/** summary for debugging
+ * @param {StateMessage}
+ * @returns {string} HTML string
+ */
 function _summaryHTML(message) {
   return message.data.map((cell, idx) => `
     <div class="cell-info">
@@ -40,58 +81,130 @@ function _summaryHTML(message) {
   `).join("")
 }
 
-function renderNBState(message, element) {
-  if (message.type === "state") {
-    const t = new Date().toLocaleTimeString();
-    message.timestamp = t;
-    const updateClass = message.changeType === "notebookUpdate" ? "update-flash" : "";
-    const stateJSON = JSON.stringify(message);
-    element.innerHTML = `
+/** feedback for debugging
+ * @param {StateMessage} message
+ * @returns {string} HTML string
+ */
+function renderNBState_feedback(message) {
+  const updateClass = message.changeType === "notebookUpdate" ? "update-flash" : "";
+  return `
+    <div class="notebook-state-feedback">
       <div class="timestamp">Last updated: ${message.timestamp}</div>
       ${_summ_stl}
-      <details id="notebook-state" class="${updateClass}">
+      <details class="${updateClass}">
         <summary><strong>Cells:</strong></summary>
         ${_summaryHTML(message)}
       </details>
-      <script id="notebook-state-json" type="application/json">${stateJSON}</script>
-    `;
+    </div>
+  `;
+}
+
+/** Get or create the notebook state script element
+ * @returns {HTMLScriptElement|null}
+ */
+function getStateScript() {
+  const doc = globalThis.document;
+  return (
+    doc.querySelector("script#notebook-state-json") ||
+    doc.body.appendChild(
+      Object.assign(doc.createElement("script"), {
+        id: "notebook-state-json",
+        type: "application/json",
+      })
+    )
+  );
+}
+
+/** Setup notebook state in the DOM
+ * @param {StateMessage} message
+ * @param {HTMLElement} element
+ * @param {string} outputId
+ */
+function setupNBState(message, element, outputId) {
+  const t = new Date().toLocaleTimeString();
+  message.timestamp = t;
+
+  // Update feedback in this output
+  element.innerHTML = renderNBState_feedback(message);
+
+  // Update state if we're the owner
+  const stateScript = getStateScript();
+  if (!stateScript.dataset.owner) {
+    stateScript.dataset.owner = outputId;
+  }
+  if (stateScript.dataset.owner === outputId) {
+    stateScript.textContent = JSON.stringify(message);
   }
 }
 
+
+/** Check if there are any state outputs left
+ * @returns {boolean}
+ */
+function hasStateOutputs() {
+  const doc = globalThis.document;
+  return doc.querySelectorAll('.notebook-state-feedback').length > 0;
+}
+
+/** @type {ActivationFunction} */
 export function activate(context) {
+  // Track listeners per output
+  const messageListeners = new Map();
+
   return {
     renderOutputItem(outputItem, element) {
       try {
-        const textDecoder = new TextDecoder();
-        const jsonString = textDecoder.decode(outputItem.data());
-        const notebookState = JSON.parse(jsonString);
+        console.log("output item", outputItem.id, outputItem.mime, outputItem.json());
 
         if (context.postMessage) {
-          const messageListener = context.onDidReceiveMessage((message) => {
+          const listener = context.onDidReceiveMessage((message) => {
             if (message.type === "error") {
               element.innerHTML = `<div class="error">${message.message}</div>`;
               return;
             }
-            renderNBState(message, element);
+            if (message.type === "state") setupNBState(message, element, outputItem.id);
           });
+          messageListeners.set(outputItem.id, listener);
 
           setTimeout(() => {
-            context.postMessage({
-              type: "getState",
-              outputId: outputItem.id, // Send output ID
-            });
+            context.postMessage({ type: "getState", outputId: outputItem.id });
           }, 100);
         }
 
         element.innerHTML = `
-                  <div id="notebook-state">
-                      <div>Requesting notebook state...</div>
-                  </div>
-              `;
+            <div>Requesting notebook state...</div>
+        `;
       } catch (error) {
         console.error("Error in renderer:", error);
         element.innerHTML = `<div class="error">Error: ${error.message}</div>`;
       }
+    },
+
+    disposeOutputItem(outputItemId) {
+      const stateScript = getStateScript();
+      if (stateScript) {
+        // If this was the owner, clear ownership
+        if (stateScript.dataset.owner === outputItemId) {
+          delete stateScript.dataset.owner;
+        }
+      }
+      if (context.postMessage) {
+        context.postMessage({ type: "deregister", outputItemId });
+      }
+
+      // unsubscribe from state updates
+      const listener = messageListeners.get(outputItemId);
+      if (listener) {
+        listener.dispose();
+        messageListeners.delete(outputItemId);
+      }
+
+      // Check for remaining outputs after DOM update
+      globalThis.requestAnimationFrame(() => {
+        if (!hasStateOutputs()) {
+          stateScript?.remove();
+        }
+      });
     },
   };
 }
