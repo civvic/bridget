@@ -77,25 +77,130 @@ function hasStateOutputs(notebook) {
 	);
 }
 
+// ---- State ----
+
+function bufferToString(data) {
+  if (Buffer.isBuffer(data)) return data.toString('utf8');
+  return data;
+}
+
+function getOutputMetadata(output) {
+  const metadata = {};
+  if (output.metadata?.outputType) metadata.outputType = output.metadata.outputType;
+  if (output.metadata?.metadata && Object.keys(output.metadata.metadata).length > 0) {
+      metadata.metadata = output.metadata.metadata;
+  }
+  return Object.keys(metadata).length > 0 ? metadata : undefined;
+}
+
+function getTypeSpecificFields(output) {
+  const type = getOutputType(output);
+  switch(type) {
+      case 'stream':
+          return {
+              name: output.items[0].mime.includes('stderr') ? 'stderr' : 'stdout',
+              text: bufferToString(output.items[0].data)
+          };
+      case 'error':
+          const errorData = output.items[0].data;
+          const fields = { ename: errorData.name, evalue: errorData.message };
+          if (errorData.stack) fields.traceback = errorData.stack.split('\n');
+          return fields;
+          // case 'execute_result':
+          //   return output.metadata?.executionCount !== undefined ? 
+          //       { execution_count: output.metadata.executionCount } : 
+          //       {};
+        default:
+            return {};
+  }
+}
+
+function getOutputType(output) {
+  if (output.items.some(item => 
+      item.mime === 'application/vnd.code.notebook.error')) {
+      return 'error';
+  }
+  if (output.items.some(item => 
+      item.mime === 'application/vnd.code.notebook.stdout' ||
+      item.mime === 'application/vnd.code.notebook.stderr')) {
+      return 'stream';
+  }
+  if (output.metadata?.executionCount !== undefined) return 'execute_result';
+  return 'display_data';
+}
+
+function processOutput(output) {
+  const result = { output_type: getOutputType(output), data: getMimeBundle(output.items) };
+  const metadata = getOutputMetadata(output);
+  if (metadata && Object.keys(metadata).length > 0) result.metadata = metadata;
+  return {...result, ...getTypeSpecificFields(output)};
+}
+
+function getMimeBundle(items) {
+  return items.reduce((bundle, item) => {
+      if (item.data) bundle[item.mime] = bufferToString(item.data);
+      return bundle;
+  }, {});
+}
+
+function getCellMetadata(cell) {
+  const metadata = {};
+  if (cell.metadata.tags?.length > 0) metadata.tags = cell.metadata.tags;
+  if (cell.metadata.jupyter) metadata.jupyter = cell.metadata.jupyter;
+  return Object.keys(metadata).length > 0 ? metadata : undefined;
+}
+
+// function getCellType(cell) {
+//   switch (cell.kind) {
+//       case vscode.NotebookCellKind.Markup:  // 1
+//           return 'markdown';
+//       case vscode.NotebookCellKind.Code:    // 2
+//           return 'code';
+//       default:
+//           return 'raw';  // Rarely used, but included for completeness
+//   }
+// }
+function getCellType(cell) {
+  return cell.kind;  // Already numeric: 1 for Markup, 2 for Code
+}
+
+function processCell(cell) {
+  const cellData = { cell_type: getCellType(cell), source: cell.document.getText() };
+  const metadata = getCellMetadata(cell);
+  if (metadata) cellData.metadata = metadata;
+  if (cell.kind === vscode.NotebookCellKind.Code && cell.outputs.length > 0) {
+      cellData.outputs = cell.outputs.map(processOutput);
+  }
+  return cellData;
+}
+
+function getCellsData() {
+  const editor = vscode.window.activeNotebookEditor;
+  if (!editor) return null;
+  return editor.notebook.getCells().map(processCell);
+}
+
 /**
  * Get current notebook state data
  * @returns {Object | null} Notebook cells data or null if no active editor
  */
-function getCellsData() {
-	const editor = vscode.window.activeNotebookEditor;
-	if (!editor) return null;
-	return editor.notebook.getCells().map((cell) => ({
-		kind: cell.kind,
-		index: cell.index,
-		text: cell.document.getText(),
-		outputs: cell.outputs.map((output) => ({
-			id: output.id,
-			items: output.items.map((item) => ({
-				mime: item.mime,
-			})),
-		})),
-	}));
-}
+// function getCellsData_old() {
+// 	const editor = vscode.window.activeNotebookEditor;
+// 	if (!editor) return null;
+// 	return editor.notebook.getCells().map((cell) => ({
+// 		kind: cell.kind,
+// 		index: cell.index,
+// 		text: cell.document.getText(),
+// 		outputs: cell.outputs.map((output) => ({
+// 			id: output.id,
+// 			items: output.items.map((item) => ({
+// 				mime: item.mime,
+// 			})),
+// 		})),
+// 	}));
+// }
+
+// ---- Extension ----
 
 /** @param {vscode.ExtensionContext} context */
 function activate(context) {

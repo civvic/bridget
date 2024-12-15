@@ -23,17 +23,17 @@ debugger;
  */
 
 /** @typedef {Object} CellData
- * @property {1 | 2} kind - 1: markdown, 2: code
- * @property {number} index
- * @property {string} text
- * @property {Array<OutputData>} outputs
+ * @property {'code' | 'markdown' | 'raw'} cell_type
+ * @property {string} source
+ * @property {Object} [metadata]
+ * @property {Array<OutputData>} [outputs]
  */ 
 
 /** @typedef {Object} OutputData
- * @property {string} id
- * @property {Array<{mime: string}>} items
-*/ 
-
+ * @property {'stream' | 'display_data' | 'execute_result' | 'error'} output_type
+ * @property {Object} [data]
+ * @property {Object} [metadata]
+ */
 
 const _summ_stl = `
 <style>
@@ -62,23 +62,29 @@ function _truncate(str, maxLength = 100) {
 function _summaryHTML(message) {
   return message.data.map((cell, idx) => `
     <div class="cell-info">
-      <strong>Cell ${idx}</strong> (${cell.kind}, index: ${cell.index})
-      <div class="cell-text">Source: ${JSON.stringify(_truncate(cell.text))}</div>
-      ${(cell.outputs && cell.outputs.length) ? `
-        <div class="output-info">
-          Outputs: ${cell.outputs.map((out) => `
-            <div>ID: ${out.id}
-              ${out.items.map((item) => `
-                <div>Mime: ${item.mime}</div>
-              `
-              ).join("")}
-            </div>
-          `).join("")}
+      <strong>Cell ${idx}</strong> (${cell.cell_type})
+      <div class="cell-text">
+        Source: ${JSON.stringify(_truncate(cell.source))}
+      </div>
+      ${cell.metadata ? `
+        <div class="cell-metadata">
+          Metadata: ${Object.keys(cell.metadata).join(', ')}
         </div>
-      ` : " (No outputs)"
-      }
+      ` : ''}
+      ${(cell.outputs?.length) ? `
+        <div class="output-info">
+          Outputs (${cell.outputs.length}):
+          ${cell.outputs.map(out => `
+            <div>Type: ${out.output_type}
+              ${out.data ? `
+                <div>MIME types: ${Object.keys(out.data).join(', ')}</div>
+              ` : ''}
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
     </div>
-  `).join("")
+  `).join('');
 }
 
 /** feedback for debugging
