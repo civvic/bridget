@@ -7,8 +7,8 @@ from __future__ import annotations
 
 
 # %% auto 0
-__all__ = ['bridge_cfg', 'Bridgeable', 'BridgeCfg', 'ScriptsDetails', 'bridget_scripts', 'ClientP', 'request2httpx_request',
-           'HasFT', 'HasHTML', 'request2response', 'httpx_response_to_json', 'BridgeBase', 'Bridget', 'get_app']
+__all__ = ['Bridgeable', 'ScriptsDetails', 'bridget_scripts', 'ClientP', 'request2httpx_request', 'HasFT', 'HasHTML',
+           'request2response', 'httpx_response_to_json', 'BridgeBase', 'Bridget', 'get_app']
 
 # %% ../nbs/22_bridget.ipynb
 import dataclasses
@@ -38,7 +38,6 @@ from httpx import Request
 from httpx import Response
 from IPython.display import display
 from IPython.display import HTML
-from olio.common import Config
 
 
 # %% ../nbs/22_bridget.ipynb
@@ -48,6 +47,7 @@ from fasthtml.components import Div, Details, Summary, B, Pre, Span
 # %% ../nbs/22_bridget.ipynb
 import bridget
 from .cell_display import DisplayId
+from .helpers import bridge_cfg
 from .helpers import cleanupwidgets
 from .helpers import id_gen
 from .helpers import nb_app
@@ -73,18 +73,6 @@ _BUNDLER_PATH = Path() if __name__ == "__main__" else Path(inspect.getfile(bridg
 
 # %% ../nbs/22_bridget.ipynb
 _n = '\n'
-
-# %% ../nbs/22_bridget.ipynb
-@dataclasses.dataclass
-class BridgeCfg(Config):
-    auto_show: bool = False
-    auto_mount: bool = False
-    auto_id: bool = False
-    current_did: str|None = None
-    debug_req: bool = False
-
-bridge_cfg = BridgeCfg()
-
 
 # %% ../nbs/22_bridget.ipynb
 @FC.patch
@@ -250,7 +238,7 @@ class Bridget(BridgeBase, anywidget.AnyWidget):
     response = T.Dict({}).tag(sync=True)  # Outgoing responses
 
     htmx = T.Bool(True).tag(sync=True)
-    htmx_sels = T.List(['.output', '.jp-Cell-outputArea']).tag(sync=True)
+    output_sels = T.List(['.output', '.jp-Cell-outputArea']).tag(sync=True)
 
     libraries = T.Dict({k:v.src for k,v in bridget_scripts().items()}).tag(sync=True)
 

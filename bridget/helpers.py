@@ -6,10 +6,11 @@
 from __future__ import annotations
 
 # %% auto 0
-__all__ = ['Singleling', 'cleanupwidgets', 'pretty_repr', 'rich_display', 'CLog', 'kounter', 'simple_id', 'id_gen', 'find',
-           'read_vfile', 'Script', 'Style', 'nb_app']
+__all__ = ['bridge_cfg', 'BridgeCfg', 'Singleling', 'cleanupwidgets', 'pretty_repr', 'rich_display', 'CLog', 'kounter',
+           'simple_id', 'id_gen', 'find', 'read_vfile', 'ScriptV', 'StyleV', 'nb_app']
 
 # %% ../nbs/01_helpers.ipynb
+import dataclasses
 import json
 import os
 import sys
@@ -30,10 +31,35 @@ from fasthtml.basics import ft_html
 from fasthtml.core import FastHTML
 from IPython.display import display
 from IPython.display import DisplayHandle
+from olio.common import Config
 
 
 # %% ../nbs/01_helpers.ipynb
 _n = '\n'
+
+# %% ../nbs/01_helpers.ipynb
+@dataclasses.dataclass
+class BridgeCfg(Config):
+    """
+    Settings for core `Bridget` behavior.
+    
+    if `True`:
+    - `auto_show`: FastHTML objects display as HTML instead of markdown.
+    - `auto_mount`: components with routes are automatically mounted.
+    - `auto_id`: display elements get auto-generated IDs.
+    - `bootstrap`: load bridget.js on import.
+    - `current_did`: the ID of the current display cell.
+    - `debug_req`: request debugging is enabled.
+    """
+    auto_show: bool = False
+    auto_mount: bool = False
+    auto_id: bool = False
+    bootstrap: bool = os.environ.get('BRIDGET_BOOTSTRAP', '').lower() in ('true', '1', 'on', 'yes', 'y')
+    current_did: str|None = None
+    debug_req: bool = False
+
+bridge_cfg = BridgeCfg()
+
 
 # %% ../nbs/01_helpers.ipynb
 class Singleling:
@@ -128,20 +154,20 @@ def find(key_path: str, j: Mapping|Sequence|str|bytes|bytearray, default:Any=Par
 def read_vfile(cts:str)->str|None:
     import anywidget
     from anywidget._file_contents import _VIRTUAL_FILES
-    if cts.startswith('vfile:'):
+    if isinstance(cts, str) and cts.startswith('vfile:'):
         if fn := _VIRTUAL_FILES.get(cts, None):
             return fn.contents
 
 
 # %% ../nbs/01_helpers.ipynb
 @FC.delegates(ft_html, keep=True)  # type: ignore
-def Script(code:str="", **kwargs)->FT:
-    "A Script tag that doesn't escape its code"
+def ScriptV(code:str="", **kwargs)-> FT:
+    "A Script w/ code or `vfile:` contents that doesn't escape its code"
     return ft_html('script', (_n, NotStr(FC.ifnone(read_vfile(code), code))), **kwargs)
 
 @FC.delegates(ft_html, keep=True)  # type: ignore
-def Style(*c, **kwargs)->FT:
-    "A Style tag that doesn't escape its code"
+def StyleV(*c, **kwargs)-> FT:
+    "A Style w/ code or `vfile:` contents that doesn't escape its code"
     return ft_html('style', tuple(NotStr(FC.ifnone(read_vfile(_), _)) for _ in c), **kwargs)
 
 
