@@ -249,8 +249,8 @@ function activate(context) {
       if (e.message.type === "getState") {
         setMonitor(editor.notebook);
         addStateOutput(editor.notebook, e.message.outputId);
-        const state = getCellsData();
-        messaging.postMessage({ type: "state", data: state });
+        const cells = getCellsData();
+        messaging.postMessage({ type: "state", cells: cells });
       } else if (e.message.type === "deregister") {
         removeStateOutput(editor.notebook, e.message.outputItemId);
       }
@@ -303,21 +303,21 @@ function activate(context) {
           if (debounceTimer) clearTimeout(debounceTimer);
           debounceTimer = setTimeout(() => {
             /** @type {StateMessage} */
-            const state = getCellsData();
+            const cells = getCellsData();
             messaging.postMessage({
               type: "state",
-              data: state,
+              cells: cells,
               changeType: "notebookUpdate",
             });
           }, 1000); // 1 second delay
           return;
         }
 
-        const state = getCellsData();
+        const cells = getCellsData();
         /** @type {StateMessage} */
         messaging.postMessage({
           type: "state",
-          data: state,
+          cells: cells,
           changeType: "notebookUpdate",
         });
       }

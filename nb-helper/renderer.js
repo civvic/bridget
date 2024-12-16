@@ -9,7 +9,7 @@ debugger;
 /** @typedef {Object} StateMessage
  * @property {'state'} type
  * @property {'notebookUpdate' | 'initial'} changeType
- * @property {Array<CellData>} data
+ * @property {Array<CellData>} cells
  */
 
 /** @typedef {Object} ErrorMessage
@@ -60,7 +60,7 @@ function _truncate(str, maxLength = 100) {
  * @returns {string} HTML string
  */
 function _summaryHTML(message) {
-  return message.data.map((cell, idx) => `
+  return message.cells.map((cell, idx) => `
     <div class="cell-info">
       <strong>Cell ${idx}</strong> (${cell.cell_type})
       <div class="cell-text">
