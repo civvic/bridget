@@ -23,6 +23,10 @@ const vscode = require('vscode');
 
 // ---- Utils ----
 
+function delIfEmpty(obj, key) {
+  if (obj[key] && Object.keys(obj[key]).length === 0) delete obj[key];
+}
+
 let debounceTimer = null;
 
 /** @type {Map<string, boolean>} - Track notebooks with active state outputs */
@@ -85,54 +89,59 @@ function bufferToString(data) {
 }
 
 function getOutputMetadata(output) {
-  const metadata = {};
-  if (output.metadata?.outputType) metadata.outputType = output.metadata.outputType;
-  if (output.metadata?.metadata && Object.keys(output.metadata.metadata).length > 0) {
-      metadata.metadata = output.metadata.metadata;
-  }
+  const metadata = {...output.metadata};
+  delete metadata.outputType;
+  delIfEmpty(metadata, 'metadata');
+  // metadata.metadata && !Object.keys(metadata).length && delete metadata.metadata;
   return Object.keys(metadata).length > 0 ? metadata : undefined;
 }
 
 function getTypeSpecificFields(output) {
-  const type = getOutputType(output);
-  switch(type) {
-      case 'stream':
-          return {
-              name: output.items[0].mime.includes('stderr') ? 'stderr' : 'stdout',
-              text: bufferToString(output.items[0].data)
-          };
-      case 'error':
-          const errorData = output.items[0].data;
-          const fields = { ename: errorData.name, evalue: errorData.message };
-          if (errorData.stack) fields.traceback = errorData.stack.split('\n');
-          return fields;
-          // case 'execute_result':
-          //   return output.metadata?.executionCount !== undefined ? 
-          //       { execution_count: output.metadata.executionCount } : 
-          //       {};
-        default:
-            return {};
+  const item = output.items[0];
+  switch(getOutputType(output)) {
+    case 0: // 'stream'
+      const text = bufferToString(item.data);
+      return { name: item.mime.includes('stderr') ? 'stderr' : 'stdout', text: text };
+    case 3: // 'error'
+      const errorData = bufferToString(item.data);
+      const fields = { ename: errorData.name, evalue: errorData.message };
+      if (errorData.stack) fields.traceback = errorData.stack.split('\n');
+      return fields;
+    case 2: // 'execute_result':
+      const data = getMimeBundle(output.items);
+      data.execution_count = output.metadata?.executionCount;
+      return data;
+    default:  // 1: display_data
+      return {data: getMimeBundle(output.items)};
   }
 }
 
-function getOutputType(output) {
-  if (output.items.some(item => 
-      item.mime === 'application/vnd.code.notebook.error')) {
-      return 'error';
-  }
-  if (output.items.some(item => 
-      item.mime === 'application/vnd.code.notebook.stdout' ||
-      item.mime === 'application/vnd.code.notebook.stderr')) {
-      return 'stream';
-  }
-  if (output.metadata?.executionCount !== undefined) return 'execute_result';
-  return 'display_data';
+const _outtypeMap = {
+  'stream': 0,
+  'display_data': 1,
+  'execute_result': 2,
+  'error': 3
+}
+function getOutputType(output) {  // 0: stream, 1: display_data, 2: execute_result, 3: error
+  const output_type = output.metadata.outputType
+  return _outtypeMap[output_type];
+  // if (output.items.some(item => 
+  //     item.mime === 'application/vnd.code.notebook.error')) {
+  //     return 3;
+  // }
+  // if (output.items.some(item => 
+  //     item.mime === 'application/vnd.code.notebook.stdout' ||
+  //     item.mime === 'application/vnd.code.notebook.stderr')) {
+  //     return 0;
+  // }
+  // if (output.metadata?.executionCount !== undefined) return 2;
+  // return 1;  // display_data
 }
 
 function processOutput(output) {
-  const result = { output_type: getOutputType(output), data: getMimeBundle(output.items) };
+  const result = { output_type: getOutputType(output) };
   const metadata = getOutputMetadata(output);
-  if (metadata && Object.keys(metadata).length > 0) result.metadata = metadata;
+  if (metadata) result.metadata = metadata;
   return {...result, ...getTypeSpecificFields(output)};
 }
 
@@ -150,16 +159,6 @@ function getCellMetadata(cell) {
   return Object.keys(metadata).length > 0 ? metadata : undefined;
 }
 
-// function getCellType(cell) {
-//   switch (cell.kind) {
-//       case vscode.NotebookCellKind.Markup:  // 1
-//           return 'markdown';
-//       case vscode.NotebookCellKind.Code:    // 2
-//           return 'code';
-//       default:
-//           return 'raw';  // Rarely used, but included for completeness
-//   }
-// }
 function getCellType(cell) {
   return cell.kind;  // Already numeric: 1 for Markup, 2 for Code
 }
