@@ -96,35 +96,41 @@ function getOutputMetadata(output) {
   return Object.keys(metadata).length > 0 ? metadata : undefined;
 }
 
-function getTypeSpecificFields(output) {
+function getTypeSpecificFields(output, metadata) {
   const item = output.items[0];
+  let fields;
   switch(getOutputType(output)) {
-    case 0: // 'stream'
+    case 'stream':
       const text = bufferToString(item.data);
-      return { name: item.mime.includes('stderr') ? 'stderr' : 'stdout', text: text };
-    case 3: // 'error'
-      const errorData = bufferToString(item.data);
-      const fields = { ename: errorData.name, evalue: errorData.message };
+      fields = { name: item.mime.includes('stderr') ? 'stderr' : 'stdout', text: text };
+      break;
+    case 'error':
+      const errorData = JSON.parse(bufferToString(item.data));
+      fields = { ename: errorData.name, evalue: errorData.message };
       if (errorData.stack) fields.traceback = errorData.stack.split('\n');
-      return fields;
-    case 2: // 'execute_result':
-      const data = getMimeBundle(output.items);
-      data.execution_count = output.metadata?.executionCount;
-      return data;
-    default:  // 1: display_data
-      return {data: getMimeBundle(output.items)};
+      metadata = null;
+      break;
+    case 'execute_result':
+      fields = getMimeBundle(output.items);
+      fields.execution_count = output.metadata?.executionCount;
+      break;
+    default:  // display_data
+      fields = {data: getMimeBundle(output.items)};
   }
+  if (metadata) fields.metadata = metadata;
+  return fields;
 }
 
-const _outtypeMap = {
-  'stream': 0,
-  'display_data': 1,
-  'execute_result': 2,
-  'error': 3
-}
+// const _outtypeMap = {
+//   'stream': 0,
+//   'display_data': 1,
+//   'execute_result': 2,
+//   'error': 3
+// }
 function getOutputType(output) {  // 0: stream, 1: display_data, 2: execute_result, 3: error
   const output_type = output.metadata.outputType
-  return _outtypeMap[output_type];
+  return output_type;
+  // return _outtypeMap[output_type];
   // if (output.items.some(item => 
   //     item.mime === 'application/vnd.code.notebook.error')) {
   //     return 3;
@@ -141,8 +147,8 @@ function getOutputType(output) {  // 0: stream, 1: display_data, 2: execute_resu
 function processOutput(output) {
   const result = { output_type: getOutputType(output) };
   const metadata = getOutputMetadata(output);
-  if (metadata) result.metadata = metadata;
-  return {...result, ...getTypeSpecificFields(output)};
+  const fields = getTypeSpecificFields(output, metadata);
+  return {...result, ...fields};
 }
 
 function getMimeBundle(items) {
@@ -159,8 +165,9 @@ function getCellMetadata(cell) {
   return Object.keys(metadata).length > 0 ? metadata : undefined;
 }
 
+const _cellKind = ['raw', 'markdown', 'code'];
 function getCellType(cell) {
-  return cell.kind;  // Already numeric: 1 for Markup, 2 for Code
+  return _cellKind[cell.kind];
 }
 
 function processCell(cell) {
@@ -173,31 +180,15 @@ function processCell(cell) {
   return cellData;
 }
 
+/**
+ * Get current notebook state data
+ * @returns {Object | null} Notebook cells data or null if no active editor
+ */
 function getCellsData() {
   const editor = vscode.window.activeNotebookEditor;
   if (!editor) return null;
   return editor.notebook.getCells().map(processCell);
 }
-
-/**
- * Get current notebook state data
- * @returns {Object | null} Notebook cells data or null if no active editor
- */
-// function getCellsData_old() {
-// 	const editor = vscode.window.activeNotebookEditor;
-// 	if (!editor) return null;
-// 	return editor.notebook.getCells().map((cell) => ({
-// 		kind: cell.kind,
-// 		index: cell.index,
-// 		text: cell.document.getText(),
-// 		outputs: cell.outputs.map((output) => ({
-// 			id: output.id,
-// 			items: output.items.map((item) => ({
-// 				mime: item.mime,
-// 			})),
-// 		})),
-// 	}));
-// }
 
 // ---- Extension ----
 

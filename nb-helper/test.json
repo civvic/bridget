@@ -1,0 +1,151 @@
+{
+  "type": "state",
+  "cells": [
+    {
+      "cell_type": "code",
+      "source": "# cell 0\nfrom IPython.display import display, HTML\n\nprint('cell 0')",
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": "cell 0\n"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": "# cell 1"
+    },
+    {
+      "cell_type": "code",
+      "source": "# cell 2\ndh1 = display('cell 2', metadata={'brdgt_did': 'cell 2'}, display_id=True)\n",
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": "'cell 2 - update 1'"
+          },
+          "metadata": {
+            "transient": {
+              "display_id": "be5f67ab2a8130ae766e5960f5546b73"
+            },
+            "metadata": {
+              "brdgt_did": "cell 2"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": "# cell 3\ndh1.update('cell 2 - update 1', metadata={'brdgt_did': 'cell 2'})"
+    },
+    {
+      "cell_type": "code",
+      "source": "# cell 4\ndh2 = display(HTML('cell 4 - output 1'), display_id=True)\ndh3 = display(HTML('cell 4 - output 2'), display_id=True)\n",
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/html": "cell 4 - output 1",
+            "text/plain": "<IPython.core.display.HTML object>"
+          },
+          "metadata": {
+            "transient": {
+              "display_id": "74b91e582feed7964b1256b7379391b6"
+            }
+          }
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/html": "cell 4 - update 7",
+            "text/plain": "<IPython.core.display.HTML object>"
+          },
+          "metadata": {
+            "transient": {
+              "display_id": "439373c2e0370e9174e28049e3af6ed9"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": "# cell 5\ndh3.update(HTML('cell 4 - update 7'))\n"
+    },
+    {
+      "cell_type": "code",
+      "source": "# cell 6\na = 33"
+    },
+    {
+      "cell_type": "code",
+      "source": "# cell 7\ndef show_notebook_state(data):\n    \"\"\"Display notebook state with our custom mime type\"\"\"\n    display({\n        'application/x-notebook-state': data\n    }, raw=True)\n\n# Test it\nshow_notebook_state({\"test\": \"Hello from notebook state!\"})",
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "application/x-notebook-state": "{\"test\":\"Hello from notebook state!\"}"
+          },
+          "metadata": {
+            "transient": {}
+          }
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": "# cell 8\ndef show_notebook_state(state):\n    \"\"\"Display notebook state with our custom mime type\"\"\"\n    display({\n        'application/x-notebook-state': state\n    }, raw=True)\n\n# Test it\nshow_notebook_state({\"test\": \"Hello from notebook state2!\"})"
+    },
+    {
+      "cell_type": "code",
+      "source": "# cell 9\nfrom IPython.core.interactiveshell import InteractiveShell\ndisplay_pub = InteractiveShell.instance().display_pub\n\ndef _add_did(msg): \n    msg['content']['metadata']['brdgt_did'] = msg['content']['transient']['display_id']\n    return msg\n"
+    },
+    {
+      "cell_type": "code",
+      "source": "# cell 10\n# display_pub.register_hook(FC.noop)\n# display_pub.unregister_hook(FC.noop)\ndisplay_pub.register_hook(_add_did)"
+    },
+    {
+      "cell_type": "markdown",
+      "source": "### ---- cell 11"
+    },
+    {
+      "cell_type": "code",
+      "source": "# cell 12\nfrom IPython import get_ipython\nshell = get_ipython()\n\n# Get the current notebook JSON\nif hasattr(shell, 'kernel'):\n    # Get the parent header which contains notebook info\n    notebook = shell.kernel.parent\n\n    # Access the notebook's metadata and cells\n    cells = notebook.notebook.cells  # This should give you the cells in their current state\n    \n    # If you want it in nbformat-compatible JSON:\n    import nbformat\n    nb = nbformat.v4.new_notebook()\n    nb.cells = cells\n    \n    # Convert to JSON string\n    import json\n    notebook_json = json.dumps(nb, default=lambda x: x.__dict__)\n    \n    print(notebook_json)",
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "AttributeError",
+          "evalue": "'IPKernelApp' object has no attribute 'notebook'",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mAttributeError\u001b[0m                            Traceback (most recent call last)",
+            "Cell \u001b[0;32mIn[1], line 10\u001b[0m",
+            "\u001b[1;32m      7\u001b[0m notebook \u001b[38;5;241m=\u001b[39m shell\u001b[38;5;241m.\u001b[39mkernel\u001b[38;5;241m.\u001b[39mparent",
+            "\u001b[1;32m      9\u001b[0m \u001b[38;5;66;03m# Access the notebook's metadata and cells\u001b[39;00m",
+            "\u001b[0;32m---> 10\u001b[0m cells \u001b[38;5;241m=\u001b[39m \u001b[43mnotebook\u001b[49m\u001b[38;5;241;43m.\u001b[39;49m\u001b[43mnotebook\u001b[49m\u001b[38;5;241m.\u001b[39mcells  \u001b[38;5;66;03m# This should give you the cells in their current state\u001b[39;00m",
+            "\u001b[1;32m     12\u001b[0m \u001b[38;5;66;03m# If you want it in nbformat-compatible JSON:\u001b[39;00m",
+            "\u001b[1;32m     13\u001b[0m \u001b[38;5;28;01mimport\u001b[39;00m \u001b[38;5;21;01mnbformat\u001b[39;00m",
+            "",
+            "\u001b[0;31mAttributeError\u001b[0m: 'IPKernelApp' object has no attribute 'notebook'"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": "# cell 13\nfrom IPython.core.display import Javascript\ndisplay(Javascript('''\n    // This is JavaScript that runs in the browser\n    debugger;\n    setTimeout(() => {\n        // Try to execute VSCode's save command\n        window.postMessage({\n            type: 'command',\n            command: 'workbench.action.files.save'\n        });\n    }, 100);\n'''))",
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "application/javascript": "\n    // This is JavaScript that runs in the browser\n    debugger;\n    setTimeout(() => {\n        // Try to execute VSCode's save command\n        window.postMessage({\n            type: 'command',\n            command: 'workbench.action.files.save'\n        });\n    }, 100);\n",
+            "text/plain": "<IPython.core.display.Javascript object>"
+          }
+        }
+      ]
+    }
+  ],
+  "changeType": "notebookUpdate",
+  "timestamp": "12:36:19 PM"
+}
