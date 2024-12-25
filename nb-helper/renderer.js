@@ -60,11 +60,17 @@ function _truncate(str, maxLength = 100) {
  * @returns {string} HTML string
  */
 function _summaryHTML(message) {
-  return message.cells.map((cell, idx) => `
+  return message.cells.map((cell, idx) => {
+    let src = cell.source;
+    // source possibly has HTML content, sanitize it
+    // src = src.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    src = src.replace(/<[^>]*>?/gm, '');
+    src = _truncate(JSON.stringify(src));
+    return `
     <div class="cell-info">
       <strong>Cell ${idx}</strong> (${cell.cell_type})
       <div class="cell-text">
-        Source: ${JSON.stringify(_truncate(cell.source))}
+        Source: ${src}
       </div>
       ${cell.metadata ? `
         <div class="cell-metadata">
@@ -84,7 +90,7 @@ function _summaryHTML(message) {
         </div>
       ` : ''}
     </div>
-  `).join('');
+  `}).join('');
 }
 
 /** feedback for debugging

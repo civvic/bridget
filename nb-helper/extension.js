@@ -111,7 +111,7 @@ function getTypeSpecificFields(output, metadata) {
       metadata = null;
       break;
     case 'execute_result':
-      fields = getMimeBundle(output.items);
+      fields = {data: getMimeBundle(output.items)};
       fields.execution_count = output.metadata?.executionCount;
       break;
     default:  // display_data
