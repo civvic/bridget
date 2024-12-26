@@ -1,6 +1,10 @@
 // The module 'vscode' contains the VS Code extensibility API
+
+
+
 // Import the module and reference it with the alias vscode in your code below
 const vscode = require('vscode');
+const crypto = require('crypto');
 
 /**
  * @typedef {Object} StateMessage
@@ -88,14 +92,6 @@ function bufferToString(data) {
   return data;
 }
 
-function getOutputMetadata(output) {
-  const metadata = {...output.metadata};
-  delete metadata.outputType;
-  delIfEmpty(metadata, 'metadata');
-  // metadata.metadata && !Object.keys(metadata).length && delete metadata.metadata;
-  return Object.keys(metadata).length > 0 ? metadata : undefined;
-}
-
 function getTypeSpecificFields(output, metadata) {
   const item = output.items[0];
   let fields;
@@ -121,27 +117,16 @@ function getTypeSpecificFields(output, metadata) {
   return fields;
 }
 
-// const _outtypeMap = {
-//   'stream': 0,
-//   'display_data': 1,
-//   'execute_result': 2,
-//   'error': 3
-// }
+function getOutputMetadata(output) {
+  const metadata = {...output.metadata};
+  delete metadata.outputType;
+  delIfEmpty(metadata, 'metadata');
+  return Object.keys(metadata).length > 0 ? metadata : undefined;
+}
+
 function getOutputType(output) {  // 0: stream, 1: display_data, 2: execute_result, 3: error
   const output_type = output.metadata.outputType
   return output_type;
-  // return _outtypeMap[output_type];
-  // if (output.items.some(item => 
-  //     item.mime === 'application/vnd.code.notebook.error')) {
-  //     return 3;
-  // }
-  // if (output.items.some(item => 
-  //     item.mime === 'application/vnd.code.notebook.stdout' ||
-  //     item.mime === 'application/vnd.code.notebook.stderr')) {
-  //     return 0;
-  // }
-  // if (output.metadata?.executionCount !== undefined) return 2;
-  // return 1;  // display_data
 }
 
 function processOutput(output) {
@@ -160,8 +145,10 @@ function getMimeBundle(items) {
 
 function getCellMetadata(cell) {
   const metadata = {};
-  if (cell.metadata.tags?.length > 0) metadata.tags = cell.metadata.tags;
-  if (cell.metadata.jupyter) metadata.jupyter = cell.metadata.jupyter;
+  const cellM = cell.metadata;
+  if (cellM.metadata?.bridget) metadata.bridget = cellM.metadata.bridget;
+  if (cellM.tags?.length > 0) metadata.tags = cellM.tags;
+  if (cellM.jupyter) metadata.jupyter = cellM.jupyter;
   return Object.keys(metadata).length > 0 ? metadata : undefined;
 }
 
@@ -172,6 +159,8 @@ function getCellType(cell) {
 
 function processCell(cell) {
   const cellData = { cell_type: getCellType(cell), source: cell.document.getText() };
+  let brid = cell.metadata.metadata?.bridget?.id
+  if (!brid) cell.metadata.metadata.bridget = {id: crypto.randomUUID()};
   const metadata = getCellMetadata(cell);
   if (metadata) cellData.metadata = metadata;
   if (cell.kind === vscode.NotebookCellKind.Code && cell.outputs.length > 0) {

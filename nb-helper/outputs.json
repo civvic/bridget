@@ -3,15 +3,30 @@
   "cells": [
     {
       "cell_type": "markdown",
-      "source": "# cell 0"
+      "source": "# cell 0",
+      "metadata": {
+        "bridget": {
+          "id": "3136fdcf-5947-4b46-9ef4-6d18516479d3"
+        }
+      }
     },
     {
       "cell_type": "code",
-      "source": "# cell 1\nimport ipywidgets as W\nimport matplotlib.pyplot as plt\nfrom IPython.display import HTML, Javascript, Image\n"
+      "source": "# cell 1\nimport ipywidgets as W\nimport matplotlib.pyplot as plt\nfrom IPython.display import HTML, Javascript, Image\n",
+      "metadata": {
+        "bridget": {
+          "id": "f06b0396-8de0-450b-94bd-f07591c2b9f5"
+        }
+      }
     },
     {
       "cell_type": "code",
       "source": "# cell 2\nprint(1)",
+      "metadata": {
+        "bridget": {
+          "id": "e3abf3c8-300c-4a90-af44-8efbe658f2f1"
+        }
+      },
       "outputs": [
         {
           "output_type": "stream",
@@ -22,7 +37,12 @@
     },
     {
       "cell_type": "code",
-      "source": "# cell 3\ndisplay('cell 3', display_id=True, metadata={'cell': 3});\n",
+      "source": "# cell 3\ndisplay('cell 3', display_id=True, metadata=dict(bridget=dict(cell=3)));\n",
+      "metadata": {
+        "bridget": {
+          "id": "f987e5b1-c705-4709-ba15-2d3b4bdf8a72"
+        }
+      },
       "outputs": [
         {
           "output_type": "display_data",
@@ -31,10 +51,12 @@
           },
           "metadata": {
             "transient": {
-              "display_id": "39070767fd2b85d4396b0336ba616e65"
+              "display_id": "6015751fcb988f7b34147396a680cd7b"
             },
             "metadata": {
-              "cell": 3
+              "bridget": {
+                "cell": 3
+              }
             }
           }
         }
@@ -42,7 +64,12 @@
     },
     {
       "cell_type": "code",
-      "source": "# cell 4\ndisplay(HTML('cell 4'), display_id=True, metadata={'cell': 4});\n",
+      "source": "# cell 4\ndisplay(HTML('cell 4'), display_id=True, metadata=dict(bridget=dict(cell=4)));\n",
+      "metadata": {
+        "bridget": {
+          "id": "738b9e38-c485-42bc-9304-3490cb9ebc31"
+        }
+      },
       "outputs": [
         {
           "output_type": "display_data",
@@ -52,10 +79,12 @@
           },
           "metadata": {
             "transient": {
-              "display_id": "40a335539d2b8d97ac162c7e855fad78"
+              "display_id": "1b3a7d5ebfcba19a591cc972b6c6465f"
             },
             "metadata": {
-              "cell": 4
+              "bridget": {
+                "cell": 4
+              }
             }
           }
         }
@@ -63,7 +92,12 @@
     },
     {
       "cell_type": "code",
-      "source": "# cell 5\ndisplay(Javascript('console.log(\"cell 5\")'), display_id=True, metadata={'cell': 5});\n",
+      "source": "# cell 5\ndisplay(Javascript('console.log(\"cell 5\")'), display_id=True, metadata=dict(bridget=dict(cell=5)));\n",
+      "metadata": {
+        "bridget": {
+          "id": "b380d7f3-4ef4-40a2-80d8-b009cc75f1a7"
+        }
+      },
       "outputs": [
         {
           "output_type": "display_data",
@@ -73,10 +107,12 @@
           },
           "metadata": {
             "transient": {
-              "display_id": "7b05812426791d3497f6e6d0224b786c"
+              "display_id": "8f3be8d133dfaed6d6c95f1a28fed224"
             },
             "metadata": {
-              "cell": 5
+              "bridget": {
+                "cell": 5
+              }
             }
           }
         }
@@ -85,6 +121,11 @@
     {
       "cell_type": "code",
       "source": "# cell 6\nprint(6.1)\nprint(6.2)\n",
+      "metadata": {
+        "bridget": {
+          "id": "b1297832-20ea-4d25-9775-5f230c8836cc"
+        }
+      },
       "outputs": [
         {
           "output_type": "stream",
@@ -95,7 +136,12 @@
     },
     {
       "cell_type": "code",
-      "source": "# cell 7\ndisplay(HTML('cell 7.1'), display_id=True, metadata={'cell': 7.1})\ndisplay(HTML('cell 7.2'), display_id=True, metadata={'cell': 7.2});\n",
+      "source": "# cell 7\ndisplay(HTML('cell 7.1'), display_id=True, metadata=dict(bridget=dict(cell=7.1)))\ndisplay(HTML('cell 7.2'), display_id=True, metadata=dict(bridget=dict(cell=7.2)));\n",
+      "metadata": {
+        "bridget": {
+          "id": "657bf6eb-564a-43e1-9839-3673a8a32093"
+        }
+      },
       "outputs": [
         {
           "output_type": "display_data",
@@ -105,10 +151,12 @@
           },
           "metadata": {
             "transient": {
-              "display_id": "a4b8dfcaa79b4169b045dabbda0f0d4c"
+              "display_id": "3cfa31a3bb90b9e73f7e4dc23cd079df"
             },
             "metadata": {
-              "cell": 7.1
+              "bridget": {
+                "cell": 7.1
+              }
             }
           }
         },
@@ -120,10 +168,12 @@
           },
           "metadata": {
             "transient": {
-              "display_id": "7271597e479825e5263f0ddb4ec342d7"
+              "display_id": "0e8bab292ad174a274188a3df37e819a"
             },
             "metadata": {
-              "cell": 7.2
+              "bridget": {
+                "cell": 7.2
+              }
             }
           }
         }
@@ -132,6 +182,11 @@
     {
       "cell_type": "code",
       "source": "%HTML\n<h3>cell 8</h3>\n",
+      "metadata": {
+        "bridget": {
+          "id": "2e575f05-be19-48e1-9ac2-32b1a58001fd"
+        }
+      },
       "outputs": [
         {
           "output_type": "display_data",
@@ -148,6 +203,11 @@
     {
       "cell_type": "code",
       "source": "%javascript\nconsole.log('cell 9')",
+      "metadata": {
+        "bridget": {
+          "id": "2f3d1dab-8fc5-414c-b65d-6726ce0ab5b5"
+        }
+      },
       "outputs": [
         {
           "output_type": "display_data",
@@ -164,6 +224,11 @@
     {
       "cell_type": "code",
       "source": "%markdown\ncell 10\n",
+      "metadata": {
+        "bridget": {
+          "id": "d86bb9f3-6e25-4821-a688-20a37d1c954d"
+        }
+      },
       "outputs": [
         {
           "output_type": "display_data",
@@ -180,6 +245,11 @@
     {
       "cell_type": "code",
       "source": "%SVG\n<svg width=\"100\" height=\"20\" xmlns=\"http://www.w3.org/2000/svg\">\n  <text x=\"10\" y=\"10\">cell 11</text>\n</svg>\n",
+      "metadata": {
+        "bridget": {
+          "id": "e87a69f4-53ca-4d34-b70d-ca6a5cbaf423"
+        }
+      },
       "outputs": [
         {
           "output_type": "display_data",
@@ -197,11 +267,16 @@
     {
       "cell_type": "code",
       "source": "# cell 12\nW.IntSlider(12, description='cell')",
+      "metadata": {
+        "bridget": {
+          "id": "2747a759-0b0b-4e30-bfd1-11be3a2b5e42"
+        }
+      },
       "outputs": [
         {
           "output_type": "execute_result",
           "data": {
-            "application/vnd.jupyter.widget-view+json": "{\"version_major\":2,\"version_minor\":0,\"model_id\":\"7cc3a7f5493e4c559072fab9d14babda\"}",
+            "application/vnd.jupyter.widget-view+json": "{\"version_major\":2,\"version_minor\":0,\"model_id\":\"d0d2db2ca1ad41b5a4a68fe11dd6b230\"}",
             "text/plain": "IntSlider(value=12, description='cell')"
           },
           "execution_count": 12,
@@ -214,11 +289,16 @@
     {
       "cell_type": "code",
       "source": "# cell 13\nw = W.Output()\ndisplay(w)\nwith w:\n    print('cell 13.1')\n    display('cell 13.2')\n    display(HTML('cell 13.3'))\n",
+      "metadata": {
+        "bridget": {
+          "id": "0c5d45b7-25f1-43b0-aa79-3d93c398dba0"
+        }
+      },
       "outputs": [
         {
           "output_type": "display_data",
           "data": {
-            "application/vnd.jupyter.widget-view+json": "{\"version_major\":2,\"version_minor\":0,\"model_id\":\"a480060cb4f544c49fb7de021181eac6\"}",
+            "application/vnd.jupyter.widget-view+json": "{\"version_major\":2,\"version_minor\":0,\"model_id\":\"de4deedde3ea4c519f1b577e3829a47b\"}",
             "text/plain": "Output()"
           },
           "metadata": {
@@ -230,6 +310,11 @@
     {
       "cell_type": "code",
       "source": "# cell 14\nfig = plt.figure(figsize=(4, 2.67))\nplt.plot([1,2,3,4]);\n",
+      "metadata": {
+        "bridget": {
+          "id": "d5de4f96-a4ae-4b00-9c1e-cd68978257b5"
+        }
+      },
       "outputs": [
         {
           "output_type": "display_data",
@@ -246,25 +331,92 @@
     },
     {
       "cell_type": "code",
-      "source": "# cell 15\nImage('https://jupyter.org/assets/try/jupyter.png')",
+      "source": "# cell 15\nImage('https://jupyter.org/assets/try/jupyter.png', metadata=dict(bridget=dict(cell=15)));",
+      "metadata": {
+        "bridget": {
+          "id": "12f6d040-3cb0-4e2c-bb44-7e38e199dbb2"
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": "# cell 16\ndh = display(display_id=True, metadata=dict(bridget=dict(cell=16)));\n",
+      "metadata": {
+        "bridget": {
+          "id": "16541a6f-e737-4184-a69c-1af356248448"
+        }
+      },
       "outputs": [
         {
-          "output_type": "execute_result",
-          "data": {
-            "image/png": "�PNG\r\n\u001a\n\u0000\u0000\u0000\rIHDR\u0000\u0000\u0000�\u0000\u0000\u0000�\b\u0006\u0000\u0000\u0000R�l\u0007\u0000\u0000\u0017�IDATx��]\t�\u0014յ6**F�7D\\b��f\u0010�Q\u0010A�(Q��X��\u0004\u0017��1`F�\u000bU53�{\u0014����\u0004�\b\b�9q'A\u0002\u0011�@���A%@\u0010Q\\@D��\u0019\u0010�wNO\rT.U�U�U�����}���s�s�9�[}�\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000@3&L��cUU�*�򀢨&YN�\u0017�̤�\"�ȉ�\u0012Pt�<yr+\"��q㔯I�VB\u0006Ѩ(�\u0013��1�\u001aP\u0014�^�\u0014\"��鈿�!(�5M�\u000e�\u0001�@�UN�o\u0018\r�4\u0012�C�@���\u0010��?qC~�l��\u001c\u000fm\u0002\u0005\u0007\"�-Y���\u001dz\n�\u0004\n��?�\\�M�\u0018��{ܸȩ�*P0\u00187N��\u000b�\b�\u0002w@�@��\b���\u0006@n�\u001ch\u0015($���\u0006���V�\u00022\u0000u��\u0006�� h\u0015(�\u0011`��\u0006���V�B\u001a\u0001^��\u0005z\u0013Z\u0005\n)\b�x<\u0002<\u0004��(���C��.G�#�)Mj�Oc5rg\u0016~��=�]R=��d}�C�t͵��퉸��2\u0000M�$0�X\t>��U���KL\r����HL����%�ʫb��\u0018U��\u001d�)RST���T�M�o*�w\\�+�5�sوr}_�k��Q��6X\"����MUUU����'��-�k�;��n$�>Ed]J��.��\n\u0019�N2�\u000f�\\��UiLS�,� \u0010>�\b\u001c���oDA�\u0001�F�����BEe��\u001b**�\u0006���A�D\"�\u0005υ�~d\\�\u0006R��$��k�&�\u0003�X�F���+���)\u0016\u0018BD���\b���z\u001dDp���[ �(��H�����aD��$�q�\u001b\u0014�[\u001a�*�@nӟ�\r�:\u0019)?�c#��i<��?4��\u0007���<wg �Q6�\u001c9��|\\g�\u0012��\b�;\"�֠��RT9J�0-V#]�\u0011��`Q̿(��\t�����\u0011�w90�$�\u0014o�4�U�k��.X�[\u0007�\u001fq �E�����P2�\n2�W�؀}}\nvg��S���z\u0003n��|�\t�[�\u0003dݜ.G�4y\u001c��\u001b�����H�7qE�Kj���\u001d�j�ڬ���@r\u0016Ho�1c�\u001cAdntc\u0000\u0015#G>�\u000f��\u001c\u0016�B�����؉��{$m�\u0011���8\u0001�\u0000��\u0017�!J*+�zK�ȁ1%|��=I���\u000e��k�QɆ�\u0007���\u001a�E�\r���}��#��=c��a�\u0013�D>���g`�O���:7\u000b\u0003��}�_vD\\�\u001e�`p\u000fȞ6s��_s\t%\r\n�\u000e�����e\u0010\\�͹�ǿ\u0002���x�\u000f��>\u000b��\u0000���\u0007�s\u0001ɉ=Zs�\u0000H�:c�|�A�\r��]&�d\"��\u000e3@�n�դ�$���\u0001\"g+�?�5�N`�G���\u0018bR�c%����\u001dO�Dk䫨ᶃ���D�\u0016B-��Fp\t�{s���L\n�\u001d�S�MU~\u0014��M�JF�\u001c\f\u0006{41F�PM�w�M\\\u001cG�\u0005�tN������\u0005$�}�`\u000eg��`\u001f�DY�8�%�/\u0002As�\u0012-��t:\t�\r\u0000\u001akçGUy%���R��Mu�\u000e``>ɯ�Έ��� d�\n�8�\u0006&�\u0001�����O\u0003�;n�Q�]\u0005z�W^�B�\u001bx�p�lt�\u0001�Ȍi�oXR����o�Զ�}x_:\u0006�\"���4�\r�u�`d\u000e��g�\u0014y\\u�.@L���uL��w$����Rv��\u0001\"\u001f�ϑ:\u0017�����<�\b�Zv�Q\u001f�\u0012��ڃ�9\u0000ױ��W�0��� \u0017\u0013�\u001e�򀦺Ng\u00051\u0015ȋyR�WI\u0019Gh\"\u0019Ļ�]�)��E�N\u0006C}ndr\u000f���\u0018l���V�e��^-X}E�\u000f���>)\u0017K���{y'\u001b\u001d��\u0000S}\u0002�\u001d�}�aw��MD�u�Ύe�d�GEہ�D!?�K�o�\u001e{�\u001f��dh3�T?ȯ��=��\u0010��a��k�mKU�z\"��a�����'\u0018�eЫ�/�6�k&��0��7�\t�U�\u0018\"�O��pl*���\u0018x��&��V=���B7f�\u0018\u001b�4�\u001b\u0018ڴ�F�촨\u0016��F�o�0��\u0019����䶌7���\u0010�e\u00113L�њ\u0002�ќ�q\u0019\u000f��̢�\u0005~�\"��b\u0012�\u001d\u001e~�9��G�?\u0012r�\u000b#P�A\u0017�Q�)L�K�~&GnHԖu���\u000e��\u0017��_L���<\n?�\u001a�s��P��9e���b(8� ���uos\u0014X�u\u0004N���F�\tn�9�pu��Qi�\rv�\u0014�a��l��e��\u0010�9�ӏ�G�J�Q�V@ڌڂ�$U#��It(��\u0015�ʓ�e\u0015�@;�mGm�j#�\u0012�t}ȗ7\u000b�(���5�\u0012\u001a*\f�[ďf73�F��EА��\u0014y���,\u0017\u0003\u0004x\u000b^-ּ�a�45�c\u0002Na�ʊkR}>�\u0014\u000e�(6��[PC\u0013M*n�\f�t�?��\u001c\\�bj[~\u0012�ԄQ����:v7.'lT�^�J����\u000b���zo'���6\u0015~\u000f�J����3^�\u0004�\u0014'�!\u0006���j��A#\u0007�}�\u0003�2�B�`��_����\u0011���:��W��Y!x�R\t\u0005ǩu��2Nr��\"\"e�p�\u000f\u0016���\u0011t=�ܠ��\u0013:���q �\u0007+���\u001b�����\b\u0000\u001a��H\u0000\u000e\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000d�A�\u0006\u001dG2`����\f\u00180`\t��\u0001�\u0000%����J�l�!C��\u0004Z\u0001`\u0000\u0000\u0000\u0003\u0000\u0000\u0018\u0000\u0000�\u0000�\u001cb����\f\u00180�Zd�С?MӀmh��F�{�aÆ\u001dC�?l�t�\u000f\u001a4�\u0013m3� �V�:x��t~��/��G��\u0015�~H�/�\\�ך���?�t��hۚ\u0016�s:Z\u001b�_�\u0018�TUU\u001dn��\\�n�A�3\u001a\u0000��N�Ѣ�1Z�9?\u001d�=\u001d�Vz�I�\u0016��^_�c<J�/q�22�δ�--B<8��\u0011#F\u001c��g\u000e�f�w��WZol\u0014\"Ao�mI)g\u001a�eq`hg8ٗ~��q[R�/�����C��c$���\t�����\f�xU�g�\u0013ݱ�\b׸B�}l�k��6��φN���p��$\u0017ۼ�\u001b\u0004\u001e��;�^��ņ\u0006\u0003��\u0000h�k���*��]�L�}�UO�F%nO��\u0003�}(�k��\u0006@��\u001f�{�d�8�עQpG�#��{\u0019*\u001a\u0000��o39\u0017\f \u0007\u00060P؞G���wk�q��\u0006�]�%\u0016����\r\u00121Ѧ�da����\u0013D���0�Na���:K\u0014:Nk�s�\u0017����ی�I�1_}��'�w��\u001f\f��M�\\���B����u��.��o�`\u0000>\u001b�I�|e��-��b����\u0006a_&@/��S��o�02>9Y'��\u001c/���\u0016�A0�~��9�\u001a]<��~i��K��\u0006���l�3�~�0����I��Ӌ13\u0011H\u0003�{ 3��\u0003v���ˁ<m�Q�o�Ŷ�L�_���G����O\u0003�G��\u0006Mr�\r#�n�7j��4ǿ�B߯\r\u001f>��bN�\u0005u\u0004�k�\u0018;8;d�F����o3\u0018~!\u0003�:\n�mg�pk\u0000���wvо/\u0019�{7��{�\u0018�ڢ&�G�����Ϸ{>��y�\u0016��[��p\u0013���4�v�p܇l�ڕ\u0001ж�\u000b�k�@��\u001ac\u0006j�\u0013�&\u00048�P\n�3A\r�/�&C���\u001d\u0002q�� \u0018�1�qW\n�\u0015��\u0000V\u001bc\u0014':�ӘFR��ΈɮS�N\u0000\u0006�c\u0003�\u0006�\u001eq�\u000f�&F\u0014K��vb\u0006}��x��\u000et��\u00008�#��ٗ�+�\u0006\u0016\f`�M\u0003���R@\u0001\u0019�2��fvN�L�Y0L\u0004�`�*�+\u0010��O\u0003\u0010{�l��_�i\u0000�`\u0000�r��wzot�\u0007\u0019��z �6�o�Z������\t'A�K\u0003\u0018�\u0001��i\u0000/�\u0000\n�\u0000�.G<'��\u0011i\f�\u0017\u0002\t>3�\"�w]��=�P׎\r@�k2�s\u000b��݊Ո\u0005\u0003pi\u0000V��A0\u0000\"X���I��Y0L���@��\nǻ$\u0007\u00060�鄛K\u001e�\u00002\u0019�I@�����3%Y�\u0000���\u001bON\t��Ԇ��3Ó-�1�:�KX�.�`�z\u0016�\u0000�d\u0000\\�k�Sv�y��Y�\u0000q�Y ��Z�Z�ۈ\u001b�`x\u0013�\u0012&�Q�]�ڱ\u0001�\u001e�\u0012G1c�5\f �\u0006��j�� ��t�\u001e�`\u001e`��{[)4�\r6\rG\f��\u0018K��\u0014�M]\f���`\u0000�m���p=�0��\u0019��t5�\u0016�x\u0007Θ���N\r�d�]�����*F�\u0013;&��\u000f�$���\u001b.u�ͬ�����+�|��@\b\u0006�#\u0003�m�L�\u0011V��J0�<{+:]\u0018\u00007�c6\bs��n�<hW'b0�%\u0015��\u001b>\u000fr���½L��\u001f�^Ǜ�\u0001x���\u0001d\t��ϝ\u0018\u0000/�\u0013���E\u0018�\u001a��q-\u000e��\u001b�o�]�nP�wn\f�ŗ��`���b�\u0012�_�tZ_,w6\u001c�K;�o\u0016�|B8\u0016�D���w�ɵ��5\u0002���\u0015t\\Z��T\u0018���opb\u0000�>�-�ɽ�b����Ma���ZR�K�0\u000b�N�٥z�^�mo㑁>�1!Iª\n�a0�:�5��<\u0013�5�^H~�.^�\u00059��$\u000b�\\����5ҷ�<@���d6���ɀ��\u0001|�4��O0-w0�8��\ncp�.��\u0011�}}��\u0016\u0007��H� \u000b��6Y�ur�#��3\\�,�}9��+Q���\u0005N7\u000b^�.�v7�\u0019�\u0014���tJg�V\u0018�<��D\u0018�>�~n\u0006�s%�3�\u0006�<je3�k\u0006.����c��_`�͸T�=\u0007\u001d�N~z�YmSI\u001b�^+�GpU.uH�n<l������L�C\u0017\u000bϸ��~��E�?uj\u0000������\u001b�\u0016��$�Gr��z�\fD[$見�\u001d�庛�~��sP�dvYO����Bz��K7�\r�x�\u0010Fw�����\t�ci��\nK�݅G�n\u0000�Lz�@�C�\u0017�\u0010Y\u0012t�p��\u0007\u0000�\u0005q�y��d�\u0018\u0000�\\z��x�\u001b(,��^\fVK�\u0000�`}fI\u0006��\u0004���\u0016�^.\u001f\u0006�gY�\u0016k��\n\u0016�).ק�I��[A��\\\u001b\u0000��X~x��,����\"\u0000E�=�\u0007��d�X�t\u000f�-f\u0003�9\r^'+\u0016��`N���+,�ı >�\"W\u0006�iT\u000b����\u001a\b0L\u001e���g:� ^o�\f�\u0017��L�Ex�\u0004�)\"�\u0002o�a�<�r��Z�<�)��C-2�'\u00038�@�%t�\u001e`\u000bPj������\u0004\u0000\u0000�D�V>/\u0019�s04Q�HRП�-�V�\nHԞ�.���8}�\u0001P$\u001d�\u0016z��.ܡ��\u0010U��cjh\"�Pj�\u001e��\u0014in�+\"V\u0013�\u001bU�$�\u0004�b$(\u0011�k�=��\t-4\u0018~ ��F�5)#P�)�\u0006�Ë����{��Ó6 ���\u000b��J��d��ph��\u0002޲C���Zڙ��۠\u0015�r\u0014y�>�H�\u0012���C3E��D:�\u0018U�{�W�6��K?\n�\u0011|��\r]\b�\u0014z�W��ع���\u001a\u0005&���_Q�\u000f�[�I\u0014�\u0015fϯH7QG�(vl���G�QFe�\u001b2��<g\u0000\r\u0015�K+\u001dO���m�Jc�!+�5\f=�z�\u000f�\u0014\u0017U���4\u0012�A�{���\u0013���h�r�\u0007-�\u0001��d\u0004{�\u0015�\u001a\r�$��X0\u001e<�w�@�m�vK�]M�/4e'pR�g�*�\f�K(8�\u0000m�y�Vʏ�IL��ҵ\u0019������&�6S���+4%[��|3&��@�ԤVh\u0004�43�\u0013��1���\u0006����0�\u0016\u0005�#�I\u0003\u0011\u001f�h�n._Yl�}4�7К��@�_��d}�]\u001dW�_%'�h\r�y��s�Z��%�t��6�7�x�Uzs:�+gF�2�o��0�u=\u0001Z̶\r�\u001f\u0019�B�\u0013��p�\u000e��9\u001e�O�\u0016�\u001anC���\n��}R�0�&-$A���>;���*ms�{T{zi\u0004J�\u0011��`�\u001a�\u0015W���\u001c����\u001c�\u001c�ʳ3gu2���dhԫ�i� ��U��3�]Ըor�\u0011\\$=����#������\u000b\u001dӨ�\u0000\u0013^>�N�S�򦁌� ��\u0012\f�7JʯW�k�\\�;����\f\u001d�O`_����[cX\u0016W��i���D��E�M#�/��\u0007�+I��w\"�N?tH\u001dT4V#w\u0006S}\r��}}k���\u0017֓�$�\u0018�\r[\b�\f�rܡI!�Gi�Q�W�FW�.��\u0006����Ph��Y\u0007i�d+/���MqE\u001aO�0<Q\u001b� \u001fC>���\u0012����*��jR�!\\��ʛs�\u0017��nv����f�����`\u0004V���T%�*�Hdx0���R#�\u0016�>���\u0010A�hT�^q�cW~\u0014\b���\u0017g�ׄ��w�x����o��)8��\u0015�{\u0007��\u0003t�\u0017��R��@�\u00196����< ��\u0015n�\b ^I�\u001aĻ\u0011P���'����\u001f5>A1\u0002\n��A\u0012 f�|~y\u0007/|\u0001�\u0015\u0018��G\u0000X��5Z#_\u0002�\u0005q��N��wZ\u0007����ـ<���Z�8�e\u0001a=�\u0013�\u001f��t\u0012\u0018V\bF�L�(�ʵ\b��\tvɵ�\u0017��\n\u0010��sh@dץ\r��5R?0������|\r ��L��x\u0016SQ�\u0017H\u0003ɏ�\u0012��Xǿ\t)�b�\r��h4x\u001aD�����$\u0002�R�s\u0006�e�2=ĩ�|��q\r\u0012�Qjn�\u0012�%�z+J����n��ݢH�@^\u0007KdXYB~���\u001a��?�\u0000�>w�#�\"�/^��\u000bxe\u0018\u001e \u0006�w�Ԏ]c�4���\u0015�DV�W�����\u0016:f̘�qʔ)#�N�zϳ�>[O�\u0000}���ϧO��c�ܣ��S\u000bo�1!\u00054��Z��J�x1N�A�\r\u0018T�hhh8�INd_O��4�\u0003�,2��~^\u000fO��Vx�\u001f?\u0004pd�늧j�4�f<���A�� ْ���\t����{�������V�Z�7������.IS>j���\u0012R�/k�K���\u000e\u0005s� \u0010%\u0012OrJ|A6M�6���f��\u001c�eM�kR}T��!���\u000b�Iwg6p\u0000\u001b�BO�2P�Q�\b��\"#?���$�H�H.��y����\u00075*e�%4�'\u0019�����&�\u001aW������\u0012�����B��\u0016�S�Ѩu���6|:R�%\u0002\"��^�� [)@\u000eC�@!�����o�\u0005�.\u0010h,]����LO6�е�2\u0010���_��\r�Ch\u0019\b,����4\u0000\u0016�\u0005:A�@�����C���\u0000h����� \u001a@/�ɯ�A3�m����,��� \u001a��\u001c�\u0000+�m p���\u001c�\u0000+�m p�6mZ�\u001c�\u0000s�m p r���\b0\u0011�\u0006��\u0006���\u0000x�����\u001a�}>�?[\u001a\u001a\u001a�@`�vD�&\u001f\r�nh\u0019\b�(��O\u0006���VB�@�A$m͹z\u001fz<�\t(\f�\u001f���=$�}�*PP�:uj9\u0011w�\u0007\u0006�0�\t\u0014lPLF��e�����:h\u0011(h�\u0002y2�k��kl\u0012?A����?���\u0002��\u0010�O�ޛz�\t����\u000b\"z�^�%���� \u0019Er4�\u0005\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0018���\u0017ѐ�^wQ\u0000\u0000\u0000\u0000IEND�B`�",
-            "text/plain": "<IPython.core.display.Image object>"
-          },
-          "execution_count": 15,
+          "output_type": "display_data",
+          "data": {},
           "metadata": {
-            "executionCount": 15,
-            "__displayOpenPlotIcon": true
+            "transient": {
+              "display_id": "3be14a4eb3108d22edcabdd02dcde125"
+            },
+            "metadata": {
+              "bridget": {
+                "cell": 16
+              }
+            }
           }
         }
       ]
     },
     {
       "cell_type": "code",
-      "source": "# cell 16\n1/0",
+      "source": "# cell 17\ndh = display(HTML('cell 17'), display_id=True, metadata=dict(bridget=dict(cell=17)));\n",
+      "metadata": {
+        "bridget": {
+          "id": "b4276462-f358-4d7c-bf21-96a773e03c02"
+        }
+      },
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/html": "cell 18",
+            "text/plain": "<IPython.core.display.HTML object>"
+          },
+          "metadata": {
+            "transient": {
+              "display_id": "fb8e0e219dd7227ddbdf072a6de996f1"
+            },
+            "metadata": {
+              "bridget": {
+                "cell": 18
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": "# cell 18\ndh.update(HTML('cell 18'), metadata=dict(bridget=dict(cell=18)));\n",
+      "metadata": {
+        "bridget": {
+          "id": "6c51c4ff-7e0e-4164-b776-8b8580fe4438"
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": "",
+      "metadata": {
+        "bridget": {
+          "id": "85e1c117-45bd-40c6-8b7b-63aeba617628"
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": "# cell 20\n1/0",
+      "metadata": {
+        "bridget": {
+          "id": "07c14cbc-3771-44c4-95bb-220cde14681f"
+        }
+      },
       "outputs": [
         {
           "output_type": "error",
@@ -273,8 +425,8 @@
           "traceback": [
             "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
             "\u001b[0;31mZeroDivisionError\u001b[0m                         Traceback (most recent call last)",
-            "Cell \u001b[0;32mIn[16], line 2\u001b[0m",
-            "\u001b[1;32m      1\u001b[0m \u001b[38;5;66;03m# cell 16\u001b[39;00m",
+            "Cell \u001b[0;32mIn[19], line 2\u001b[0m",
+            "\u001b[1;32m      1\u001b[0m \u001b[38;5;66;03m# cell 20\u001b[39;00m",
             "\u001b[0;32m----> 2\u001b[0m \u001b[38;5;241;43m1\u001b[39;49m\u001b[38;5;241;43m/\u001b[39;49m\u001b[38;5;241;43m0\u001b[39;49m",
             "",
             "\u001b[0;31mZeroDivisionError\u001b[0m: division by zero"
@@ -284,54 +436,12 @@
     },
     {
       "cell_type": "code",
-      "source": "# cell 17\ndh = display(display_id=True, metadata={'cell': 17});\n",
-      "outputs": [
-        {
-          "output_type": "display_data",
-          "data": {},
-          "metadata": {
-            "transient": {
-              "display_id": "a5c659d709f2ee81fa3506b529b4e490"
-            },
-            "metadata": {
-              "cell": 17
-            }
-          }
+      "source": "# cell 21   \ndisplay({'application/x-notebook-state': {\"cell\": 21}}, raw=True, display_id=True, metadata=dict(bridget=dict(cell=21)));\n",
+      "metadata": {
+        "bridget": {
+          "id": "63faf96c-ec43-4929-9848-d862b7fb644c"
         }
-      ]
-    },
-    {
-      "cell_type": "code",
-      "source": "# cell 18\ndh = display(HTML('cell 18'), display_id=True, metadata={'cell': 18});\n",
-      "outputs": [
-        {
-          "output_type": "display_data",
-          "data": {
-            "text/html": "cell 19",
-            "text/plain": "<IPython.core.display.HTML object>"
-          },
-          "metadata": {
-            "transient": {
-              "display_id": "6195abe57f27d04c3252a94b91c48751"
-            },
-            "metadata": {
-              "cell": 19
-            }
-          }
-        }
-      ]
-    },
-    {
-      "cell_type": "code",
-      "source": "# cell 19\ndh.update(HTML('cell 19'), metadata={'cell': 19});\n"
-    },
-    {
-      "cell_type": "code",
-      "source": ""
-    },
-    {
-      "cell_type": "code",
-      "source": "# cell 21   \ndisplay({'application/x-notebook-state': {\"cell\": 21}}, raw=True, display_id=True, metadata={'cell': 21});\n",
+      },
       "outputs": [
         {
           "output_type": "display_data",
@@ -340,16 +450,17 @@
           },
           "metadata": {
             "transient": {
-              "display_id": "7f94b5035b7f1b7b7f127202e75368ec"
+              "display_id": "ccef1ae5913e88cc61af52d77145f040"
             },
             "metadata": {
-              "cell": 21
+              "bridget": {
+                "cell": 21
+              }
             }
           }
         }
       ]
     }
   ],
-  "changeType": "notebookUpdate",
-  "timestamp": "11:29:00 AM"
+  "timestamp": "9:47:56 PM"
 }
