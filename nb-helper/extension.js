@@ -85,12 +85,61 @@ function hasStateOutputs(notebook) {
 	);
 }
 
-// ---- State ----
 
-function bufferToString(data) {
-  if (Buffer.isBuffer(data)) return data.toString('utf8');
-  return data;
+// ---- Mime handling ----
+
+function isJsonMime(mime) {
+  return  mime === 'application/json' || 
+          mime.endsWith('+json') ||
+          mime.startsWith('application/vnd.jupyter') ||
+          mime.includes('json');
 }
+
+function isBinaryMime(mime) {
+  return  mime === 'image/png' || 
+          mime === 'image/jpeg' || 
+          mime === 'image/gif' ||
+          mime === 'application/pdf';
+}
+
+function isTextMime(mime) {
+  return  mime.startsWith('text/') || 
+          mime === 'image/svg+xml' ||
+          mime === 'application/xml';
+}
+
+function bufferToString(data, mime) {
+  // If not a buffer, return as is
+  if (!Buffer.isBuffer(data)) return data;
+  if (mime) {
+    // Binary types need base64 encoding
+    if (isBinaryMime(mime)) return data.toString('base64');
+    // JSON types need parsing
+    if (isJsonMime(mime)) {
+        try {
+            return JSON.parse(data.toString('utf8'));
+        } catch (e) {
+            console.warn(`Failed to parse JSON for ${mime}`, e);
+            return data.toString('utf8');
+        }
+    }
+    // Text types (including SVG) use UTF-8
+    if (isTextMime(mime)) return data.toString('utf8');
+  }
+  // Default to UTF-8 for unknown types
+  return data.toString('utf8');
+}
+
+function getMimeBundle(items) {
+  return items.reduce((bundle, item) => {
+    if (item.data) {
+      bundle[item.mime] = bufferToString(item.data, item.mime);
+    }
+    return bundle;
+  }, {});
+}
+
+// ---- State ----
 
 function getTypeSpecificFields(output, metadata) {
   const item = output.items[0];
@@ -132,15 +181,9 @@ function getOutputType(output) {  // 0: stream, 1: display_data, 2: execute_resu
 function processOutput(output) {
   const result = { output_type: getOutputType(output) };
   const metadata = getOutputMetadata(output);
+  if (metadata?.metadata?.bridget?.skip) return undefined;
   const fields = getTypeSpecificFields(output, metadata);
   return {...result, ...fields};
-}
-
-function getMimeBundle(items) {
-  return items.reduce((bundle, item) => {
-      if (item.data) bundle[item.mime] = bufferToString(item.data);
-      return bundle;
-  }, {});
 }
 
 function getCellMetadata(cell) {
@@ -164,8 +207,9 @@ function processCell(cell) {
   const metadata = getCellMetadata(cell);
   if (metadata) cellData.metadata = metadata;
   if (cell.kind === vscode.NotebookCellKind.Code && cell.outputs.length > 0) {
-      cellData.outputs = cell.outputs.map(processOutput);
+      cellData.outputs = cell.outputs.map(processOutput).filter(output => output !== undefined);
   }
+  if (cellData.outputs?.length === 0) delete cellData.outputs;
   return cellData;
 }
 

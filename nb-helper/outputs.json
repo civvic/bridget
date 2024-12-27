@@ -6,16 +6,16 @@
       "source": "# cell 0",
       "metadata": {
         "bridget": {
-          "id": "3136fdcf-5947-4b46-9ef4-6d18516479d3"
+          "id": "2ae92851-c7c2-43ad-b187-2b919048a896"
         }
       }
     },
     {
       "cell_type": "code",
-      "source": "# cell 1\nimport ipywidgets as W\nimport matplotlib.pyplot as plt\nfrom IPython.display import HTML, Javascript, Image\n",
+      "source": "# cell 1\nimport ipywidgets as W\nimport matplotlib.pyplot as plt\nfrom IPython.display import HTML, Javascript, Image, JSON\n",
       "metadata": {
         "bridget": {
-          "id": "f06b0396-8de0-450b-94bd-f07591c2b9f5"
+          "id": "78c93bea-9f65-46b7-af79-99ee473b5c5f"
         }
       }
     },
@@ -24,7 +24,7 @@
       "source": "# cell 2\nprint(1)",
       "metadata": {
         "bridget": {
-          "id": "e3abf3c8-300c-4a90-af44-8efbe658f2f1"
+          "id": "cdc9a48c-0383-4afd-b918-16fb6f53fac5"
         }
       },
       "outputs": [
@@ -37,10 +37,10 @@
     },
     {
       "cell_type": "code",
-      "source": "# cell 3\ndisplay('cell 3', display_id=True, metadata=dict(bridget=dict(cell=3)));\n",
+      "source": "# cell 3\ndisplay('cell 3', display_id=True, metadata={'bridget': {'cell': 3}});\n",
       "metadata": {
         "bridget": {
-          "id": "f987e5b1-c705-4709-ba15-2d3b4bdf8a72"
+          "id": "6c80dcfb-3b4c-488c-b8a5-536755a5c9c1"
         }
       },
       "outputs": [
@@ -51,7 +51,7 @@
           },
           "metadata": {
             "transient": {
-              "display_id": "6015751fcb988f7b34147396a680cd7b"
+              "display_id": "911d632f1a340fd4346c9224ad4dd615"
             },
             "metadata": {
               "bridget": {
@@ -64,38 +64,19 @@
     },
     {
       "cell_type": "code",
-      "source": "# cell 4\ndisplay(HTML('cell 4'), display_id=True, metadata=dict(bridget=dict(cell=4)));\n",
+      "source": "# cell 4\ndisplay(HTML('cell 4'), display_id=True, metadata={'bridget': {'cell': 4}});\n",
       "metadata": {
         "bridget": {
-          "id": "738b9e38-c485-42bc-9304-3490cb9ebc31"
+          "id": "895619d4-2b6f-4bce-b185-fc1e64c0c97f"
         }
-      },
-      "outputs": [
-        {
-          "output_type": "display_data",
-          "data": {
-            "text/html": "cell 4",
-            "text/plain": "<IPython.core.display.HTML object>"
-          },
-          "metadata": {
-            "transient": {
-              "display_id": "1b3a7d5ebfcba19a591cc972b6c6465f"
-            },
-            "metadata": {
-              "bridget": {
-                "cell": 4
-              }
-            }
-          }
-        }
-      ]
+      }
     },
     {
       "cell_type": "code",
-      "source": "# cell 5\ndisplay(Javascript('console.log(\"cell 5\")'), display_id=True, metadata=dict(bridget=dict(cell=5)));\n",
+      "source": "# cell 5\ndisplay(Javascript('console.log(\"cell 5\")'), display_id=True, metadata={'bridget': {'cell': 5}});\n",
       "metadata": {
         "bridget": {
-          "id": "b380d7f3-4ef4-40a2-80d8-b009cc75f1a7"
+          "id": "7ac2c444-d91b-442e-b062-70aca85b7e1b"
         }
       },
       "outputs": [
@@ -107,7 +88,7 @@
           },
           "metadata": {
             "transient": {
-              "display_id": "8f3be8d133dfaed6d6c95f1a28fed224"
+              "display_id": "f1008c2cf47aa070088ff6c93ec09c57"
             },
             "metadata": {
               "bridget": {
@@ -123,7 +104,7 @@
       "source": "# cell 6\nprint(6.1)\nprint(6.2)\n",
       "metadata": {
         "bridget": {
-          "id": "b1297832-20ea-4d25-9775-5f230c8836cc"
+          "id": "9cd15632-fbbc-42d4-9e1d-0eb3dd0513d1"
         }
       },
       "outputs": [
@@ -136,10 +117,10 @@
     },
     {
       "cell_type": "code",
-      "source": "# cell 7\ndisplay(HTML('cell 7.1'), display_id=True, metadata=dict(bridget=dict(cell=7.1)))\ndisplay(HTML('cell 7.2'), display_id=True, metadata=dict(bridget=dict(cell=7.2)));\n",
+      "source": "# cell 7\ndisplay(HTML('cell 7.1'), display_id=True, metadata={'bridget': {'cell': 7.1}})\ndisplay(HTML('cell 7.2'), display_id=True, metadata={'bridget': {'cell': 7.2}});\n",
       "metadata": {
         "bridget": {
-          "id": "657bf6eb-564a-43e1-9839-3673a8a32093"
+          "id": "f81185d8-2509-4d40-b89a-12842e37e5c9"
         }
       },
       "outputs": [
@@ -151,7 +132,7 @@
           },
           "metadata": {
             "transient": {
-              "display_id": "3cfa31a3bb90b9e73f7e4dc23cd079df"
+              "display_id": "1d5112ff618dcc4685df344894eaa6ee"
             },
             "metadata": {
               "bridget": {
@@ -168,7 +149,7 @@
           },
           "metadata": {
             "transient": {
-              "display_id": "0e8bab292ad174a274188a3df37e819a"
+              "display_id": "f56288ed1421705044a5e2c60777e11b"
             },
             "metadata": {
               "bridget": {
@@ -184,7 +165,7 @@
       "source": "%HTML\n<h3>cell 8</h3>\n",
       "metadata": {
         "bridget": {
-          "id": "2e575f05-be19-48e1-9ac2-32b1a58001fd"
+          "id": "3dbc6bbd-9505-460c-a644-701067713d49"
         }
       },
       "outputs": [
@@ -205,7 +186,7 @@
       "source": "%javascript\nconsole.log('cell 9')",
       "metadata": {
         "bridget": {
-          "id": "2f3d1dab-8fc5-414c-b65d-6726ce0ab5b5"
+          "id": "b869e42f-b9a4-4209-bbd7-345e09058935"
         }
       },
       "outputs": [
@@ -226,7 +207,7 @@
       "source": "%markdown\ncell 10\n",
       "metadata": {
         "bridget": {
-          "id": "d86bb9f3-6e25-4821-a688-20a37d1c954d"
+          "id": "8779f6cd-3fcc-4749-af1f-5f99a2cfaaa7"
         }
       },
       "outputs": [
@@ -247,7 +228,7 @@
       "source": "%SVG\n<svg width=\"100\" height=\"20\" xmlns=\"http://www.w3.org/2000/svg\">\n  <text x=\"10\" y=\"10\">cell 11</text>\n</svg>\n",
       "metadata": {
         "bridget": {
-          "id": "e87a69f4-53ca-4d34-b70d-ca6a5cbaf423"
+          "id": "6e70c270-b140-43a8-8853-4b3438d12705"
         }
       },
       "outputs": [
@@ -269,14 +250,18 @@
       "source": "# cell 12\nW.IntSlider(12, description='cell')",
       "metadata": {
         "bridget": {
-          "id": "2747a759-0b0b-4e30-bfd1-11be3a2b5e42"
+          "id": "e684e1f5-b99a-4418-a4c4-d0d23c7cc7c9"
         }
       },
       "outputs": [
         {
           "output_type": "execute_result",
           "data": {
-            "application/vnd.jupyter.widget-view+json": "{\"version_major\":2,\"version_minor\":0,\"model_id\":\"d0d2db2ca1ad41b5a4a68fe11dd6b230\"}",
+            "application/vnd.jupyter.widget-view+json": {
+              "version_major": 2,
+              "version_minor": 0,
+              "model_id": "a18e7694f609465cb7740cfdc26b7f15"
+            },
             "text/plain": "IntSlider(value=12, description='cell')"
           },
           "execution_count": 12,
@@ -291,14 +276,18 @@
       "source": "# cell 13\nw = W.Output()\ndisplay(w)\nwith w:\n    print('cell 13.1')\n    display('cell 13.2')\n    display(HTML('cell 13.3'))\n",
       "metadata": {
         "bridget": {
-          "id": "0c5d45b7-25f1-43b0-aa79-3d93c398dba0"
+          "id": "c24a55e2-5085-4fe3-9912-16d6c5cab7a3"
         }
       },
       "outputs": [
         {
           "output_type": "display_data",
           "data": {
-            "application/vnd.jupyter.widget-view+json": "{\"version_major\":2,\"version_minor\":0,\"model_id\":\"de4deedde3ea4c519f1b577e3829a47b\"}",
+            "application/vnd.jupyter.widget-view+json": {
+              "version_major": 2,
+              "version_minor": 0,
+              "model_id": "d839479f516449b7b1d8c3e200e868b3"
+            },
             "text/plain": "Output()"
           },
           "metadata": {
@@ -312,14 +301,14 @@
       "source": "# cell 14\nfig = plt.figure(figsize=(4, 2.67))\nplt.plot([1,2,3,4]);\n",
       "metadata": {
         "bridget": {
-          "id": "d5de4f96-a4ae-4b00-9c1e-cd68978257b5"
+          "id": "d68f6af9-349e-4154-8041-9be62f149f4a"
         }
       },
       "outputs": [
         {
           "output_type": "display_data",
           "data": {
-            "image/png": "�PNG\r\n\u001a\n\u0000\u0000\u0000\rIHDR\u0000\u0000\u0001i\u0000\u0000\u0000�\b\u0006\u0000\u0000\u0000�jĹ\u0000\u0000\u00009tEXtSoftware\u0000Matplotlib version3.9.2, https://matplotlib.org/!N\u0003�\u0000\u0000\u0000\tpHYs\u0000\u0000\u000fa\u0000\u0000\u000fa\u0001�?�i\u0000\u0000+FIDATx���{\\�u����p\u001a\u0010\u0001\u0015\u0005AP�\u0003\n\b\u0019XRj���fZ�}ؽ[�]w�W�������\u0016��f��Y�e���SD1\u000fi�@\u0016mj\bx\"\u000f(� �\u0001�������d%A\u0019N3\u0003����\u001fs�\u000f����q�ŌF)�\u0010B\ba�\u001c�=�\u0010B��IH\u000b!�\r��\u0016B\b\u001b&!-�\u00106LBZ\b!l���\u0010B�0\ti!��a\u0012�B\baÜ�=@}�L&.^����\u0007\u001a����\b!D�)�(--���\u001f\u0007����]��ŋ\u0017\t\f\f��\u0018B\b��Ο?O@@@�߷�����\u0000�?������\u0011B����t\u0004\u0006\u0006V�[]�\"�o]������\u0016B�*���+/\u001c\n!�\r��\u0016B\b\u001b֨�NHH@�����/�u]jj*QQQ���\u0012\u001c\u001c��ի\u001b�B\b�f48�\u000f\u001c8��5k�������\\Ǝ\u001d�СC���`������$&&6���\u0010��hPH����_��\u000f>���\u001d;�u��ի�޽;˖-��������\u0017^`�ҥ\r\u001aX\b!l���7�V^�l~�Bzڴi�\u001b7��\u001f��k���\u00195jT�c�G�����TUU�z�^�G����\u0012B\b[����\u000e�1��4\u0016$\u001fm���\u0016��\u001b7��\u000f?p���z�/,,��׷�1___\f\u0006\u0003�������qNBB\u0002\u000b\u0017.�t4!�h\u0011��o2/1��O\u0016\u0003p��\rnT\u001ah���w5[�'�?��^z�={����Z��~~\u001f୏U������x���\u001fߺ�[\b!�I)�gߟ筝�)�\u001b�:90kT\b/\f\t�ѡy޲¢�>t�\u0010EEEDEEU\u001f3\u001a�����b�\n�z=���5��ڵ+���5�\u0015\u0015\u0015��䄷�w�ϣ�j�j���&�\u0010����\u001b�o�f�)s{��ёœ\"�ե}�>�E!=b�\b���k\u001c{����ׯ\u001fs�ν#�\u0001bbbؾ}{�c{��!::\u001agg�\u0006�,�\u0010-�dR���y,�y��J#��\u000e�\u001eݏ�\u001e��l��v\u0016����\u0007���5�������]}<>>���|֯_\u000f�ԩSY�b\u0005qqqL�2���t֮]�g�}�D?�\u0010B4��Wo0gs\u0016�g�\u00000�gG\u0016O�$��{����W�\u000b\n\n��˫~\u001c\u0014\u0014�Ν;�9s&+W���ߟ�˗\u0013\u001b\u001b��O-�\u0010M�dRl��9\u0016�:��J#nΎ��E\b�cz��\u0002��v\u001au�U<\u001b�����򢤤D�`I\bѬ�])g��,��{\u0015�\u0007�:�xR\u0004=���=�7���]��\u0010���L���ϲxw\u000e7���sqdޘ~�׃=Z�=�NBZ\b���\u0016�3ws\u0016ߟ5��`oގ���w;+O&!-�hÌ&źorY�'��*\u0013�.�ď��/\u001f�n��|;\ti!D�t�r\u0019s6gq��5\u0000\u001e��͢�#\b�d��|;\ti!D�b4)���ܞ�\u0006\u0013��N�\u001f۟�| �&?�ZBZ\b�f�**c��L2�\u00030�Og\u0016�FЭ��u\u0007�\u000b\ti!D�g0��p.��#�\u0006\u0013\u001eZ'^}�?�\u0016m���v\u0012�B�V��Rfm�\"��u\u0000\u001e�ۅ��\u0007�o���v\u0012�B�V�`4�~�\u0019���$�F\u0013\u001e�N��D(��\u0002l�=�NBZ\b���\u0014�2{s&Y\u0017J\u0000x��\u000fo=5��^��e[!!-�h5��&�O=ͻ�8I�Q���Ă�a<}7�jϷ��\u0016B�\n�\u000bt�ڔ�ы��{��\u000fo>5\u0000_O�kϷ��\u0016Bص*�����f�>s{�rsf�aL���n���$��\u0010v���\u0012fo��X��=�\n���O���a���v\u0012�B\b�Si0�b�)��w\n�Iѱ�3\u000b'�3>¯U���IH\u000b!�ʑ�\u0012fm��Da)\u0000�\b��\u001b\u0013����:?\u0017UBZ\ba\u0017�\u0006#+�:�{)�1�\u0014��]x}B\u0018�\u0006���|;\ti!��˺p�ٛ�ȹdn��\"�x��0�۷��|;\ti!���\u001b����I�O;�Ѥ�vwፉ�\u001d�g��Z���\u0010�&\u001d>�ٛ29YT\u0006��H\u0016>\u0019F'w\u0017+Oֲ\u001c,Y�j�*\"\"\"�����ӓ��\u0018v��U����\u00144\u001a�\u001d_'N�h��B�֩��H®�<��7�,*�s{-��+�����6\u0017�`a�\u000e\b\b`ѢE���\u001b��?��\t\u0013&���AXXX�������4�.]�4p\\!Dk�C�5fo����r\u0000&��ς�atl��|�E!=~��\u001a��|�MV�Z�w�}wא���C�\u000e\r\u001aP\b��UT\u0019���\u001f���3�\u0014t�����pF�u��hV��k�F��M�6Q^^NLL�]�\u000e\u001c8���\nBCCy��W\u0019>|�]���z�z}�c�N��1�\u00106�й��ޔřbs{~��n��D(\u001dڵ��|;�C:;;���\u0018***h߾=III���ֺ��Ϗ5k�\u0010\u0015\u0015�^��O>aĈ\u0011���0lذ:�#!!��\u000b\u0017Z:�\u0010ܬ4�tO\u000e�&\u0017���S�[O\r`D_k�fS4J)e�\t������q��u\u0012\u0013\u0013���\u000fIMM�3�n���h4\u001a����\\S[�\u000e\f\f����Ƶm!�}�>�*s6gr��\r\u0000&E\u0005��q�x�s��d-G�����u�\\��I���T�p\u0018\u001d\u001d́\u0003\u0007x��wy����u����ٰa�]�h�Z�����\u0010m͍J\u0003�w��q�Y�����$�\u000e`x���G�Y��OZ)U���KFF\u0006~~m�Ft!��wg�0gs\u0016yW���ߣ\u0003y��x�����\u0010\u0016�����\u00193f\f�������q�FRRRؽ{7\u0000������~�z\u0000�-[FϞ=\t\u000b\u000b����\r\u001b6���Hbbb��$B\b�T�7�x�\t>N?\u0007���+�b#x��܊[\u001f\u0016���K�x��g)((��ˋ��\bv���ȑ#\u0001((( //�z}ee%�f�\"??\u001f777���رc\u0007cǎmڟB\ba��=]���,�_�\t�>Н�c��!���,~��\u001a�{�]\ba\u001b��\u0006\u0016�:Ά�̥�[\u00077\u0016�\u000e`h\u001fiϷ4�\u000b�B\bq7ߜ*f��,���\u001e�N�����J�4��\u0010�I�VT���\u0004���ܞ\u0003:��86��zw��d�MBZ\b�hi?^f^b\u0016\u0017K*\u0000�uL\u000f���\u001f�Ҟ\u001bMvP\b�`��*��q��\u0007�\u0003\u0010�ɍű�����d����\u0010�ARr��ߒM�O����z2�\u0017!�s�XiJ��B\b��ܬ�ϟ\u001fcӡ\u000b\u0000��n���\b\u001e\f���\u001c$��\u0010��ՉK�o��N�F\u0003�?\u0014���!��8Z{�VKBZ\bqO%7�x��c$�`n�A��Y2)�螝�<Y�'!-���/�]b~R6E�����!Ač���R$��\u0010��~���ۏ���\u000f@p\u0017s{��!��%IH\u000b!����B^I:Bq�\u001e\u0007\rL\u0019\u001a�̑}qu����$��\u0010ծ�W��$g^\u0004��O{�L�``��V��풐\u0016B\u0000��H\u0001�n=BqY%\u000e\u001a��#�xiD\u001fi�V&!-D\u001bw�Lς�|�U\u0000@_��,�\u0014Id`\u0007�\u000e&\u0000\ti!ڴ\u001dY\u0005���\bW�+qt��ߏ�bƈ�h��=�\n\ti!ڠ�2=�m;���B\u0000B|=X�L$\u0003\u0002��<��9\ti!�\u0010�\u0014��Ԟ�ݨ��A�\u001f\u001e��������`��D-$��h#�J+���#|q�\u0012\u0000��<Y2)��nҞm���\u0010��R��̋,H>�������z�G{K{�\u0003\u0012�B�bE�\n^�z�����9�ϓ��D\u0012�/�\u0015j/,���U�������\u0013OOObbbصk�]�IMM%**\nWWW���Y�zu�\u0006\u0016BܛR�-?\\`�;i�=v\tgG\r�3�/ۦ?,\u0001mg,j�\u0001\u0001\u0001,Z��޽{\u0003���\u001f3a�\u0004222\b\u000b\u000b�c}nn.cǎeʔ)lذ�o���?��\u000ft�҅��ئ�\t�\u00105\\�U0K6�8Q\u0004@x7s{��U��\u001ei�R�1@�N�X�d\t���o���ܹsINN�����ǦN�Jff&����~��~��\u0010m�R��\u001f�y}�Qt\u0015\u0006\\\u001c\u001dx��>�nX0Ύr����7�\u001a|M�h4�i�&��ˉ���uMzz:�F��ql��Ѭ]����*���k=O�ף��\u001f�t���)D�PPr��-٤�\\\u0006 2��%�D����ʓ�Ʋ8�������������ۓ��Dhhh�k\u000b\u000b\u000b����q���\u0017��@qq1~~~������\u000b-\u001dM�6G)Ŧ�\u0017x��c����y�ȾL\u0019\u001a����V��\u000e\t\t����\\�~���D&O�Ljjj�A��hj<�uu���o\u0017\u001f\u001fO\\\\\\�c�NG``���\nѪ]�~�y[�I��ܞ�\u000b���I\u0011���ܪX\u001c�...�/\u001cFGGs��\u0001�}�]���;�v�ڕ���\u001aǊ��prr�ۻ�\u000f��j�h�ZKG\u0013�MPJ���y��q�2�\u0001\u0017'\u0007f���o�\u0004��Pw�\u0011����I+�j\\?�]LL\f۷o�qlϞ=DGG�y=Z\bQ�\u000b�n\u0010�%��O\u0016\u0003p�\u000e,�\u0014Io��V�L4\u0017�Bz����\u00193���@JKKٸq#)))�޽\u001b0_����g�����N�\u0015+V\u0010\u0017\u0017ǔ)SHOOg�ڵ|��gM��\bъ)����<��q��J#Z'\u0007f�\u000e�����=�r\u0016���K�x��g)((��ˋ��\bv���ȑ#\u0001((( //�z}PP\u0010;w�d�̙�\\�\u0012�/_.�H\u000ba��Wo071�oO_\u0001 �GG\u0016O� ���綠��I�\u0004�OZ�E&���y��]'�Qi��ف9��1���Ҟ[�f�OZ\b�|��`Nb&ߝ�\n�\u0003=;�xR\u0004=;�[y2��$���!&�b}�Y�ޝ��*#nΎ�\u001bӏg\u0007��A�s�$!-��8[\\Μ�,��5�����x;6�\u001e�Ҟ�2\ti!��dR|��Y\u0016q��*\u0013�\\\u001c�\u001fӏ_=(�YHH\u000baUg.�1gs\u0016\u0007�]\u0003�^޼\u001d\u001bA`�vV�L�\n\ti!��hR�}.K��7�pwqd������w}�\u0004��HH\u000b��N\u0015�1{s&\u0019y�\u0001\u0018һ3�b\u0007\u0010�Qڳ����\u0010-�hR|��\u0019���G*\r&�k�xu\\�}P��gQ'\ti!Z��K��ڜE���\u0000\f�ۅ��\u0007Э��u\u0007\u00136OBZ�fd0�X��\u0019��=I�ф�։?>\u0011�3�\u0001ҞE�HH\u000b�Lr\nK��9��\u000b%\u0000\f\u000f��[O\u000f��Kڳ�?\ti!�X������Y��S����Ă�a���Mڳ����\u0010M�x��ٛ39�o�\\�\u0011�|x�\u0001t�r��d�^IH\u000b�\u0004��&V���o_��ʨ�rs�OO�2�>iϢq$��h��\u0017K��)�c\u0005���x_�z*\u001c\u001fOiϢ�$��h�J����N�r�)\f&E�v�,|2�'#��=�&#!-D\u0003\u001c�/a֦LN\u0014�\u00020:̗7&���!�Y4-\ti!,�7\u0018Y��)�K9�Ѥ��Ι�'��D���g�,$�����\u000bי�)��K��<v@W^�\u0010N��Z+O&Z3\ti!�Ao0��\u001f'Y�z\u0006�I�����\u0013�\u0019\u0017�g��D\u001b�`�℄\u0004\u0006\r\u001a���\u0007>>>L�8����������F����ĉ\u0013�\u001a\\���y�:O,���}��\u001bOD��g�0\th�b,jҩ��L�6�A�\u0006a0\u0018x�W\u00185j\u0014ǎ\u001d����\u001f񓓓S�\u0013q�t�Ұ��h\u0001\u0015UF�}y�5i�1)��ޅ7&�3f���hY\u0016���ݻk<^�n\u001d>>>\u001c:t�aÆ��\\\u001f\u001f\u001f:t�`�B��\u001f�1{S&�/�\u00030�>\u0016�\u000f�����'\u0013mQ��I����8�S�N�\\;p�@***\b\r\r��W_e���u���������:��1c\nQ/\u0015UF���G>���O�Y˛O�3:���G\u0013mX�CZ)E\\\\\u001cC�\f!<<��u~~~�Y����(�z=�|�\t#F� %�������\u000b\u001b:�\u0010\u0016;t�*�7eq��ܞ�\u001a؍\u0005�C��Nڳ�.�RJ5��iӦ�c�\u000e���O@@�E�\u001f?\u001e�FCrrr�߯�I\u0007\u0006\u0006RRRR㺶\u0010�u���_����\\�\u0002\u001f\u000f-o=5��C}�=�h�t:\u001d^^^�̵\u00065�\u00193f���LZZ��\u0001\r0x�`6l�P���Z-Z��{*�ׁ�W��9�ܟ�s��\u0001��D(^휭<�\u0010�bQH+��1c\u0006III���\u0010\u0014\u0014Ԡ'�����O^%\u0017�q����/r��۳(\u0005��Z\u0012�\u001e�c��=\u000b�cQHO�6�O?��m۶���Aaa!\u0000^^^���?m\">>���|֯_\u000f��e��ٳ'aaaTVV�a�\u0006\u0012\u0013\u0013ILLl�\u001fE�{��+�I��ܕ\u001b\u0000�[t\u0000��\u000b��Mڳ�M\u0016���U�\u0000x��Gk\u001c_�n\u001d�=�\u001c\u0000\u0005\u0005\u0005���U����Y�f������\u001baaa�ر��c�6nr!,P�7�x�\t>N?\u0007���+\tO\u000f��\u0010\u001f+O&��5��ÖT�\u000b�B������M���՛\u0000�Ǡ@�돧��ga=��¡\u0010��\\o`Ѯ\u0013|�=�{��(6�a}�]����\u0016��7�����5s{��݉\u001f�\u000f\u000fi���HH�V�����]'�����E�up���\b���l�Ʉh\u0018\ti�j|}�2�\u0012�ɿnn��\u000e���1�h�����~��^a�t\u0015U$�<�gߟ\u0007 ���=?�Kڳ�\u0012�®��\u0014\u0011�%���\n\u0000&��`�/��.�Y�\u0012�7Yإ��U���\u0018���\u0005\u0000�wj��I\u0011\f\u000e���dB4-\tiaw��0��B]\u0005\u001a\r<�POf�\u000e����u\u0016����\u0016v��F\u0015�~��\u001f����w;\u0016O�䁠{���\u0010�JBZ؅/�]b~R6E�z4\u001ax�� f�\n����ڣ\tѬ$��M�~��׷\u001fcKF>\u0000���Y�L\u0004Q=�=��ABZج=G\u000bye�\u0011.��q������\u001c�\u0017WgiϢ퐐\u00166�Zy%�~�m�/\u0002Ы�;K�����\u001d�<�\u0010-OBZؔ�G\nxu�\u0011��*q��������H{\u0016m����\tW��,H>��Y\u0005\u0000��iϒg\"�/��u\u0007\u0013��$�����.��[�p��\u0012G\u0007\rS\u001f\t��\u0011}�:I{\u0016BBZXMq��\u0005ێ�#�ܞC|=X�L$\u0003\u0002��<�\u0010�CBZ�8�\u0014�g\u0015� �(Wj��\u001e�Ŵ�zK{\u0016�g$�E��\\��[�����C��u5���nҞ�����h\u0011J)�3/� �(�oT��a���L\u001b�\u001b\u0017'\u0007k�'�Ͳ�_GBB\u0002�\u0006\r���\u0003\u001f\u001f\u001f&N�HNN�=�KMM%**\nWWW���Y�zu�\u0007\u0016��HW��>9�K\u001b\u000fs�F\u0015�~�l��03G���\u0016�\u001e,�\u0017���ʴi����ػw/\u0006��Q�FQ^^^�9����\u001d;��C��������y��\u0017ILLl��¶)�Hʸ��w��{�\u0012Ύ\u001a�F�e��\t��\u001bBԇF)�\u001az��˗���!55�aÆպf�ܹ$''s����cS�N%33����z=O}?�\\؎K�\n^I����E\u0000�w�dɤH���?!���֨k�%%\u0000t�T��ݤ��3jԨ\u001a�F�\u001e�ڵk�����Y>��5QJ��C>�o?������\u001f���\u0005��(�6��T�CZ)E\\\\\u001cC�\f!<<��u�������8����`���\u0018??�;���������:���c�\u0016TXRA��,��\\\u0006 \"��%�\"\t��a�Ʉ�_\r\u000e��ӧ��������V���x|�\n�Ϗߒ���\u000b\u001b:�haJ)6\u001d��\u001b�\u001f����\u0003/����\u0006�$�Y�FiPHϘ1���d���\b\b\b��ڮ]�RXXX�XQQ\u0011NNNx{��yt������U?��t\u0004\u0006\u00066dT��.^�ɼ-٤�hnϑ�\u001dX:)�>�Ҟ�h\n\u0016��R�\u00193f���DJJ\nAAA�<'&&��۷�8�g�\u001e����\u001e��j�j���&Z�R��;p�?�8N�ހ��\u0003�3�/�\u0019\u0012$�Y�&dQHO�6�O?��m۶���Qݐ���pss\u0003�-8??����\u0003�;9V�XA\\\\\u001cS�L!==��k���g�5�\"ZJ����K����\u0000\f�ށ%�\"����ʓ\t��X\u0014ҫV�\u0002��G\u001f�q|ݺu<��s\u0000\u0014\u0014\u0014���W���� v���̙3Y�r%���,_������M.Z�R�O���\u001d�)�4�ur`��\u0010�8\bG��__\u0010B4N��n)r�����z�y[����\u0015\u0000�{td�\b��H{\u0016�!Z�>i���L���>���ǹQi��ف٣���C=�=\u000b�\u0002$�E���`Nb&ߝ�\n�\u0003=;�xR\u0004=;�[y2!�\u000e\tiq\u0007�I��w�X��\u00047���9;2�\u0017!�:�'\u000eҞ�hQ\u0012Ң�sWʙ�9��s���� s{��-�Y\bk��\u0016��=��Y\u0016q��*\u0013�\\\u001c�\u001fӏ_=�Cڳ\u0010V$!-�-.g��L\u000e��\u0006@L�7�'E\u0010ة��'\u0013BHH�aF�b�7�,�\"\u0007�����#�c���\u0007�K{\u0016�FHH�Q�/�1{S&?�]\u0007`H��,�\u001d@@Gi�B�\u0012\t�6�hR������\u0011��D{�\u0013����\f\n��]\t�\u0010�#!݆�**e��,2~j�C�tfQl\u0004�:�Yw0!D�$��\u0000���\u0007_��Η?Ri0�u�O��Lt��g!l��t+��Rfo�$����\u001e\r�B��\u0003���,�=��n�\fF\u0013利��/ORi4����kO�2)Jڳ\u0010�DB�\u0015:Q�c��,������~>���\u0000�z�Zy2!��$�[�*���)�Y��I��\nOW'��d\u0018O\r�&�Y\b;%!�J\u001c/�1kS&G/�?Y������T8>�Ҟ��g\u0012�v��`⽔S���\u0014\u0006��C;g\u0016>\u0019Ɠ��Ҟ�h\u0005$���ы%�ڔ��\u0002s{\u001e\u001d��\u001b\u0013����,Dk!!m�*\r&V�;�{����c;g^�\u0010�\u0013\u0011~Ҟ�he$��̑�\u0012fm��Da)\u0000c\u0007t��\t�tn���dB�� !m'�\u0006#��)V���hRx�����p�E�Y{4!D3r�􄴴4Ə\u001f�������[��u}JJ\n\u001a�掯\u0013'N4t�6'��u��m?+���hR<\u0011�Ǟ��$��h\u0003,n����DFF����\u0013\u001b\u001b[��rrrj|ly�.],}�6���Ȼ�8ɚ�3\u0018M���]xcB8c\u0006H8\u000b�VX\u001c�cƌa̘1\u0016?���\u000f\u001d:t����*#�\u001a�7gq��\f�\t���`|\u0018��]�<�\u0010�%��5�\u0003\u0007RQQAhh(���*Ç\u000f�s�^�G��W?��t-1�M��2�Η?�A�\u0019L\n:����S�\u000e�j�ф\u0010V��!���ǚ5k���B����'�0b�\bRRR\u00186lX��$$$�p���\u001e��\u001c:w�9�39}�\u001c��\u0006vc��P:���,D[�QJ�\u0006��ѐ���ĉ\u0013-:o���h4\u001a���k�~mM:00����\u001a׵[��*#ٓÇ�sQ\n|<����\u0000\u001e\u000f���hB�f������g�Y�\u0016���\u0007�aÆ:���j�j��}�\u0007�^e��,�\u0014��s��\u0001��D(^휭<�\u0010�\u0016X%�322��k�w(ܬ4��\u001c�}knϾ�Z\u0012�\u001e�c��=\u000b!���.++�ԩSՏsss9|�0�:u�{����Ǔ������\u0001X�l\u0019={�$,,���J6l�@bb\"���M�Sؙ�s�2gs&g��\u0000�ߢ\u0003xe\\(^nҞ�\u00105Y\u001c�\u0007\u000f\u001e�qgF\\\\\u001c\u0000�'O棏>���������WVV2k�,���qss#,,�\u001d;v0v��&\u0018߾ܨ4�xw\u000e\u001f��E)��r%��\u0001<\u001a�c�ф\u00106�Q/\u001c���^`�eߝ��Y�]5���\u0018\u0014��q��t��,D[d�/\u001c�%�z\u0003o�>���s\u0000�{��(6�a}�7.�\u0010�&!݌�=U̜�,.\\�\t�/\u001f�N��~xH{\u0016Bԓ�t3(�\u001bX��8\u001b�3_������c#\u0018ҧ��'\u0013B�\u001b\t�&��d1s\u0013�ȿnn��\u000e���1�h���\u0016BXN����VT���\u0013|���=\u0007v2��zI{\u0016B4��t\u0013H��2�\u0012��XR\u0001��\u001e��E?ܥ=\u000b!\u001aIR�\u0011t\u0015U���q���y\u0000�wj��I\u0011\f\u000e���dB��BB����\u00141K6\u0005%\u0015h4��C=�=:�v.��B��#�b���U���cl:t\u0001����X<)�\u0007�:Yy2!Dk$!m��N\\\"~K6�tz4\u001ax�� f�\n����ڣ\t!Z)\t�z(�Q��Ϗ��|\u0000�;���\b�zH{\u0016B4/\t�{�{�\u0012�$eST��A\u0003�\u001d\u001aL�Ⱦ�:K{\u0016B4?\t�:\\+�d���l=|\u0011�^]�Y�L$�w�h�Ʉ\u0010m��t-�8Z�+IG(.3���\r��ˏ���,�hq\u0012ҷ�Z^ɟ����in�}|ڳ�H�\u000b�`���\u0010m���Ove\u0017��mG(.���A��\u0005��\bi�B\b�j�!}�L�k�GّU\u0000@��\u0007K�� \"��u\u0007\u0013B\b�xH��2�����<��^L{�7Z'i�B\b��&C�r��׶\u001daבB\u0000�u�`�3��w��dB\bQS�\ni�\u0014۳\nX��\b�nT��a���L\u001b�\u001b\u0017'\u0007k�'�\u0010w�8����\u0018?~<���h4\u001a�n�z�sRSS�����Օ��`V�^ݐY\u001b�����\u001b\u000e��g\u0019\\�QE��'ۦ?�̑}%��\u00106��t*//'22�\u0015+V�k}nn.cǎe�Сddd0�|^|�E\u0012\u0013\u0013-\u001e�!�Rl��g�;i|q�\u0012Ύ\u001a�F�e��\t��\u001bB\b�f��1c�0f̘z�_�z5ݻwgٲe\u0000��ߟ�\u0007\u000f�t�Rbcc-}z�\u0014�*��t�/�_\u0002 ��'K&E�߯�O\u0017B\b[��פ���\u00195jT�c�G�f�ڵTUU��|�'g��z�z}�c�Ng��\u001e:w���\u001d@Wa��Q�ˏ��wÂqv�K\u001bB\b���UXX���o�c���\u0018\f\u0006���k='!!\u0001//����@�����\u0007��ND\u0004x����L\u001b�[\u0002Z\bawZ��\u000e�FS�R������\u0013\u0017\u0017W�X��Y\u001c�\u001e��|:e0\u0001\u001d�p�p\u0016Bةf\u000f�]�RXXX�XQQ\u0011NNNx{��Y�Z�\u0016�V�����ٽ��\u0010BXS�W̘�\u0018���[�؞={�����z�\u0010B��8����8|�0�\u000f\u001f\u0006̷�\u001d>|���<�|��׿�u���S�r��9���8~�8���Y�v-�f�j��@\b!Z1�/w\u001c<x��ÇW?�u�x���|��G\u0014\u0014\u0014T\u00076@PP\u0010;w�d�̙�\\�\u0012�/_���\t!Dk�Q�^ųa:�\u000e///JJJ���{��\u0010����&�=\b!�\r��7X�U�\u001b�K-B\ba�n�ٽ.f�EH���\u00024�Z�\u0010�����U��\b��5i���ŋ\u0017����\u0017`js�`Ο?owײev�٭�-ή����\u0014\u001c\u001c��l\u0017M�������\u0006����iw��o�٭Cf���6��\u001a�-�¡\u0010B�0\ti!��a�:��Z-\u000b\u0016,h��\u0001ii2�u���!���.^8\u0014B���U7i!��w\u0012�B\ba�$��\u0010IH\u000b!�\r���~��\b\n\n��Օ��(���뻮OMM%**\nWWW���Y�zu\u000bMz'KfOIIA����u�ĉ\u0016�\u0018���\u0018?~<���h4\u001a�n�z�sle�-��V�\u001c̟�9h� <<<���a�ĉ�����<[����n+{�j�*\"\"\"�Q%&&�]�v���&�se�6nܨ����\u0007\u001f|��\u001d;�^z�%���Ν;W��3gΨv�ک�^zI\u001d;vL}��\u0007���Ym޼��'�|�}��)@��䨂���/��Тs�ܹS���+*11Q\u0001*))��mi�-��V�\\)�F�\u001e�֭[��\u001c9�\u000e\u001f>�ƍ\u001b��w�����<�V��!����'''�\u001d;v���\u001c�����ϟ����Ց#Gj]�\u001c{n�!��\u0003\u000f��S��8֯_?5o޼Z�ϙ3G��ׯƱ����j����6c],���_�k׮��t�S����=��%!mK{~KQQ�\u0002Tjjj�klu��3�-�}ǎ\u001dՇ\u001f~X���c���rGee%�\u000e\u001dbԨQ5��\u001a5�o����s����X?z�h\u000e\u001e<HUUU���s\r����\u0003\u0007���ǈ\u0011#طo_s��$le�\u001b�\u0016����\u0004�N�:չ�V��>��bK{o4\u001aٸq#������Ժ�9��nC���\u0018�ш��o�㾾�w|:�-�����7\u0018\f\u0014\u0017\u00177۬?א����X�f\r���lٲ���\u0010F�\u0018AZZZK��`���\ra�{��\"..�!C�\u0010\u001e\u001e^�:[����nK{���M����j�L�:���$BCCk]�\u001c{n\u0017�w7?�R��]�δ���\u001do\t��\u001e\u0012\u0012BHHH�㘘\u0018Ο?�ҥK\u00196lX���X��疰�=�>}:YYY�߿��kmm��;�-�}HH\b�\u000f\u001f����$&&2y�dRSS�\f��s�mҝ;w�����YTTt���n�ڵk�띜����n�Y�!��f����<y���kR���M��{>c�\f���ٷo�=߾���ޒ�kc��wqq�w��DGG���@dd$��n�k�c��6�]\\\\���b�޽5��ݻ��\u001ez��sbbb�X�g�\u001e���qvvn�Y�!��&##\u0003??��\u001e�I�ʞ7\u0015k��R��ӧ�e�\u0016���+����y���}Cf����}WJ���k�^��y�_r�\u0001�nc[�v�:v�z�嗕���:{��RJ�y��g�}�z���cfΜ��\u001d;�֮]k�[��;�;Ｃ���ԏ?���\u001c9��͛�\u0000���آs������\f����\u0000�׿�UeddT�:h�{n�춲�J)��������K���Ը%�ƍ\u001b�klu�\u001b2���}||�JKKS���*++K͟?_988�={��:ws�]��RJ�\\�R���C�����￿�m=�'OV�<�H��)))j������E���S�Z���'�\u0017Kf���U�^������ر�\u001a2d�ڱcG��|�֨�M�<�ֹ���=�tv[�s�T�s\u0003jݺu�klu�\u001b2����\u000b/�P�o�K�.jĈ\u0011�\u0001]��J5���[�\n!�\r��k�B\b�\u0016HH\u000b!�\r��\u0016B\b\u001b&!-�\u00106LBZ\b!l���\u0010B�0\ti!��a\u0012�B\ba�$��\u0010IH\u000b!�\r��\u0016B\b\u001b&!-�\u00106��\u0003��\u001cs�\u0011e�\u0000\u0000\u0000\u0000IEND�B`�",
+            "image/png": "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",
             "text/plain": "<Figure size 400x267 with 1 Axes>"
           },
           "metadata": {
@@ -331,19 +320,40 @@
     },
     {
       "cell_type": "code",
-      "source": "# cell 15\nImage('https://jupyter.org/assets/try/jupyter.png', metadata=dict(bridget=dict(cell=15)));",
+      "source": "# cell 15\nImage('https://jupyter.org/assets/try/jupyter.png', metadata={'bridget': {'cell': 15}})",
       "metadata": {
         "bridget": {
-          "id": "12f6d040-3cb0-4e2c-bb44-7e38e199dbb2"
+          "id": "b7d7e79c-4d29-4f1e-8923-d25539a7ff88"
         }
-      }
+      },
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "image/png": "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",
+            "text/plain": "<IPython.core.display.Image object>"
+          },
+          "execution_count": 15,
+          "metadata": {
+            "executionCount": 15,
+            "metadata": {
+              "image/png": {
+                "bridget": {
+                  "cell": 15
+                }
+              }
+            },
+            "__displayOpenPlotIcon": true
+          }
+        }
+      ]
     },
     {
       "cell_type": "code",
-      "source": "# cell 16\ndh = display(display_id=True, metadata=dict(bridget=dict(cell=16)));\n",
+      "source": "# cell 16\ndh = display(display_id=True, metadata={'bridget': {'cell': 16}})\n",
       "metadata": {
         "bridget": {
-          "id": "16541a6f-e737-4184-a69c-1af356248448"
+          "id": "3f453773-fe5f-45a3-bb29-25bfa125780b"
         }
       },
       "outputs": [
@@ -352,7 +362,7 @@
           "data": {},
           "metadata": {
             "transient": {
-              "display_id": "3be14a4eb3108d22edcabdd02dcde125"
+              "display_id": "391996ab361700cb87b3f436d6836180"
             },
             "metadata": {
               "bridget": {
@@ -365,10 +375,10 @@
     },
     {
       "cell_type": "code",
-      "source": "# cell 17\ndh = display(HTML('cell 17'), display_id=True, metadata=dict(bridget=dict(cell=17)));\n",
+      "source": "# cell 17\ndh = display(HTML('cell 17'), display_id=True, metadata={'bridget': {'cell': 17}})\n",
       "metadata": {
         "bridget": {
-          "id": "b4276462-f358-4d7c-bf21-96a773e03c02"
+          "id": "0db5143d-859b-43a0-80cc-01c2dc4c027a"
         }
       },
       "outputs": [
@@ -380,7 +390,7 @@
           },
           "metadata": {
             "transient": {
-              "display_id": "fb8e0e219dd7227ddbdf072a6de996f1"
+              "display_id": "4a5b3f320707dd808d978404d37ec631"
             },
             "metadata": {
               "bridget": {
@@ -393,28 +403,62 @@
     },
     {
       "cell_type": "code",
-      "source": "# cell 18\ndh.update(HTML('cell 18'), metadata=dict(bridget=dict(cell=18)));\n",
+      "source": "# cell 18\ndh.update(HTML('cell 18'), metadata={'bridget': {'cell': 18}})\n",
       "metadata": {
         "bridget": {
-          "id": "6c51c4ff-7e0e-4164-b776-8b8580fe4438"
+          "id": "68b97634-0771-486c-9c18-f67fed89ddb6"
         }
       }
+    },
+    {
+      "cell_type": "code",
+      "source": "# cell 19\ndisplay(JSON({'cell': 19}), display_id=True, metadata={'bridget': {'cell': 19}});\n",
+      "metadata": {
+        "bridget": {
+          "id": "71b91808-6f60-4c5f-872a-1084f1025353"
+        }
+      },
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "application/json": {
+              "cell": 19
+            },
+            "text/plain": "<IPython.core.display.JSON object>"
+          },
+          "metadata": {
+            "transient": {
+              "display_id": "ff8495fbf70ea6987575aef0a72719af"
+            },
+            "metadata": {
+              "application/json": {
+                "expanded": false,
+                "root": "root"
+              },
+              "bridget": {
+                "cell": 19
+              }
+            }
+          }
+        }
+      ]
     },
     {
       "cell_type": "code",
       "source": "",
       "metadata": {
         "bridget": {
-          "id": "85e1c117-45bd-40c6-8b7b-63aeba617628"
+          "id": "33ecb862-4425-4028-aa81-8d5fa3a4c7cb"
         }
       }
     },
     {
       "cell_type": "code",
-      "source": "# cell 20\n1/0",
+      "source": "# cell 21\n1/0",
       "metadata": {
         "bridget": {
-          "id": "07c14cbc-3771-44c4-95bb-220cde14681f"
+          "id": "3c572edb-652b-4472-9d4d-d0037f3dfbfa"
         }
       },
       "outputs": [
@@ -425,8 +469,8 @@
           "traceback": [
             "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
             "\u001b[0;31mZeroDivisionError\u001b[0m                         Traceback (most recent call last)",
-            "Cell \u001b[0;32mIn[19], line 2\u001b[0m",
-            "\u001b[1;32m      1\u001b[0m \u001b[38;5;66;03m# cell 20\u001b[39;00m",
+            "Cell \u001b[0;32mIn[20], line 2\u001b[0m",
+            "\u001b[1;32m      1\u001b[0m \u001b[38;5;66;03m# cell 21\u001b[39;00m",
             "\u001b[0;32m----> 2\u001b[0m \u001b[38;5;241;43m1\u001b[39;49m\u001b[38;5;241;43m/\u001b[39;49m\u001b[38;5;241;43m0\u001b[39;49m",
             "",
             "\u001b[0;31mZeroDivisionError\u001b[0m: division by zero"
@@ -436,31 +480,13 @@
     },
     {
       "cell_type": "code",
-      "source": "# cell 21   \ndisplay({'application/x-notebook-state': {\"cell\": 21}}, raw=True, display_id=True, metadata=dict(bridget=dict(cell=21)));\n",
+      "source": "# cell 22   \ndisplay({'application/x-notebook-state': {\"cell\": 22}}, raw=True, display_id=True, \n        metadata={'bridget': {'cell': 22, 'skip': True}});\n",
       "metadata": {
         "bridget": {
-          "id": "63faf96c-ec43-4929-9848-d862b7fb644c"
+          "id": "657ec5d3-d8af-4ac6-9fa5-f17f68b3db87"
         }
-      },
-      "outputs": [
-        {
-          "output_type": "display_data",
-          "data": {
-            "application/x-notebook-state": "{\"cell\":21}"
-          },
-          "metadata": {
-            "transient": {
-              "display_id": "ccef1ae5913e88cc61af52d77145f040"
-            },
-            "metadata": {
-              "bridget": {
-                "cell": 21
-              }
-            }
-          }
-        }
-      ]
+      }
     }
   ],
-  "timestamp": "9:47:56 PM"
+  "timestamp": "7:47:52 PM"
 }

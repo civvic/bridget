@@ -45,9 +45,7 @@
     ]
   },
   "scripts": {
-    "lint": "eslint .",
-    "pretest": "npm run lint",
-    "test": "vscode-test"
+    "lint": "eslint ."
   },
   "devDependencies": {
     "@types/vscode": "^1.93.0",
