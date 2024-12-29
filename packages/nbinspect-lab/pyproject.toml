@@ -53,12 +53,12 @@ ensured-targets = [
 skip-if-exists = ["nbinspect_lab/labextension/static/style.js"]
 
 [tool.hatch.build.hooks.jupyter-builder.build-kwargs]
-build_cmd = "build:prod"
-npm = ["jlpm"]
+build_cmd = "pnpm build:prod"
+npm = ["pnpm"]
 
 [tool.hatch.build.hooks.jupyter-builder.editable-build-kwargs]
-build_cmd = "install:extension"
-npm = ["jlpm"]
+build_cmd = "pnpm install:extension"
+npm = ["pnpm"]
 source_dir = "src"
 build_dir = "nbinspect_lab/labextension"
 
@@ -68,10 +68,10 @@ version_cmd = "hatch version"
 [tool.jupyter-releaser.hooks]
 before-build-npm = [
     "python -m pip install 'jupyterlab>=4.0.0,<5'",
-    "jlpm",
-    "jlpm build:prod"
+    "pnpm install",
+    "pnpm build:prod"
 ]
-before-build-python = ["jlpm clean:all"]
+before-build-python = ["pnpm clean:all"]
 
 [tool.check-wheel-contents]
 ignore = ["W002"]

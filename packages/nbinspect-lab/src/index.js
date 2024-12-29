@@ -1,29 +1,33 @@
-import {
-  JupyterFrontEnd,
-  JupyterFrontEndPlugin
-} from '@jupyterlab/application';
-
+// Import required JupyterLab modules
 import { INotebookTracker } from '@jupyterlab/notebook';
-
-import { ICommandPalette } from '@jupyterlab/apputils'; // Import for the palette
+import { ICommandPalette } from '@jupyterlab/apputils';
 
 /**
  * Initialization data for the nbinspect-lab extension.
+ * @type {import('@jupyterlab/application').JupyterFrontEndPlugin<void>}
  */
-const plugin: JupyterFrontEndPlugin<void> = {
+const plugin = {
   id: 'nbinspect-lab:plugin',
   description: 'Expose notebook state and add commands.',
   autoStart: true,
   requires: [INotebookTracker, ICommandPalette],
-  activate: (
-    app: JupyterFrontEnd,
-    notebookTracker: INotebookTracker,
-    palette: ICommandPalette
-  ) => {
+
+  /**
+   * Activate the extension.
+   * @param {JupyterFrontEnd} app - The JupyterLab front-end application.
+   * @param {INotebookTracker} notebookTracker - Tracks the state of notebooks.
+   * @param {ICommandPalette} palette - The command palette for JupyterLab.
+   */
+  activate: (app, notebookTracker, palette) => {
     console.log('JupyterLab extension nbinspect-lab is activated!');
 
-    // Add a command to fetch notebook JSON
+    /**
+     * Command to fetch the notebook JSON.
+     * @type {string}
+     */
     const command = 'nbinspect-lab:fetch-notebook-json';
+
+    // Add the command
     app.commands.addCommand(command, {
       label: 'Fetch Notebook JSON',
       execute: () => {
@@ -47,11 +51,14 @@ const plugin: JupyterFrontEndPlugin<void> = {
     // Add the command to the Command Palette
     palette.addItem({
       command,
-      category: 'Notebook Operations' // Customize the category name
+      category: 'Notebook Operations'
     });
 
-    // Attach a global method to window for fetching the current notebook JSON
-    (window as any).getNotebookJSON = () => {
+    /**
+     * Attach a global method to `window` for fetching the notebook JSON.
+     * @returns {Object|null} The notebook JSON, or `null` if no active notebook is found.
+     */
+    window.getNotebookJSON = () => {
       const currentNotebook = notebookTracker.currentWidget?.content;
       if (currentNotebook?.model) {
         return currentNotebook.model.toJSON();
