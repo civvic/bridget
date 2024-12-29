@@ -1,0 +1,14 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: v4.3.6
+_src_path: https://github.com/jupyterlab/extension-template
+author_email: civvic@gmail.com
+author_name: civvic
+has_binder: false
+has_settings: false
+kind: frontend
+labextension_name: nbinspect-lab
+project_short_description: Inspect notebook state.
+python_name: nbinspect_lab
+repository: ttps://github.com/civvic/nbinspect-lab
+test: false
+
