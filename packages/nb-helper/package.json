@@ -2,7 +2,7 @@
   "name": "nb-helper",
   "displayName": "Notebook Helper",
   "description": "Helper extension for notebook state",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "publisher": "spikey-summers",
   "repository": {
     "type": "git",
@@ -26,12 +26,6 @@
   ],
   "main": "./extension.js",
   "contributes": {
-    "commands": [
-      {
-        "command": "nb-helper.getNoteContent",
-        "title": "Get Notebook Content"
-      }
-    ],
     "notebookRenderer": [
       {
         "id": "nb-helper-renderer",

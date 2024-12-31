@@ -35,56 +35,59 @@ debugger;
  * @property {Object} [metadata]
  */
 
-const _summ_stl = `
+/** @typedef {Object} Options
+ * @property {boolean} feedback  // show feedback so user can see changes
+ * @property {boolean} watch     // watch for changes
+ */
+
+const NBSTATE_FEEDBACK_CLS = 'notebook-state-feedback';
+const NBSTATE_SCRIPT_ID = 'notebook-state-json';
+const SUMMSTL = `
 <style>
-.update-flash { animation: flash 0.5s ease-out; }
-@keyframes flash {
-  0% { background-color: pink; }
-  100% { background-color: transparent; }
+  .update-flash { animation: flash 0.5s ease-out; }
+  @keyframes flash {
+    0% { background-color: pink; }
+    100% { background-color: transparent; }
   }
   .cell-info { margin-bottom: 1em; }
   .output-info { margin-left: 2em; }
-  </style>
-  `;
-  
-/** @param {string} str
- * @param {number} [maxLength=100]
- * @returns {string}
- */
+</style>
+`;
+
+// ---- utils ----
+
 function _truncate(str, maxLength = 100) {
   return str.length > maxLength ? str.substring(0, maxLength) + "..." : str;
 }
+
+const pickDefined = (obj, ...keys) => Object.fromEntries(
+  keys.map(k => [k, obj?.[k]]).filter(([_, v]) => v !== undefined) // eslint-disable-line no-unused-vars
+);
+
+// ---- rendering ----
 
 /** summary for debugging
  * @param {StateMessage}
  * @returns {string} HTML string
  */
-function _summaryHTML(message) {
+function summaryHTML(message) {
   return message.cells.map((cell, idx) => {
     let src = cell.source;
     // source possibly has HTML content, sanitize it
-    // src = src.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     src = src.replace(/<[^>]*>?/gm, '');
     src = _truncate(JSON.stringify(src));
     return `
     <div class="cell-info">
       <strong>Cell ${idx}</strong> (${cell.cell_type})
-      <div class="cell-text">
-        Source: ${src}
-      </div>
+      <div class="cell-text">Source: ${src}</div>
       ${cell.metadata ? `
-        <div class="cell-metadata">
-          Metadata: ${Object.keys(cell.metadata).join(', ')}
-        </div>
+        <div class="cell-metadata">Metadata: ${Object.keys(cell.metadata).join(', ')}</div>
       ` : ''}
       ${(cell.outputs?.length) ? `
-        <div class="output-info">
-          Outputs (${cell.outputs.length}):
+        <div class="output-info">Outputs (${cell.outputs.length}):
           ${cell.outputs.map(out => `
-            <div>Type: ${out.output_type}
-              ${out.data ? `
-                <div>MIME types: ${Object.keys(out.data).join(', ')}</div>
-              ` : ''}
+            <div>Type: ${out.output_type}${out.data ? `
+              <div>MIME types: ${Object.keys(out.data).join(', ')}</div>\n` : ''}
             </div>
           `).join('')}
         </div>
@@ -95,17 +98,23 @@ function _summaryHTML(message) {
 
 /** feedback for debugging
  * @param {StateMessage} message
+ * @param {Options} opts
  * @returns {string} HTML string
  */
-function renderNBState_feedback(message) {
+function renderNBStateFeedback(message, opts) {
+  if (!opts.feedback) return `
+    <div class="${NBSTATE_FEEDBACK_CLS}">
+      <div class="timestamp">Last updated: ${message.timestamp}</div>
+    </div>
+  `;
   const updateClass = message.changeType === "notebookUpdate" ? "update-flash" : "";
   return `
-    <div class="notebook-state-feedback">
+    <div class="${NBSTATE_FEEDBACK_CLS}">
       <div class="timestamp">Last updated: ${message.timestamp}</div>
-      ${_summ_stl}
+      ${SUMMSTL}
       <details class="${updateClass}">
         <summary><strong>Cells:</strong></summary>
-        ${_summaryHTML(message)}
+        ${summaryHTML(message)}
       </details>
     </div>
   `;
@@ -117,10 +126,10 @@ function renderNBState_feedback(message) {
 function getStateScript() {
   const doc = globalThis.document;
   return (
-    doc.querySelector("script#notebook-state-json") ||
+    doc.querySelector(`script#${NBSTATE_SCRIPT_ID}`) ||
     doc.body.appendChild(
       Object.assign(doc.createElement("script"), {
-        id: "notebook-state-json",
+        id: NBSTATE_SCRIPT_ID,
         type: "application/json",
       })
     )
@@ -131,92 +140,92 @@ function getStateScript() {
  * @param {StateMessage} message
  * @param {HTMLElement} element
  * @param {string} outputId
+ * @param {Options} opts
  */
-function setupNBState(message, element, outputId) {
+function setupNBState(message, element, outputId, opts) {
   const t = new Date().toLocaleTimeString();
   message.timestamp = t;
-
   // Update feedback in this output
-  element.innerHTML = renderNBState_feedback(message);
-
-  // Update state if we're the owner
-  const stateScript = getStateScript();
-  if (!stateScript.dataset.owner) {
-    stateScript.dataset.owner = outputId;
-  }
-  if (stateScript.dataset.owner === outputId) {
-    stateScript.textContent = JSON.stringify(message);
-  }
+  element.innerHTML = renderNBStateFeedback(message, opts);
+  // Update state if we're the owner or first time
+  const script = getStateScript();
+  if (!script.dataset.owner) script.dataset.owner = outputId;
+  if (script.dataset.owner === outputId) script.textContent = JSON.stringify(message);
 }
 
+class NBStateRenderer {
+  static _defaultOpts = { feedback: true, watch: true };
+  static _renderers = new Map();  // Track listeners, options per output
+  
+  static render(context, outputItem, element) {
+    const feedbackItemId = outputItem.id;
+    const opts = outputItem.json();
+    console.log("output item", feedbackItemId, outputItem.mime, opts);
+    const nOpts = pickDefined(opts, 'watch', 'feedback');
 
-/** Check if there are any state outputs left
- * @returns {boolean}
- */
-function hasStateOutputs() {
-  const doc = globalThis.document;
-  return doc.querySelectorAll('.notebook-state-feedback').length > 0;
+    let renderer = this._renderers.get(feedbackItemId);
+    if (!renderer) {
+      renderer = new this(context, element, feedbackItemId, nOpts);
+      this._renderers.set(feedbackItemId, renderer);
+    } else {
+      renderer.opts = { ...renderer.opts, ...nOpts };
+    }
+    
+    context.postMessage({ type: "getState", outputId: feedbackItemId, opts: nOpts });
+    return renderer;
+  }
+
+  static delete(feedbackItemId) {
+    const stateScript = getStateScript();
+    if (stateScript) {  // If this was the owner, clear ownership
+      if (stateScript.dataset.owner === feedbackItemId) delete stateScript.dataset.owner;
+    }
+    const renderer = this._renderers.get(feedbackItemId);
+    if (renderer) {
+      renderer.listener.dispose();
+      this._renderers.delete(feedbackItemId);
+    }
+    // Check for remaining outputs after DOM update
+    globalThis.requestAnimationFrame(() => {
+      if (!globalThis.document.querySelectorAll(`.${NBSTATE_FEEDBACK_CLS}`).length) {
+        stateScript?.remove();
+      }
+    });
+  }
+
+  constructor(context, feedbackEl, feedbackItemId, opts) {
+    this.feedbackEl = feedbackEl;
+    this.feedbackItemId = feedbackItemId;
+    this.opts = { ...NBStateRenderer._defaultOpts, ...opts };
+    this.listener = context.onDidReceiveMessage(this.onMessage.bind(this));
+  }
+  
+  onMessage(message) {
+    if (message.type === "state") {
+      setupNBState(message, this.feedbackEl, this.feedbackItemId, this.opts);
+    } else if (message.type === "error") {
+      this.feedbackEl.innerHTML = `<div class="error">${message.message}</div>`;
+    }
+  }
 }
 
 /** @type {ActivationFunction} */
 export function activate(context) {
-  // Track listeners per output
-  const messageListeners = new Map();
+  if (!context.postMessage) throw new Error("No postMessage function");
 
   return {
+    /** @param {OutputItem} outputItem */
+    /** @param {HTMLElement} element */
     renderOutputItem(outputItem, element) {
-      try {
-        console.log("output item", outputItem.id, outputItem.mime, outputItem.json());
-
-        if (context.postMessage) {
-          const listener = context.onDidReceiveMessage((message) => {
-            if (message.type === "error") {
-              element.innerHTML = `<div class="error">${message.message}</div>`;
-              return;
-            }
-            if (message.type === "state") setupNBState(message, element, outputItem.id);
-          });
-          messageListeners.set(outputItem.id, listener);
-
-          setTimeout(() => {
-            context.postMessage({ type: "getState", outputId: outputItem.id });
-          }, 100);
-        }
-
-        element.innerHTML = `
-            <div>Requesting notebook state...</div>
-        `;
-      } catch (error) {
+      try { NBStateRenderer.render(context, outputItem, element); }
+      catch (error) {
         console.error("Error in renderer:", error);
         element.innerHTML = `<div class="error">Error: ${error.message}</div>`;
       }
     },
-
     disposeOutputItem(outputItemId) {
-      const stateScript = getStateScript();
-      if (stateScript) {
-        // If this was the owner, clear ownership
-        if (stateScript.dataset.owner === outputItemId) {
-          delete stateScript.dataset.owner;
-        }
-      }
-      if (context.postMessage) {
-        context.postMessage({ type: "deregister", outputItemId });
-      }
-
-      // unsubscribe from state updates
-      const listener = messageListeners.get(outputItemId);
-      if (listener) {
-        listener.dispose();
-        messageListeners.delete(outputItemId);
-      }
-
-      // Check for remaining outputs after DOM update
-      globalThis.requestAnimationFrame(() => {
-        if (!hasStateOutputs()) {
-          stateScript?.remove();
-        }
-      });
-    },
+      NBStateRenderer.delete(outputItemId);
+      context?.postMessage({ type: "deregister", outputId: outputItemId });
+    }
   };
 }
