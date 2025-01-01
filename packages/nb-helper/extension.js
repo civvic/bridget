@@ -9,7 +9,8 @@ const crypto = require('crypto');
 /**
  * @typedef {Object} StateMessage
  * @property {'state'} type - Message type identifier
- * @property {Object} data - Notebook state data
+ * @property {Object} cells - Notebook cells
+ * @property {Object} NBData - Notebook metadata
  * @property {'notebookUpdate'} [changeType] - Type of change that triggered update
  */
 
@@ -218,23 +219,40 @@ class NBStateMonitor {
     return notebook.getCells().map(processCell);
   }
 
+  static getNbData(nb) {
+    return { metadata:nb.metadata, cellCount: nb.cellCount, notebookType: nb.notebookType };
+  }
+
+  static sentNBState(nb, reqMsg, changeType) {
+    const cells = NBStateMonitor.getCellsData(nb);
+    const nbData = NBStateMonitor.getNbData(nb);
+    /** @type {StateMessage} */
+    const message = { type: "state", cells: cells, nbData: nbData };
+    if (changeType) message.changeType = changeType;
+    if (reqMsg) {
+      message.outputId = reqMsg.outputId;
+      message.reqId = reqMsg.reqId;
+    }
+    NBStateMonitor.messaging.postMessage(message);
+  }
+
   /** @param {{message: GetStateMessage | DeregisterMessage}} e */
   static onRendererMessage(e) {
     console.log("Message from renderer:", e);
     const editor = vscode.window.activeNotebookEditor;
     if (!editor) return;
-    const monitor = NBStateMonitor.get(editor.notebook) ?? NBStateMonitor.create(editor.notebook);
+    const nb = editor.notebook;
+    const monitor = NBStateMonitor.get(nb) ?? NBStateMonitor.create(nb);
     const nOpts = e.message.opts;
     if (nOpts) {
       if (nOpts.watch !== undefined) monitor.#opts.watch = nOpts.watch;
     }
     if (e.message.type === "getState") {
       monitor.addStateOutput(e.message.outputId);
-      const cells = NBStateMonitor.getCellsData(editor.notebook);
-      NBStateMonitor.messaging.postMessage({ type: "state", cells: cells });
+      NBStateMonitor.sentNBState(nb, e.message);
     } else if (e.message.type === "deregister") {
       monitor.removeStateOutput(e.message.outputId);
-      if (monitor.isEmpty) NBStateMonitor.delete(editor.notebook);
+      if (monitor.isEmpty) NBStateMonitor.delete(nb);
     }
   }
 
@@ -261,30 +279,23 @@ class NBStateMonitor {
     const hasContentChanges = event.contentChanges.length > 0;
     const hasCellChanges = event.cellChanges.some(
       /** @param {vscode.NotebookCellChangeEvent} change */
-      (change) =>
-        // change.executionSummary || // Cell was executed
-        change.document || // Cell content changed
-        change.metadata || // Cell metadata changed
-        change.outputs // Cell outputs changed
+      change => // change.executionSummary || // Cell was executed
+                change.document || // Cell content changed
+                change.metadata || // Cell metadata changed
+                change.outputs // Cell outputs changed
     );
 
     if (hasContentChanges || hasCellChanges) {
       // Debounce content-only changes
       const isOnlyContentChange = event.cellChanges.every(
-        (change) => change.document && !change.outputs
+        change => change.document && !change.outputs
       );
 
       if (isOnlyContentChange) {
         if (monitor.debounceTimer) clearTimeout(monitor.debounceTimer);
         monitor.debounceTimer = setTimeout(() => {
-          /** @type {StateMessage} */
-          const cells = NBStateMonitor.getCellsData(notebook);
-          NBStateMonitor.messaging.postMessage({
-            type: "state",
-            cells: cells,
-            changeType: "notebookUpdate",
-          });
-        }, 1000); // 1 second delay
+          NBStateMonitor.sentNBState(notebook, "notebookUpdate");
+        }, 1000);
         return;
       }
       if (monitor.debounceTimer) {
@@ -296,13 +307,7 @@ class NBStateMonitor {
         change => change.outputs?.some(output => output.items?.some(item => item.mime !== NBSTATE_MIME))
       );
       if (changedCells.length > 0) {
-        const cells = NBStateMonitor.getCellsData(notebook);
-        /** @type {StateMessage} */
-        NBStateMonitor.messaging.postMessage({
-          type: "state",
-          cells: cells,
-          changeType: "notebookUpdate",
-        });
+        NBStateMonitor.sentNBState(notebook, "notebookUpdate");
       }
     }
   }

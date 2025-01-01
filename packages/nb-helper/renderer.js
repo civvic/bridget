@@ -150,7 +150,11 @@ function setupNBState(message, element, outputId, opts) {
   // Update state if we're the owner or first time
   const script = getStateScript();
   if (!script.dataset.owner) script.dataset.owner = outputId;
-  if (script.dataset.owner === outputId) script.textContent = JSON.stringify(message);
+  if (script.dataset.owner === outputId) {
+    script.dataset.reqId = message.reqId;
+    script.dataset.ts = message.timestamp;
+    script.textContent = JSON.stringify(message);
+  }
 }
 
 class NBStateRenderer {
@@ -160,6 +164,7 @@ class NBStateRenderer {
   static render(context, outputItem, element) {
     const feedbackItemId = outputItem.id;
     const opts = outputItem.json();
+    const reqId = opts.id
     console.log("output item", feedbackItemId, outputItem.mime, opts);
     const nOpts = pickDefined(opts, 'watch', 'feedback');
 
@@ -171,7 +176,7 @@ class NBStateRenderer {
       renderer.opts = { ...renderer.opts, ...nOpts };
     }
     
-    context.postMessage({ type: "getState", outputId: feedbackItemId, opts: nOpts });
+    context.postMessage({ type: "getState", outputId: feedbackItemId, reqId: reqId, opts: nOpts });
     return renderer;
   }
 
