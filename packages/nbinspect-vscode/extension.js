@@ -318,8 +318,8 @@ class NBStateMonitor {
 
 /** @param {vscode.ExtensionContext} context */
 function activate(context) {
-  console.log('Congratulations, your extension "nb-helper" is now active!');
-  const messaging = vscode.notebooks.createRendererMessaging("nb-helper-renderer");
+  console.log('Congratulations, your extension "nbinspect" is now active!');
+  const messaging = vscode.notebooks.createRendererMessaging("nbinspect-renderer");
   NBStateMonitor.messaging = messaging;
   messaging.onDidReceiveMessage(NBStateMonitor.onRendererMessage);
   const listener = vscode.workspace.onDidChangeNotebookDocument(NBStateMonitor.onNotebookDocumentChange);

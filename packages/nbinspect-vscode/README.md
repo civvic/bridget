@@ -1,4 +1,4 @@
-# nb-helper
+# nbinspect
 > Helper extension for notebook state capture
 
 ## Features

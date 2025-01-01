@@ -8,7 +8,7 @@ importers:
 
   .: {}
 
-  packages/nb-helper:
+  packages/nbinspect:
     devDependencies:
       '@types/mocha':
         specifier: ^10.0.10

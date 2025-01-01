@@ -1,19 +1,19 @@
 {
-  "name": "nb-helper",
-  "displayName": "Notebook Helper",
+  "name": "nbinspect",
+  "displayName": "Notebook state inspect",
   "description": "Helper extension for notebook state",
   "version": "0.0.18",
   "publisher": "spikey-summers",
   "repository": {
     "type": "git",
     "url": "https://github.com/civvic/nb-bridget.git",
-    "directory": "nb-helper"
+    "directory": "nbinspect-vscode"
   },
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/yourusername/bridget/issues"
   },
-  "homepage": "https://github.com/civvic/bridget/tree/main/nb-helper#readme",
+  "homepage": "https://github.com/civvic/bridget/tree/main/nbinspect-vscode#readme",
   "engines": {
     "vscode": "^1.93.0"
   },
@@ -28,8 +28,8 @@
   "contributes": {
     "notebookRenderer": [
       {
-        "id": "nb-helper-renderer",
-        "displayName": "Notebook Helper Renderer",
+        "id": "nbinspect-renderer",
+        "displayName": "Notebook state renderer",
         "mimeTypes": [
           "application/x-notebook-state"
         ],
