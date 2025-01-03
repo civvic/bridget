@@ -1,30 +1,34 @@
-// The module 'vscode' contains the VS Code extensibility API
-
-
-
-// Import the module and reference it with the alias vscode in your code below
 const vscode = require('vscode');
 const crypto = require('crypto');
 
 /**
  * @typedef {Object} StateMessage
- * @property {'state'} type - Message type identifier
+ * @property {'state''} type - Message type identifier
  * @property {Object} cells - Notebook cells
  * @property {Object} NBData - Notebook metadata
+ * @property {number} timestamp - Timestamp of the state message
  * @property {'notebookUpdate'} [changeType] - Type of change that triggered update
+ * @property {string} [outputId] - ID of the output requesting state
+ * @property {string} [reqid] - ID of the request
  */
 
 /**
- * @typedef {Object} GetStateMessage
- * @property {'getState'} type - Message type identifier
+ * @typedef {Object} RendererStateMessage
+ * @property {'getState' | 'updateState'} type - Message type identifier
+ * @property {string} outputId - ID of the output requesting state
+ * @property {string} reqid - ID of the request
+ * @property {Object} opts - Options for the renderer
+ */
+
+/**
+ * @typedef {Object} RendererDeregisterMessage
+ * @property {'deregister'} type - Message type identifier
  * @property {string} outputId - ID of the output requesting state
  */
 
-/**
- * @typedef {Object} DeregisterMessage 
- * @property {'deregister'} type - Message type identifier
- * @property {string} outputItemId - ID of the output being removed
- */
+let DEBUG = true;
+
+const MIME = 'application/x-notebook-state';  // Renderer MIME type
 
 // ---- Utils ----
 
@@ -32,9 +36,99 @@ function delIfEmpty(obj, key) {
   if (obj[key] && Object.keys(obj[key]).length === 0) delete obj[key];
 }
 
+// function debounce(func, delay) {
+//   let timer;
+//   return function (...args) {
+//     clearTimeout(timer);
+//     timer = setTimeout(() => func.apply(this, args), delay);
+//   };
+// }
+
+/** Check if a notebook has any mime outputs.
+ * @param {vscode.NotebookDocument} nb
+ * @param {string} mime
+ * @returns {boolean}
+ */
+function hasMimeOutputs(nb, mime) {
+  return nb.getCells().some(c => c.outputs.some(o => o.items.some(it => it.mime === mime)));
+}
+
+function isRendererCell(nb, cell) {
+  return cell.outputs.some(o => o.items.some(it => it.mime === MIME));
+}
+
+function cellChange(change) {
+  const ch = {
+    executionSummary: change.executionSummary ? true : undefined,
+    document: change.document ? true : undefined,
+    metadata: change.metadata ? true : undefined,
+    outputs: change.outputs ? true : undefined
+  }
+  return ch;
+}
+
+/** @param {vscode.NotebookCellChangeEvent} ch */
+function hasChangeMimeOutput(ch) {
+  const outs = ch.outputs;
+  return (outs && outs.length === 1 && outs[0].items.length === 1 && outs[0].items[0].mime === MIME);
+}
+
+/** @param {vscode.NotebookDocumentCellChange} ch */
+function hasOnlyExecutionSummary(ch) {
+  return  ch.executionSummary && !ch.document && !ch.metadata && !ch.outputs;
+}
+
+
+/** @param {vscode.NotebookDocumentCellChange} ch */
+function hasOnlyOutputs(ch) {
+  return  ch.outputs && !ch.document && !ch.metadata && !ch.executionSummary;
+}
+
+function hasOnlyMetadata(ch) {
+  return  ch.metadata && !ch.document && !ch.executionSummary && !ch.outputs;
+}
+
+// const CHANGETYPES = ['outputs', 'document', 'metadata', 'executionSummary'];
+// /** @param {vscode.NotebookDocumentCellChange} cellCh */
+// function hasOnlyChange(cellCh, chType) {
+//   const chs = CHANGETYPES.filter(t => cellCh[t]);
+//   return  chs.length === 1 && chs[0] === chType;
+// }
+
+/** @param {vscode.NotebookDocument} nb */
+/** @param {vscode.NotebookDocumentChangeEvent} event */
+function relevantChanges(nb, event, skipRendererOutput = true) {
+  for (const ch of event.cellChanges) {
+    const cell = ch.cell;
+    const isRenderer = isRendererCell(nb, cell);
+    if (isRenderer && skipRendererOutput) return false;
+    const isSummary = hasOnlyExecutionSummary(ch);
+    if (!isRenderer && isSummary) return false;
+    if (hasOnlyOutputs(ch) && hasChangeMimeOutput(ch)) return false;
+    if (hasOnlyMetadata(ch) && !cell.outputs.length) return false;
+  }
+  return true;
+}
+
+/** @param {vscode.NotebookDocument} nb */
+/** @param {vscode.NotebookDocumentChangeEvent} event */
+function relevantEvent(nb, event, contentOnly, skipRendererOutput = true) {
+  const hasContentChanges = event.contentChanges.length > 0;  // cells added or removed
+  if (contentOnly && !hasContentChanges) return false;
+  const chs = event.cellChanges.map(ch => [ch.cell.index, cellChange(ch)]);
+  if (DEBUG) console.log("cellChanges", JSON.stringify(chs));
+  if (!relevantChanges(nb, event, skipRendererOutput)) return false;
+  return true;
+}
+  
+function changedCells(nb, evts, contentOnly) {
+  const _evts = evts.filter(evt => relevantEvent(nb, evt, contentOnly));
+  return new Map(_evts.flatMap(evt => evt.cellChanges.map(ch => [ch.cell.index, ch.cell])));
+}
+
+
 // ---- Notebook State monitoring ----
 
-const NBSTATE_MIME = 'application/x-notebook-state';
 // ---- Mime handling ----
 
 function isJsonMime(mime) {
@@ -66,10 +160,10 @@ function bufferToString(data, mime) {
     // JSON types need parsing
     if (isJsonMime(mime)) {
         try {
-            return JSON.parse(data.toString('utf8'));
+          return JSON.parse(data.toString('utf8'));
         } catch (e) {
-            console.warn(`Failed to parse JSON for ${mime}`, e);
-            return data.toString('utf8');
+          console.warn(`Failed to parse JSON for ${mime}`, e);
+          return data.toString('utf8');
         }
     }
     // Text types (including SVG) use UTF-8
@@ -162,32 +256,51 @@ function processCell(cell) {
   return cellData;
 }
 
-// /**
-//  * Get current notebook state data
-//  * @returns {Object | null} Notebook cells data or null if no active editor
-//  */
-// function getCellsData() {
-//   const editor = vscode.window.activeNotebookEditor;
-//   if (!editor) return null;
-//   return editor.notebook.getCells().map(processCell);
-// }
+function getCellsData(notebook) {
+  return notebook.getCells().map(processCell);
+}
+
+function getNbData(nb) {
+  return { metadata:nb.metadata, cellCount: nb.cellCount, notebookType: nb.notebookType };
+}
+
+/** 
+ * @param {vscode.NotebookDocument} nb
+ * @param {RendererMessage | null} reqMsg
+ * @param {'notebookUpdate' | undefined} changeType
+ */
+function sentNBState(nb, changeType) {
+  const cells = getCellsData(nb);
+  const nbData = getNbData(nb);
+  const t = Date.now();
+  if (DEBUG) console.log("sentNBState", t);
+  /** @type {StateMessage} */
+  const message = { type: "state", cells: cells, nbData: nbData, timestamp: t };
+  if (changeType) message.changeType = changeType;
+  NBStateMonitor.messaging.postMessage(message);
+}
 
 class NBStateMonitor {
   static monitors = new Map();  // notebook.uri -> NBStateMonitor
-  static defaultOpts = { watch: true };
+  static defaultOpts = {
+    watch: false,  // watch for changes, otherwise only send state on renderer request
+    contentOnly: false,  // send state if notebook structure changes, e.g. cells added or removed
+    debug: false
+  };
   static messaging = null;
-
-  /** @type {Set<string>} - Track state output IDs for this notebook */
-  #stateOutputs = new Set();
-  #debounceTimer = null;
+  static defaultDebounceDelay = 600;
+  
+  /** @type {Set<string>} - Track renderer output IDs for this notebook to filter out changes */
   #uri;
   #opts;
-
+  debounce = true;
+  #debounceDelay = NBStateMonitor.defaultDebounceDelay;
+  
   constructor(notebook, opts = {}) {
     this.#uri = notebook.uri.toString();
     this.#opts = { ...NBStateMonitor.defaultOpts, ...opts };
   }
-
+  
   static get(notebook) { return this.monitors.get(notebook.uri.toString()); }
   static delete(notebook) { this.monitors.delete(notebook.uri.toString()); }
   static create(notebook, opts) {
@@ -195,122 +308,103 @@ class NBStateMonitor {
     this.monitors.set(notebook.uri.toString(), monitor);
     return monitor;
   }
-
-  addStateOutput(outputId) { this.#stateOutputs.add(outputId); }
-  removeStateOutput(outputId) { this.#stateOutputs.delete(outputId); }
-  hasStateOutput(outputId) { return this.#stateOutputs.has(outputId); }
-
-  get isEmpty() { return this.#stateOutputs.size === 0; }
-
-  get debounceTimer() { return this.#debounceTimer; }
-  set debounceTimer(timer) {
-    if (this.#debounceTimer) clearTimeout(this.#debounceTimer);
-    this.#debounceTimer = timer;
+  
+  get debounceDelay() { 
+    return this.#debounceDelay;
+  }
+  restoreDebounceDelay() {
+    this.#debounceDelay = NBStateMonitor.defaultDebounceDelay;
+  }
+  oneShotDelay(delay = 100) {
+    this.#debounceDelay = delay;
+    setTimeout(() => {
+      this.restoreDebounceDelay();
+    }, 1000);
   }
 
-  static hasStateFeedbackOutputs(notebook) {
-    return notebook.getCells().some(
-      /** @param {vscode.NotebookCell} cell */
-      cell => cell.outputs.some(output => output.items.some(item => 
-        item.mime === NBSTATE_MIME)));
-  }
+  get watch() { return this.#opts.watch; }
+  set watch(flag) { this.#opts.watch = flag; }
+  get contentOnly() { return this.#opts.contentOnly; }
+  set contentOnly(flag) { this.#opts.contentOnly = flag; }
 
-  static getCellsData(notebook) {
-    return notebook.getCells().map(processCell);
-  }
-
-  static getNbData(nb) {
-    return { metadata:nb.metadata, cellCount: nb.cellCount, notebookType: nb.notebookType };
-  }
-
-  static sentNBState(nb, reqMsg, changeType) {
-    const cells = NBStateMonitor.getCellsData(nb);
-    const nbData = NBStateMonitor.getNbData(nb);
-    /** @type {StateMessage} */
-    const message = { type: "state", cells: cells, nbData: nbData };
-    if (changeType) message.changeType = changeType;
-    if (reqMsg) {
-      message.outputId = reqMsg.outputId;
-      message.reqId = reqMsg.reqId;
-    }
-    NBStateMonitor.messaging.postMessage(message);
-  }
-
-  /** @param {{message: GetStateMessage | DeregisterMessage}} e */
+  /** @param {{message: RendererStateMessage | RendererDeregisterMessage}} e */
   static onRendererMessage(e) {
-    console.log("Message from renderer:", e);
     const editor = vscode.window.activeNotebookEditor;
     if (!editor) return;
-    const nb = editor.notebook;
+    /** @type {RendererStateMessage | RendererDeregisterMessage} */
+    const nb = editor.notebook; const msg = e.message;
+    if (DEBUG) console.log("Message from renderer");
+    if (DEBUG) console.log(msg.type, 'from:', msg.outputId);
     const monitor = NBStateMonitor.get(nb) ?? NBStateMonitor.create(nb);
-    const nOpts = e.message.opts;
-    if (nOpts) {
-      if (nOpts.watch !== undefined) monitor.#opts.watch = nOpts.watch;
+    if (msg.type === "deregister") {
+      if (DEBUG) console.log("---- deregister", msg.outputId);
+      if (!hasMimeOutputs(nb, MIME)) {
+        NBStateMonitor.delete(nb);
+        if (DEBUG) console.log("---- deleted monitor");
+      }
+      if (DEBUG) console.log("----"); return;
     }
-    if (e.message.type === "getState") {
-      monitor.addStateOutput(e.message.outputId);
-      NBStateMonitor.sentNBState(nb, e.message);
-    } else if (e.message.type === "deregister") {
-      monitor.removeStateOutput(e.message.outputId);
-      if (monitor.isEmpty) NBStateMonitor.delete(nb);
+    const nOpts = msg.opts;
+    if (DEBUG) console.log('nOpst:', nOpts);
+    if (DEBUG) console.log("----");
+    if (nOpts.watch !== undefined) monitor.watch = nOpts.watch;
+    if (nOpts.contentOnly !== undefined) monitor.contentOnly = nOpts.contentOnly;
+    if (nOpts.debug !== undefined) DEBUG = nOpts.debug;
+    if (!monitor.watch) {
+      sentNBState(nb, msg);
+    } else {
+      if (msg.type === "getState") {
+        monitor.oneShotDelay();  // reduce delay for renderer cell changes
+      } else {  // updateState
+        monitor.oneShotDelay();  // reduce delay for renderer cell changes
+      }
+      sentNBState(nb, msg);
     }
   }
-
-  /** @param {vscode.NotebookDocumentChangeEvent} event */
-  static onNotebookDocumentChange(event) {
-    const notebook = event.notebook;
-    const monitor = NBStateMonitor.get(notebook);
-    if (!monitor || !monitor.#opts.watch) return;
-
-    // Filter out changes that only affect feedback outputs
-    const hasNonStateChanges = event.cellChanges.some((change) =>
-      change.outputs?.some((output) => !monitor.hasStateOutput(output.id))
-    );
-
-    if (!hasNonStateChanges) return; // Skip if only state outputs changed
-
-    // Stop monitoring if no state outputs remain
-    if (!NBStateMonitor.hasStateFeedbackOutputs(notebook)) {
-      NBStateMonitor.delete(notebook);
-      return;
+  
+  /** @param {vscode.NotebookDocumentChangeEvent} allEvts[] */
+  _onChange(allEvts) {
+    if (allEvts.length === 0 || !this.watch) return;
+    const nb = allEvts[0].notebook;
+    const cells = changedCells(nb, allEvts, this.contentOnly);
+    if (!cells.size) { if (DEBUG) console.log("-------- no relevant changed cells"); return; };
+    if (this.watch) {
+      // assume this changes was triggered by a renderer cell change
+      // if (cells.values().some(c => isRendererCell(nb, c))) this.oneShotDelay();
     }
+    sentNBState(nb, "notebookUpdate");
+  }
 
-    // Process notebook changes
-    const hasContentChanges = event.contentChanges.length > 0;
-    const hasCellChanges = event.cellChanges.some(
-      /** @param {vscode.NotebookCellChangeEvent} change */
-      change => // change.executionSummary || // Cell was executed
-                change.document || // Cell content changed
-                change.metadata || // Cell metadata changed
-                change.outputs // Cell outputs changed
-    );
+  static onChange = (() => {
+    const debounceState = new WeakMap();
 
-    if (hasContentChanges || hasCellChanges) {
-      // Debounce content-only changes
-      const isOnlyContentChange = event.cellChanges.every(
-        change => change.document && !change.outputs
-      );
-
-      if (isOnlyContentChange) {
-        if (monitor.debounceTimer) clearTimeout(monitor.debounceTimer);
-        monitor.debounceTimer = setTimeout(() => {
-          NBStateMonitor.sentNBState(notebook, "notebookUpdate");
-        }, 1000);
+    return (event) => {
+      const monitor = NBStateMonitor.get(event.notebook);
+      if (!monitor || !monitor.watch) return;
+      
+      if (monitor.debounce) {
+        let state = debounceState.get(monitor) ?? { events: [], timer: null, delay: monitor.debounceDelay };
+        if (DEBUG) console.log("-------- d");
+        
+        state.events.push(event);
+        clearTimeout(state.timer);
+        
+        state.timer = setTimeout(() => {
+          const allEvts = state.events;
+          if (allEvts.length === 0) return;
+          debounceState.delete(monitor);
+          if (!NBStateMonitor.get(allEvts[0].notebook)) return;  // deleted
+          monitor.restoreDebounceDelay();
+          monitor._onChange(allEvts);
+        }, state.delay);
+        
+        debounceState.set(monitor, state);
         return;
       }
-      if (monitor.debounceTimer) {
-        clearTimeout(monitor.debounceTimer);
-        monitor.debounceTimer = null;
-      }
-      // is change in one of our feedback elements?
-      const changedCells = event.cellChanges.filter(
-        change => change.outputs?.some(output => output.items?.some(item => item.mime !== NBSTATE_MIME))
-      );
-      if (changedCells.length > 0) {
-        NBStateMonitor.sentNBState(notebook, "notebookUpdate");
-      }
-    }
-  }
+      
+      monitor._onChange([event]);
+    };
+  })();
 
 }
 
@@ -318,18 +412,17 @@ class NBStateMonitor {
 
 /** @param {vscode.ExtensionContext} context */
 function activate(context) {
-  console.log('Congratulations, your extension "nbinspect" is now active!');
+  if (DEBUG) console.log('Extension "nbinspect" is now active!');
   const messaging = vscode.notebooks.createRendererMessaging("nbinspect-renderer");
   NBStateMonitor.messaging = messaging;
   messaging.onDidReceiveMessage(NBStateMonitor.onRendererMessage);
-  const listener = vscode.workspace.onDidChangeNotebookDocument(NBStateMonitor.onNotebookDocumentChange);
+  const listener = vscode.workspace.onDidChangeNotebookDocument(
+    NBStateMonitor.onChange);
   context.subscriptions.push(messaging, listener);
 }
 
 function deactivate() {
-  NBStateMonitor.monitors.forEach(monitor => {
-    if (monitor.debounceTimer) clearTimeout(monitor.debounceTimer);
-  });
+  NBStateMonitor.monitors.forEach( monitor => monitor.watch = false );
   NBStateMonitor.monitors.clear();
 }
 

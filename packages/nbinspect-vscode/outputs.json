@@ -6,16 +6,16 @@
       "source": "# cell 0",
       "metadata": {
         "bridget": {
-          "id": "d8270901-1e9d-4af7-aee3-4c8bb27c0a4e"
+          "id": "99ebe083-6dfa-4a25-8327-b8f4f67806bb"
         }
       }
     },
     {
       "cell_type": "code",
-      "source": "# cell 1\nimport ipywidgets as W\nimport matplotlib.pyplot as plt\nfrom IPython.display import HTML, Javascript, Image, JSON\nimport time\nfrom itertools import count\n\ncounter = count()",
+      "source": "# cell 1\nimport ipywidgets as W\nimport matplotlib.pyplot as plt\nfrom IPython.display import HTML, Javascript, Image, JSON\nimport time\nfrom itertools import count\n",
       "metadata": {
         "bridget": {
-          "id": "22e8e8f2-d4c6-46dd-9e6a-00ba7df23dac"
+          "id": "bc646d9e-2e11-4074-96ca-fc55d8a56351"
         }
       }
     },
@@ -24,7 +24,7 @@
       "source": "# cell 2\nprint(1)",
       "metadata": {
         "bridget": {
-          "id": "d60f0020-3180-4d19-9c8e-c91a60f2e4ac"
+          "id": "1a15c902-f0c6-446f-a816-159e0abc13fb"
         }
       },
       "outputs": [
@@ -40,7 +40,7 @@
       "source": "# cell 3\ndisplay('cell 3', display_id=True, metadata={'bridget': {'cell': 3}});\n",
       "metadata": {
         "bridget": {
-          "id": "8e46e600-152f-490a-bd7d-2dd3ec070226"
+          "id": "6a9a1865-0992-4f91-a6a3-91f534a6ae4c"
         }
       },
       "outputs": [
@@ -51,7 +51,7 @@
           },
           "metadata": {
             "transient": {
-              "display_id": "7a3c39f3d07d691912c2d9f8f411b249"
+              "display_id": "c0a0d5f34b961aadd650422e43922588"
             },
             "metadata": {
               "bridget": {
@@ -67,7 +67,7 @@
       "source": "# cell 4\ndisplay(HTML('cell 4'), display_id=True, metadata={'bridget': {'cell': 4}});\n",
       "metadata": {
         "bridget": {
-          "id": "bed5ce5a-a797-486a-9f30-0d111b03685c"
+          "id": "3ce3b335-3571-4827-8dde-af798e88f874"
         }
       },
       "outputs": [
@@ -79,7 +79,7 @@
           },
           "metadata": {
             "transient": {
-              "display_id": "3fa26378fcf1830107e7922a1c7b82c2"
+              "display_id": "61db5d7966020953bd0b1e41d2b0ccae"
             },
             "metadata": {
               "bridget": {
@@ -95,7 +95,7 @@
       "source": "# cell 5\ndisplay(Javascript('console.log(\"cell 5\")'), display_id=True, metadata={'bridget': {'cell': 5}});\n",
       "metadata": {
         "bridget": {
-          "id": "0b9c4794-b0aa-457a-b1a8-0bef9770d9be"
+          "id": "e01dc456-588f-4cfb-9935-facafc7826d9"
         }
       },
       "outputs": [
@@ -107,7 +107,7 @@
           },
           "metadata": {
             "transient": {
-              "display_id": "42bcfa6bbdeb58a2098a8c1dd7629cd3"
+              "display_id": "45c9c9daca4fd319f7f6b53be0436b3a"
             },
             "metadata": {
               "bridget": {
@@ -123,7 +123,7 @@
       "source": "# cell 6\nprint(6.1)\nprint(6.2)\n",
       "metadata": {
         "bridget": {
-          "id": "39a3214c-db02-4505-a8af-358cbbc67186"
+          "id": "ba1342e2-2f41-4735-9a44-ca091bac5b8a"
         }
       },
       "outputs": [
@@ -139,7 +139,7 @@
       "source": "# cell 7\ndisplay(HTML('cell 7.1'), display_id=True, metadata={'bridget': {'cell': 7.1}})\ndisplay(HTML('cell 7.2'), display_id=True, metadata={'bridget': {'cell': 7.2}});\n",
       "metadata": {
         "bridget": {
-          "id": "9ce94ebc-09ad-4a4c-b086-62ab2e8f2683"
+          "id": "f7755efc-ac65-4888-9b5a-be65f4651432"
         }
       },
       "outputs": [
@@ -151,7 +151,7 @@
           },
           "metadata": {
             "transient": {
-              "display_id": "7b077c3c7e98ef54989c05c7ef578869"
+              "display_id": "034e748608b56a30a34079c2c4653d5e"
             },
             "metadata": {
               "bridget": {
@@ -168,7 +168,7 @@
           },
           "metadata": {
             "transient": {
-              "display_id": "e13115f20b44d22b2a2473980aa72fb2"
+              "display_id": "57a483405ce7ba84ee01d5fc6b0fdaaf"
             },
             "metadata": {
               "bridget": {
@@ -184,7 +184,7 @@
       "source": "%HTML\n<h3>cell 8</h3>\n",
       "metadata": {
         "bridget": {
-          "id": "fdce5ccb-5d2b-483f-8b01-810b47ffd39a"
+          "id": "2bf7c38f-443d-48fc-99ae-3c88f9e0660e"
         }
       },
       "outputs": [
@@ -205,7 +205,7 @@
       "source": "%javascript\nconsole.log('cell 9')",
       "metadata": {
         "bridget": {
-          "id": "5cc56f04-5d24-4d64-a16c-67e20c6a12df"
+          "id": "aa713367-d5e0-47bc-9f3e-65663b267230"
         }
       },
       "outputs": [
@@ -226,7 +226,7 @@
       "source": "%markdown\ncell 10\n",
       "metadata": {
         "bridget": {
-          "id": "c66656ef-4902-4697-b9be-fd14efbeeed7"
+          "id": "72d768cb-5d70-4a32-b791-a75e2dff77fe"
         }
       },
       "outputs": [
@@ -247,7 +247,7 @@
       "source": "%SVG\n<svg width=\"100\" height=\"20\" xmlns=\"http://www.w3.org/2000/svg\">\n  <text x=\"10\" y=\"10\">cell 11</text>\n</svg>\n",
       "metadata": {
         "bridget": {
-          "id": "99e5f8a1-0d24-4e29-82ca-1ae5174d6a45"
+          "id": "ab0dde23-6bff-453e-9a93-4d11360da83f"
         }
       },
       "outputs": [
@@ -269,7 +269,7 @@
       "source": "# cell 12\nW.IntSlider(12, description='cell')",
       "metadata": {
         "bridget": {
-          "id": "d10b4d23-c14a-44c8-85de-2952731da3b9"
+          "id": "6126c0ac-873d-463a-848a-818606d2775f"
         }
       },
       "outputs": [
@@ -279,7 +279,7 @@
             "application/vnd.jupyter.widget-view+json": {
               "version_major": 2,
               "version_minor": 0,
-              "model_id": "16e0d899722742559814891768648d8c"
+              "model_id": "f8d1b61603324ef89890e0ea09cf6a40"
             },
             "text/plain": "IntSlider(value=12, description='cell')"
           },
@@ -295,7 +295,7 @@
       "source": "# cell 13\nw = W.Output()\ndisplay(w)\nwith w:\n    print('cell 13.1')\n    display('cell 13.2')\n    display(HTML('cell 13.3'))\n",
       "metadata": {
         "bridget": {
-          "id": "aa512a75-2f44-4bc6-a126-886fd8fcd359"
+          "id": "a768196a-00e5-42f4-a6aa-4a2baa1bc006"
         }
       },
       "outputs": [
@@ -305,7 +305,7 @@
             "application/vnd.jupyter.widget-view+json": {
               "version_major": 2,
               "version_minor": 0,
-              "model_id": "fe777dec77c243bb93537154bb4a68d6"
+              "model_id": "b1bff1275b354a3cae6be5249e300e32"
             },
             "text/plain": "Output()"
           },
@@ -320,7 +320,7 @@
       "source": "# cell 14\nfig = plt.figure(figsize=(4, 2.67))\nplt.plot([1,2,3,4]);\n",
       "metadata": {
         "bridget": {
-          "id": "198a326a-c0a4-4d8c-a460-69f5ef5ed24a"
+          "id": "1f8895a9-4605-41f5-991a-ceef21b67807"
         }
       },
       "outputs": [
@@ -342,7 +342,7 @@
       "source": "# cell 15\nImage('https://jupyter.org/assets/try/jupyter.png', metadata={'bridget': {'cell': 15}})",
       "metadata": {
         "bridget": {
-          "id": "a19e0c20-8e10-482f-a440-5533855f911c"
+          "id": "e8bb86d8-cece-4bfa-908c-88b406b67e10"
         }
       },
       "outputs": [
@@ -372,7 +372,7 @@
       "source": "# cell 16\ndh = display(display_id=True, metadata={'bridget': {'cell': 16}})\n",
       "metadata": {
         "bridget": {
-          "id": "768b18c0-9832-40a3-a313-59454593a877"
+          "id": "53cc0ead-34ef-49b8-b863-64f6e1289483"
         }
       },
       "outputs": [
@@ -381,7 +381,7 @@
           "data": {},
           "metadata": {
             "transient": {
-              "display_id": "59fcddb73258e929c1d3d084c8cbb349"
+              "display_id": "140fca178812ff90f44bc494bd7f7a6b"
             },
             "metadata": {
               "bridget": {
@@ -397,7 +397,7 @@
       "source": "# cell 17\ndh = display(HTML('cell 17'), display_id=True, metadata={'bridget': {'cell': 17}})\n",
       "metadata": {
         "bridget": {
-          "id": "2ad8add9-2af2-428f-8c7c-60d6e37f9d0e"
+          "id": "98b0ae67-7494-4269-964c-2681d7c819fc"
         }
       },
       "outputs": [
@@ -409,7 +409,7 @@
           },
           "metadata": {
             "transient": {
-              "display_id": "7ed528052866b72877fcc447c4e738bf"
+              "display_id": "27d4d81468853aa5391f482f5b7b6d70"
             },
             "metadata": {
               "bridget": {
@@ -425,7 +425,7 @@
       "source": "# cell 18\ndh.update(HTML('cell 18'), metadata={'bridget': {'cell': 18}})\n",
       "metadata": {
         "bridget": {
-          "id": "e221df10-846d-4baa-9b7e-d3753206cd51"
+          "id": "75fa4272-0ade-4255-834e-b90e3ec623ef"
         }
       }
     },
@@ -434,7 +434,7 @@
       "source": "# cell 19\ndisplay(JSON({'cell': 19}), display_id=True, metadata={'bridget': {'cell': 19}});\n",
       "metadata": {
         "bridget": {
-          "id": "c7629e03-3405-4d5b-a493-7e5893c6cea5"
+          "id": "378461db-515b-4aab-afe1-3c7f469dc843"
         }
       },
       "outputs": [
@@ -448,7 +448,7 @@
           },
           "metadata": {
             "transient": {
-              "display_id": "ba44f04db0a7e9348c357950cb5ca74f"
+              "display_id": "58e8dd5ca89deb41ab651d36bb3541ac"
             },
             "metadata": {
               "application/json": {
@@ -468,7 +468,7 @@
       "source": "# cell 20\ndisplay(W.IntSlider(20, description='cell'), metadata={'bridget': {'cell': 20, 'skip': True}})",
       "metadata": {
         "bridget": {
-          "id": "51605935-c164-4533-aed1-aa4fa63371cc"
+          "id": "5059a483-8e85-4e5c-b151-c9c6dc568179"
         }
       },
       "outputs": [
@@ -478,7 +478,7 @@
             "application/vnd.jupyter.widget-view+json": {
               "version_major": 2,
               "version_minor": 0,
-              "model_id": "6b7d0915cdb04fd2b3ea4f617108f296"
+              "model_id": "07de8952550f431f8539cb584acabd0c"
             },
             "text/plain": "IntSlider(value=20, description='cell')"
           },
@@ -499,7 +499,7 @@
       "source": "",
       "metadata": {
         "bridget": {
-          "id": "e7919fce-4420-426c-bfe5-a38989e67234"
+          "id": "de33bac1-7dd6-4ca3-b765-62672e789eda"
         }
       }
     },
@@ -508,7 +508,7 @@
       "source": "# cell 22\n1/0",
       "metadata": {
         "bridget": {
-          "id": "cc1963b3-db4f-4be7-ad94-4614e1a6192f"
+          "id": "b66157f8-0749-472f-9480-17e8668a736a"
         }
       },
       "outputs": [
@@ -529,26 +529,35 @@
       ]
     },
     {
-      "cell_type": "code",
-      "source": "# cell 23   \ndh = display({'application/x-notebook-state': {'feedback': True, 'watch': True}}, raw=True, display_id=True, \n        metadata={'bridget': {'cell': 23, 'skip': True}})\n",
+      "cell_type": "markdown",
+      "source": "# cell 23",
       "metadata": {
         "bridget": {
-          "id": "b1fc2494-94f6-429e-bd2e-1f95a8285c29"
+          "id": "ef47f9d3-c1d5-4a7e-b6bd-4c037d3aac8f"
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": "# cell 24\ncounter = count()\ndh1 = display({'application/x-notebook-state': {'feedback': True, 'watch': True, 'id': next(counter)}}, \n        raw=True, display_id=True, metadata={'bridget': {'cell': 24, 'skip': True}})\n",
+      "metadata": {
+        "bridget": {
+          "id": "7a78597c-d5e2-4f5c-8717-9fa7b24b88a8"
         }
       },
       "outputs": [
         {
           "output_type": "display_data",
           "data": {
-            "application/x-notebook-state": "{\"feedback\":true,\"watch\":true}"
+            "application/x-notebook-state": "{\"id\":1,\"update\":true}"
           },
           "metadata": {
             "transient": {
-              "display_id": "7a0133008fcbdde8f4ad8e3e1d61dccb"
+              "display_id": "b1cd65761ba3d4dcf466ff0760dba40f"
             },
             "metadata": {
               "bridget": {
-                "cell": 23,
+                "cell": 25,
                 "skip": true
               }
             }
@@ -558,37 +567,81 @@
     },
     {
       "cell_type": "code",
-      "source": "# cell 24\ndh.update({'application/x-notebook-state': {'cmd': 'update', 'id': next(counter)}}, raw=True, \n        metadata={'bridget': {'cell': 24, 'skip': True}})\n",
+      "source": "# cell 25\ndh1.update({'application/x-notebook-state': {'id': next(counter), 'update': True}}, raw=True, \n        metadata={'bridget': {'cell': 25, 'skip': True}})\n",
       "metadata": {
         "bridget": {
-          "id": "29cbe386-dfc1-428a-8fbd-26c3e43b29c0"
+          "id": "c8ee3cb5-8f24-4655-a767-12ba86479960"
         }
       }
     },
     {
       "cell_type": "code",
-      "source": "# cell 25\nprint('cell 25')\n",
+      "source": "# cell 26\nprint('cell 26 - update 1')\n",
       "metadata": {
         "bridget": {
-          "id": "3a8e8079-04c3-4afb-8634-d49db5153297"
+          "id": "670f85b3-6cb2-4abb-a836-32c010a8f489"
+        }
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": "cell 26 - update 1\n"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": "# cell 27\ndh1.update({'application/x-notebook-state': {'feedback': False, 'id': next(counter)}}, raw=True, \n        metadata={'bridget': {'cell': 27, 'skip': True}})\n",
+      "metadata": {
+        "bridget": {
+          "id": "fc0bdb05-afe5-4d0e-94cb-adc3ca3a894c"
         }
       }
     },
     {
       "cell_type": "code",
-      "source": "# cell 26\ndh.update({'application/x-notebook-state': {'feedback': False, 'id': next(counter)}}, raw=True, \n        metadata={'bridget': {'cell': 26, 'skip': True}})\n",
+      "source": "# cell 28\ndh1.update({'application/x-notebook-state': {'watch': True, 'id': next(counter)}}, raw=True, \n        metadata={'bridget': {'cell': 28, 'skip': True}})\n",
       "metadata": {
         "bridget": {
-          "id": "467fb80c-b444-4cd6-9abd-2dafe1f14fc3"
+          "id": "a6db589e-d418-46fd-ae86-161b0a02f1a9"
         }
       }
     },
     {
       "cell_type": "code",
-      "source": "# cell 27\ndh.update({'application/x-notebook-state': {'watch': False, 'id': next(counter)}}, raw=True, \n        metadata={'bridget': {'cell': 27, 'skip': True}})\n",
+      "source": "# cell 29\ndh2 = display({'application/x-notebook-state': {'feedback': True, 'watch': True, 'id': next(counter)}}, \n        raw=True, display_id=True, metadata={'bridget': {'cell': 29, 'skip': True}})\n",
       "metadata": {
         "bridget": {
-          "id": "6c1c1fd3-deee-4cac-8bc5-7a107a0f1654"
+          "id": "95f2d1e8-41d5-4246-a5d4-c2523ceb9e83"
+        }
+      },
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "application/x-notebook-state": "{\"id\":3}"
+          },
+          "metadata": {
+            "transient": {
+              "display_id": "f73dec1bb76017d7759b5cb3dca6cc01"
+            },
+            "metadata": {
+              "bridget": {
+                "cell": 30,
+                "skip": true
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": "# cell 30\ndh2.update({'application/x-notebook-state': {'id': next(counter)}}, raw=True, \n        metadata={'bridget': {'cell': 30, 'skip': True}})\n",
+      "metadata": {
+        "bridget": {
+          "id": "40c78763-721c-45aa-ae4f-f2c550d74205"
         }
       }
     }
@@ -619,8 +672,9 @@
       "nbformat_minor": 4,
       "indentAmount": " "
     },
-    "cellCount": 28,
+    "cellCount": 31,
     "notebookType": "jupyter-notebook"
   },
-  "timestamp": "1:41:25 PM"
+  "timestamp": 1735925139616,
+  "changeType": "notebookUpdate"
 }

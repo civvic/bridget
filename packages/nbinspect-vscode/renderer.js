@@ -1,44 +1,57 @@
 // This script runs in the notebook output webview
 debugger;
 
-/** @typedef {import('vscode-notebook-renderer').ActivationFunction} ActivationFunction */
+/** @typedef {import('vscode-notebook-renderer').RendererContext} RendererContext */
 /** @typedef {import('vscode-notebook-renderer').OutputItem} OutputItem */
-/** @typedef {import('vscode-notebook-renderer').RenderContext} RenderContext */
-/** @typedef {import('vscode-notebook-renderer').NotebookRendererScript} NotebookRendererScript */
-
-/** @typedef {Object} StateMessage
- * @property {'state'} type
- * @property {'notebookUpdate' | 'initial'} changeType
- * @property {Array<CellData>} cells
+/**
+ * @typedef {Object} ExtensionMessage
+ * @property {'state'|'error'} type - Message type identifier
+ * @property {Object} cells - Notebook cells
+ * @property {Object} NBData - Notebook metadata
+ * @property {number} timestamp - Timestamp of the state message
+ * @property {'notebookUpdate'} [changeType] - Type of change that triggered update
+ * @property {string} [outputId] - ID of the output requesting state
+ * @property {string} [reqid] - ID of the request
+ * @property {string} [message] - Error message
  */
 
-/** @typedef {Object} ErrorMessage
- * @property {'error'} type
- * @property {string} message
+/**
+ * @typedef {Object} Options
+ * @property {boolean} feedback - Show feedback so user can see changes
+ * @property {boolean} watch - Watch for changes (extension)
+ * @property {boolean} contentOnly - Only estructural changes (extension)
  */
 
-/** @typedef {Object} DeregisterMessage
- * @property {'deregister'} type
- * @property {string} outputId
+/**
+ * @typedef {Object} StateMessage
+ * @property {'getState'} type - Message type identifier
+ * @property {string} outputId - ID of the output requesting state
+ * @property {string} reqid - ID of the request
+ * @property {Options} opts - Options for the renderer
  */
 
-/** @typedef {Object} CellData
+/** 
+ * @typedef {Object} DeregisterMessage
+ * @property {'deregister'} type - Message type identifier
+ * @property {string} outputId - ID of the output requesting the action
+ */
+
+/** 
+ * @typedef {Object} CellData
  * @property {'code' | 'markdown' | 'raw'} cell_type
  * @property {string} source
  * @property {Object} [metadata]
  * @property {Array<OutputData>} [outputs]
  */ 
 
-/** @typedef {Object} OutputData
+/** 
+ * @typedef {Object} OutputData
  * @property {'stream' | 'display_data' | 'execute_result' | 'error'} output_type
  * @property {Object} [data]
  * @property {Object} [metadata]
  */
 
-/** @typedef {Object} Options
- * @property {boolean} feedback  // show feedback so user can see changes
- * @property {boolean} watch     // watch for changes
- */
+let DEBUG = true;
 
 const NBSTATE_FEEDBACK_CLS = 'notebook-state-feedback';
 const NBSTATE_SCRIPT_ID = 'notebook-state-json';
@@ -53,6 +66,8 @@ const SUMMSTL = `
   .output-info { margin-left: 2em; }
 </style>
 `;
+const TSFMT = { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 };
+const timeFormatter = new Intl.DateTimeFormat(undefined, TSFMT);
 
 // ---- utils ----
 
@@ -60,6 +75,11 @@ function _truncate(str, maxLength = 100) {
   return str.length > maxLength ? str.substring(0, maxLength) + "..." : str;
 }
 
+/** Pick defined properties from an object
+ * @param {Object} obj
+ * @param {...string} keys
+ * @returns {Object}
+ */
 const pickDefined = (obj, ...keys) => Object.fromEntries(
   keys.map(k => [k, obj?.[k]]).filter(([_, v]) => v !== undefined) // eslint-disable-line no-unused-vars
 );
@@ -102,15 +122,18 @@ function summaryHTML(message) {
  * @returns {string} HTML string
  */
 function renderNBStateFeedback(message, opts) {
+  // message.timestamp is a number, convert to Date
+  const t = new Date(message.timestamp);
+  const ts = timeFormatter.format(t);
   if (!opts.feedback) return `
     <div class="${NBSTATE_FEEDBACK_CLS}">
-      <div class="timestamp">Last updated: ${message.timestamp}</div>
+      <div class="timestamp">Last updated: ${ts}</div>
     </div>
   `;
-  const updateClass = message.changeType === "notebookUpdate" ? "update-flash" : "";
+  const updateClass = "update-flash";
   return `
     <div class="${NBSTATE_FEEDBACK_CLS}">
-      <div class="timestamp">Last updated: ${message.timestamp}</div>
+      <div class="timestamp">Last updated: ${ts}</div>
       ${SUMMSTL}
       <details class="${updateClass}">
         <summary><strong>Cells:</strong></summary>
@@ -137,54 +160,54 @@ function getStateScript() {
 }
 
 /** Setup notebook state in the DOM
- * @param {StateMessage} message
+ * @param {ExtensionMessage} message
  * @param {HTMLElement} element
  * @param {string} outputId
  * @param {Options} opts
  */
 function setupNBState(message, element, outputId, opts) {
-  const t = new Date().toLocaleTimeString();
-  message.timestamp = t;
-  // Update feedback in this output
   element.innerHTML = renderNBStateFeedback(message, opts);
-  // Update state if we're the owner or first time
-  const script = getStateScript();
-  if (!script.dataset.owner) script.dataset.owner = outputId;
-  if (script.dataset.owner === outputId) {
-    script.dataset.reqId = message.reqId;
-    script.dataset.ts = message.timestamp;
+  // Update state if ts doesn't match
+  const script = getStateScript(); const d = script.dataset;
+  const ts = `${message.timestamp}`; const reqid = `${message.reqid}`;
+  const update =  !d.ts || // first time
+                  !(d.ts === ts);
+  if (DEBUG) {
+    console.group('setupNBState');
+    console.log('outputId:', outputId);
+    console.log('message reqid/ts:', reqid, ts);
+    console.log('script', JSON.stringify(d), ' - update:', update);
+    console.groupEnd();
+  }
+  if (update) {
+    d.ts = ts;
     script.textContent = JSON.stringify(message);
   }
 }
 
 class NBStateRenderer {
-  static _defaultOpts = { feedback: true, watch: true };
+  /** @type {Options} */
+  static _defaultOpts = { feedback: true, watch: false,  contentOnly: true, debug: false };
   static _renderers = new Map();  // Track listeners, options per output
   
-  static render(context, outputItem, element) {
-    const feedbackItemId = outputItem.id;
-    const opts = outputItem.json();
-    const reqId = opts.id
-    console.log("output item", feedbackItemId, outputItem.mime, opts);
-    const nOpts = pickDefined(opts, 'watch', 'feedback');
-
-    let renderer = this._renderers.get(feedbackItemId);
-    if (!renderer) {
-      renderer = new this(context, element, feedbackItemId, nOpts);
-      this._renderers.set(feedbackItemId, renderer);
-    } else {
-      renderer.opts = { ...renderer.opts, ...nOpts };
-    }
-    
-    context.postMessage({ type: "getState", outputId: feedbackItemId, reqId: reqId, opts: nOpts });
-    return renderer;
+  /**
+   * @param {RendererContext} context
+   * @param {HTMLElement} feedbackEl
+   * @param {string} feedbackItemId
+   * @param {Options} opts
+   */
+  constructor(context, feedbackEl, feedbackItemId, opts) {
+    this.feedbackEl = feedbackEl;
+    this.feedbackItemId = feedbackItemId;
+    this.opts = { ...NBStateRenderer._defaultOpts, ...opts };
+    this.listener = context.onDidReceiveMessage(this.onMessage.bind(this));
   }
-
+  
   static delete(feedbackItemId) {
     const stateScript = getStateScript();
-    if (stateScript) {  // If this was the owner, clear ownership
-      if (stateScript.dataset.owner === feedbackItemId) delete stateScript.dataset.owner;
-    }
+    // if (stateScript) {  // If this was the owner, clear ownership
+    //   if (stateScript.dataset.rid === feedbackItemId) delete stateScript.dataset.rid;
+    // }
     const renderer = this._renderers.get(feedbackItemId);
     if (renderer) {
       renderer.listener.dispose();
@@ -198,13 +221,35 @@ class NBStateRenderer {
     });
   }
 
-  constructor(context, feedbackEl, feedbackItemId, opts) {
-    this.feedbackEl = feedbackEl;
-    this.feedbackItemId = feedbackItemId;
-    this.opts = { ...NBStateRenderer._defaultOpts, ...opts };
-    this.listener = context.onDidReceiveMessage(this.onMessage.bind(this));
-  }
-  
+  static render(context, outputItem, element) {
+    const feedbackItemId = outputItem.id;
+    const opts = outputItem.json();
+    const reqid = opts.id
+    const update = opts.update
+    if (opts.debug !== undefined) DEBUG = opts.debug;
+    if (DEBUG) {
+      console.group("render");
+      console.log("feedbackItemId", feedbackItemId);
+      console.log(outputItem.mime, opts);
+      console.groupEnd();
+    }
+    const nOpts = pickDefined(opts, ...Object.keys(this._defaultOpts));
+    
+    let renderer = this._renderers.get(feedbackItemId);
+    if (!renderer) {
+      renderer = new this(context, element, feedbackItemId, nOpts);
+      this._renderers.set(feedbackItemId, renderer);
+    } else {
+      renderer.opts = { ...renderer.opts, ...nOpts };
+    }  
+    const msgType = update ? 'updateState' : 'getState';
+    /** @type {RendererStateMessage} */
+    const msg = { type: msgType, outputId: feedbackItemId, reqid: reqid, opts: nOpts };
+    context.postMessage(msg);
+    return renderer;
+  }  
+
+  /** @param {ExtensionMessage} message */
   onMessage(message) {
     if (message.type === "state") {
       setupNBState(message, this.feedbackEl, this.feedbackItemId, this.opts);
@@ -212,9 +257,10 @@ class NBStateRenderer {
       this.feedbackEl.innerHTML = `<div class="error">${message.message}</div>`;
     }
   }
+
 }
 
-/** @type {ActivationFunction} */
+/** @param {RendererContext} context */
 export function activate(context) {
   if (!context.postMessage) throw new Error("No postMessage function");
 
@@ -229,8 +275,11 @@ export function activate(context) {
       }
     },
     disposeOutputItem(outputItemId) {
+      if (DEBUG) console.log('disposeOutputItem', outputItemId);
       NBStateRenderer.delete(outputItemId);
-      context?.postMessage({ type: "deregister", outputId: outputItemId });
+      /** @type {RendererDeregisterMessage} */
+      const msg = { type: "deregister", outputId: outputItemId };
+      context?.postMessage(msg);
     }
   };
 }
