@@ -18,6 +18,7 @@ const crypto = require('crypto');
  * @property {string} outputId - ID of the output requesting state
  * @property {string} reqid - ID of the request
  * @property {Object} opts - Options for the renderer
+ * @property {string} origin - Origin of the request (window)
  */
 
 /**
@@ -57,6 +58,10 @@ function isRendererCell(nb, cell) {
   return cell.outputs.some(o => o.items.some(it => it.mime === MIME));
 }
 
+function isHiddenCell(cell) {
+  return cell.metadata?.bridget?.skip;
+}
+
 function cellChange(change) {
   const ch = {
     executionSummary: change.executionSummary ? true : undefined,
@@ -71,6 +76,11 @@ function cellChange(change) {
 function hasChangeMimeOutput(ch) {
   const outs = ch.outputs;
   return (outs && outs.length === 1 && outs[0].items.length === 1 && outs[0].items[0].mime === MIME);
+}
+
+/** @param {vscode.NotebookCellChangeEvent} ch */
+function hasHiddenOutput(ch) {
+  return ch?.outputs?.some(o => o.metadata?.metadata?.bridget?.skip);
 }
 
 /** @param {vscode.NotebookDocumentCellChange} ch */
@@ -88,23 +98,27 @@ function hasOnlyMetadata(ch) {
   return  ch.metadata && !ch.document && !ch.executionSummary && !ch.outputs;
 }
 
-// const CHANGETYPES = ['outputs', 'document', 'metadata', 'executionSummary'];
-// /** @param {vscode.NotebookDocumentCellChange} cellCh */
-// function hasOnlyChange(cellCh, chType) {
-//   const chs = CHANGETYPES.filter(t => cellCh[t]);
-//   return  chs.length === 1 && chs[0] === chType;
-// }
-
 /** @param {vscode.NotebookDocument} nb */
 /** @param {vscode.NotebookDocumentChangeEvent} event */
 function relevantChanges(nb, event, skipRendererOutput = true) {
   for (const ch of event.cellChanges) {
     const cell = ch.cell;
+    if (isHiddenCell(cell)) return false;
     const isRenderer = isRendererCell(nb, cell);
-    if (isRenderer && skipRendererOutput) return false;
+    if (isRenderer) {
+      cell.metadata.metadata.bridget.skip = true;
+      if (skipRendererOutput) return false;
+    };
     const isSummary = hasOnlyExecutionSummary(ch);
     if (!isRenderer && isSummary) return false;
-    if (hasOnlyOutputs(ch) && hasChangeMimeOutput(ch)) return false;
+    if (hasHiddenOutput(ch)) {
+      cell.metadata.metadata.bridget.skip = true;
+      return false;
+    };
+    if (hasOnlyOutputs(ch) && hasChangeMimeOutput(ch)) {
+      cell.metadata.metadata.bridget.skip = true;
+      return false;
+    };
     if (hasOnlyMetadata(ch) && !cell.outputs.length) return false;
   }
   return true;
@@ -269,13 +283,13 @@ function getNbData(nb) {
  * @param {RendererMessage | null} reqMsg
  * @param {'notebookUpdate' | undefined} changeType
  */
-function sentNBState(nb, changeType) {
+function sentNBState(nb, reqMsg, changeType) {
   const cells = getCellsData(nb);
   const nbData = getNbData(nb);
   const t = Date.now();
   if (DEBUG) console.log("sentNBState", t);
   /** @type {StateMessage} */
-  const message = { type: "state", cells: cells, nbData: nbData, timestamp: t };
+  const message = { type: "state", cells: cells, nbData: nbData, timestamp: t, origin: reqMsg.origin };
   if (changeType) message.changeType = changeType;
   NBStateMonitor.messaging.postMessage(message);
 }
@@ -291,20 +305,22 @@ class NBStateMonitor {
   static defaultDebounceDelay = 600;
   
   /** @type {Set<string>} - Track renderer output IDs for this notebook to filter out changes */
-  #uri;
-  #opts;
+  #uri;  // notebook uri
+  #origin;  // renderer origin (document.origin, webview)
+  #opts;  // options
   debounce = true;
   #debounceDelay = NBStateMonitor.defaultDebounceDelay;
   
-  constructor(notebook, opts = {}) {
+  constructor(notebook, origin, opts = {}) {
     this.#uri = notebook.uri.toString();
+    this.#origin = origin;
     this.#opts = { ...NBStateMonitor.defaultOpts, ...opts };
   }
   
   static get(notebook) { return this.monitors.get(notebook.uri.toString()); }
   static delete(notebook) { this.monitors.delete(notebook.uri.toString()); }
-  static create(notebook, opts) {
-    const monitor = new NBStateMonitor(notebook, opts);
+  static create(notebook, origin, opts = {}) {
+    const monitor = new NBStateMonitor(notebook, origin, opts);
     this.monitors.set(notebook.uri.toString(), monitor);
     return monitor;
   }
@@ -335,12 +351,12 @@ class NBStateMonitor {
     const nb = editor.notebook; const msg = e.message;
     if (DEBUG) console.log("Message from renderer");
     if (DEBUG) console.log(msg.type, 'from:', msg.outputId);
-    const monitor = NBStateMonitor.get(nb) ?? NBStateMonitor.create(nb);
+    const monitor = NBStateMonitor.get(nb) ?? NBStateMonitor.create(nb, msg.origin);
     if (msg.type === "deregister") {
       if (DEBUG) console.log("---- deregister", msg.outputId);
       if (!hasMimeOutputs(nb, MIME)) {
         NBStateMonitor.delete(nb);
-        if (DEBUG) console.log("---- deleted monitor");
+        if (DEBUG) console.log("---- deleted monitor", monitor.#uri);
       }
       if (DEBUG) console.log("----"); return;
     }
@@ -363,16 +379,15 @@ class NBStateMonitor {
   }
   
   /** @param {vscode.NotebookDocumentChangeEvent} allEvts[] */
-  _onChange(allEvts) {
+  _onChange(allEvts, nb) {
     if (allEvts.length === 0 || !this.watch) return;
-    const nb = allEvts[0].notebook;
     const cells = changedCells(nb, allEvts, this.contentOnly);
     if (!cells.size) { if (DEBUG) console.log("-------- no relevant changed cells"); return; };
     if (this.watch) {
       // assume this changes was triggered by a renderer cell change
       // if (cells.values().some(c => isRendererCell(nb, c))) this.oneShotDelay();
     }
-    sentNBState(nb, "notebookUpdate");
+    sentNBState(nb, { origin: this.#origin }, "notebookUpdate");
   }
 
   static onChange = (() => {
@@ -383,7 +398,8 @@ class NBStateMonitor {
       if (!monitor || !monitor.watch) return;
       
       if (monitor.debounce) {
-        let state = debounceState.get(monitor) ?? { events: [], timer: null, delay: monitor.debounceDelay };
+        let state = debounceState.get(monitor) ?? { 
+          events: [], timer: null, delay: monitor.debounceDelay, nb: event.notebook };
         if (DEBUG) console.log("-------- d");
         
         state.events.push(event);
@@ -393,9 +409,9 @@ class NBStateMonitor {
           const allEvts = state.events;
           if (allEvts.length === 0) return;
           debounceState.delete(monitor);
-          if (!NBStateMonitor.get(allEvts[0].notebook)) return;  // deleted
           monitor.restoreDebounceDelay();
-          monitor._onChange(allEvts);
+          if (!NBStateMonitor.get(state.nb)) return;  // monitordeleted
+          monitor._onChange(allEvts, state.nb);
         }, state.delay);
         
         debounceState.set(monitor, state);

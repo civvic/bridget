@@ -10,6 +10,7 @@ debugger;
  * @property {Object} NBData - Notebook metadata
  * @property {number} timestamp - Timestamp of the state message
  * @property {'notebookUpdate'} [changeType] - Type of change that triggered update
+ * @property {string} [origin] - Origin of the change (window.origin, webview)
  * @property {string} [outputId] - ID of the output requesting state
  * @property {string} [reqid] - ID of the request
  * @property {string} [message] - Error message
@@ -28,6 +29,7 @@ debugger;
  * @property {string} outputId - ID of the output requesting state
  * @property {string} reqid - ID of the request
  * @property {Options} opts - Options for the renderer
+ * @property {string} origin - Origin of the request (window)
  */
 
 /** 
@@ -195,12 +197,14 @@ class NBStateRenderer {
    * @param {HTMLElement} feedbackEl
    * @param {string} feedbackItemId
    * @param {Options} opts
+   * @param {string} docId - renderer document id
    */
-  constructor(context, feedbackEl, feedbackItemId, opts) {
+  constructor(context, feedbackEl, feedbackItemId, opts, docId) {
     this.feedbackEl = feedbackEl;
     this.feedbackItemId = feedbackItemId;
     this.opts = { ...NBStateRenderer._defaultOpts, ...opts };
     this.listener = context.onDidReceiveMessage(this.onMessage.bind(this));
+    this.docId = docId;
   }
   
   static delete(feedbackItemId) {
@@ -221,7 +225,7 @@ class NBStateRenderer {
     });
   }
 
-  static render(context, outputItem, element) {
+  static render(context, outputItem, element, docId) {
     const feedbackItemId = outputItem.id;
     const opts = outputItem.json();
     const reqid = opts.id
@@ -237,20 +241,23 @@ class NBStateRenderer {
     
     let renderer = this._renderers.get(feedbackItemId);
     if (!renderer) {
-      renderer = new this(context, element, feedbackItemId, nOpts);
+      renderer = new this(context, element, feedbackItemId, nOpts, docId);
       this._renderers.set(feedbackItemId, renderer);
     } else {
       renderer.opts = { ...renderer.opts, ...nOpts };
     }  
     const msgType = update ? 'updateState' : 'getState';
     /** @type {RendererStateMessage} */
-    const msg = { type: msgType, outputId: feedbackItemId, reqid: reqid, opts: nOpts };
+    const msg = { type: msgType, outputId: feedbackItemId, reqid: reqid, opts: nOpts, origin: renderer.docId };
     context.postMessage(msg);
     return renderer;
   }  
 
   /** @param {ExtensionMessage} message */
   onMessage(message) {
+    if (message.origin !== this.docId) {
+      return;
+    }
     if (message.type === "state") {
       setupNBState(message, this.feedbackEl, this.feedbackItemId, this.opts);
     } else if (message.type === "error") {
@@ -268,7 +275,8 @@ export function activate(context) {
     /** @param {OutputItem} outputItem */
     /** @param {HTMLElement} element */
     renderOutputItem(outputItem, element) {
-      try { NBStateRenderer.render(context, outputItem, element); }
+      const docId = element.ownerDocument.location.href;
+      try { NBStateRenderer.render(context, outputItem, element, docId); }
       catch (error) {
         console.error("Error in renderer:", error);
         element.innerHTML = `<div class="error">Error: ${error.message}</div>`;
