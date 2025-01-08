@@ -54,8 +54,8 @@ function hasMimeOutputs(nb, mime) {
   return nb.getCells().some(c => c.outputs.some(o => o.items.some(it => it.mime === mime)));
 }
 
-function isRendererCell(nb, cell) {
-  return cell.outputs.some(o => o.items.some(it => it.mime === MIME));
+function isRendererCell(cell) {
+  return cell?.outputs?.some(o => o.items?.some(it => it.mime === MIME));
 }
 
 function isHiddenCell(cell) {
@@ -70,6 +70,11 @@ function cellChange(change) {
     outputs: change.outputs ? true : undefined
   }
   return ch;
+}
+
+/** @param {vscode.NotebookCellChangeEvent} ch */
+function hasTransientOutputs(ch) {
+  return ch?.outputs?.some(o => o.metadata?.transient);
 }
 
 /** @param {vscode.NotebookCellChangeEvent} ch */
@@ -98,13 +103,14 @@ function hasOnlyMetadata(ch) {
   return  ch.metadata && !ch.document && !ch.executionSummary && !ch.outputs;
 }
 
-/** @param {vscode.NotebookDocument} nb */
 /** @param {vscode.NotebookDocumentChangeEvent} event */
-function relevantChanges(nb, event, skipRendererOutput = true) {
+function relevantChanges(event, skipRendererOutput = true) {
   for (const ch of event.cellChanges) {
+    // // transient outputs are always relevant
+    // if (ch.outputs && ch.outputs.some(o => o?.metadata?.transient)) return true;
     const cell = ch.cell;
     if (isHiddenCell(cell)) return false;
-    const isRenderer = isRendererCell(nb, cell);
+    const isRenderer = isRendererCell(cell);
     if (isRenderer) {
       cell.metadata.metadata.bridget.skip = true;
       if (skipRendererOutput) return false;
@@ -129,9 +135,11 @@ function relevantChanges(nb, event, skipRendererOutput = true) {
 function relevantEvent(nb, event, contentOnly, skipRendererOutput = true) {
   const hasContentChanges = event.contentChanges.length > 0;  // cells added or removed
   if (contentOnly && !hasContentChanges) return false;
-  const chs = event.cellChanges.map(ch => [ch.cell.index, cellChange(ch)]);
-  if (DEBUG) console.log("cellChanges", JSON.stringify(chs));
-  if (!relevantChanges(nb, event, skipRendererOutput)) return false;
+  if (DEBUG) {
+    const chs = event.cellChanges.map(ch => [ch.cell.index, cellChange(ch)]);
+    console.log("cellChanges", JSON.stringify(chs));
+  }
+  if (!relevantChanges(event, skipRendererOutput)) return false;
   return true;
 }
   
@@ -379,13 +387,13 @@ class NBStateMonitor {
   }
   
   /** @param {vscode.NotebookDocumentChangeEvent} allEvts[] */
-  _onChange(allEvts, nb) {
-    if (allEvts.length === 0 || !this.watch) return;
+  _onChange(allEvts, nb, transient = false) {
+    if (allEvts.length === 0 || (!this.watch && !transient)) return;
     const cells = changedCells(nb, allEvts, this.contentOnly);
     if (!cells.size) { if (DEBUG) console.log("-------- no relevant changed cells"); return; };
     if (this.watch) {
       // assume this changes was triggered by a renderer cell change
-      // if (cells.values().some(c => isRendererCell(nb, c))) this.oneShotDelay();
+      // if (cells.values().some(c => isRendererCell(c))) this.oneShotDelay();
     }
     sentNBState(nb, { origin: this.#origin }, "notebookUpdate");
   }
@@ -395,30 +403,34 @@ class NBStateMonitor {
 
     return (event) => {
       const monitor = NBStateMonitor.get(event.notebook);
-      if (!monitor || !monitor.watch) return;
+      if (!monitor) return;
       
       if (monitor.debounce) {
-        let state = debounceState.get(monitor) ?? { 
-          events: [], timer: null, delay: monitor.debounceDelay, nb: event.notebook };
+        let state = debounceState.get(monitor) ?? { events: [], timer: null, delay: monitor.debounceDelay, nb: event.notebook, transient: null };
         if (DEBUG) console.log("-------- d");
-        
-        state.events.push(event);
+          
         clearTimeout(state.timer);
-        
+        state.events.push(event);
+        const transient = event.cellChanges && event.cellChanges.some(ch => hasTransientOutputs(ch));
+        if (transient && state.transient === null) {
+          state.transient = true;
+          state.delay = 100;
+        }
+      
         state.timer = setTimeout(() => {
-          const allEvts = state.events;
-          if (allEvts.length === 0) return;
-          debounceState.delete(monitor);
+          if (!NBStateMonitor.get(state.nb)) return;  // monitor deleted
           monitor.restoreDebounceDelay();
-          if (!NBStateMonitor.get(state.nb)) return;  // monitordeleted
-          monitor._onChange(allEvts, state.nb);
+          debounceState.delete(monitor);
+          if (state.events.length === 0) return;
+          if (!monitor.watch && !state.transient) return;
+          monitor._onChange(state.events, state.nb, state.transient);
         }, state.delay);
         
         debounceState.set(monitor, state);
         return;
       }
       
-      monitor._onChange([event]);
+      monitor._onChange([event], event.notebook);
     };
   })();
 
