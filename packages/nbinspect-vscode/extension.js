@@ -74,7 +74,7 @@ function cellChange(change) {
 
 /** @param {vscode.NotebookCellChangeEvent} ch */
 function hasTransientOutputs(ch) {
-  return ch?.outputs?.some(o => o.metadata?.transient);
+  return ch?.outputs?.some(o => o.metadata?.transient && Object.keys(o.metadata.transient).length > 0);
 }
 
 /** @param {vscode.NotebookCellChangeEvent} ch */
@@ -195,6 +195,7 @@ function bufferToString(data, mime) {
   return data.toString('utf8');
 }
 
+/** @param {vscode.NotebookCellOutputItem[]} items */
 function getMimeBundle(items) {
   return items.reduce((bundle, item) => {
     if (item.data) {
@@ -243,6 +244,7 @@ function getOutputType(output) {  // 0: stream, 1: display_data, 2: execute_resu
   return output_type;
 }
 
+/** @param {vscode.NotebookCellOutput} output */
 function processOutput(output) {
   const result = { output_type: getOutputType(output) };
   const metadata = getOutputMetadata(output);
@@ -251,12 +253,16 @@ function processOutput(output) {
   return {...result, ...fields};
 }
 
-function getCellMetadata(cell) {
-  const metadata = {};
-  const cellM = cell.metadata;
-  if (cellM.metadata?.bridget) metadata.bridget = cellM.metadata.bridget;
-  if (cellM.tags?.length > 0) metadata.tags = cellM.tags;
-  if (cellM.jupyter) metadata.jupyter = cellM.jupyter;
+/** @param {vscode.NotebookCell} cell */
+function setupCellMetadata(cell) {
+  const cellMd = cell.metadata;
+  if (!cellMd.metadata?.bridget?.id) {
+    if (!cellMd.metadata) cellMd.metadata = { bridget: {id: crypto.randomUUID()} };
+    else cellMd.metadata.bridget = { ...cellMd.metadata?.bridget, id: crypto.randomUUID() };
+  };
+  const metadata = { 'bridget': cellMd.metadata.bridget };
+  if (cellMd.tags?.length > 0) metadata.tags = cellMd.tags;
+  if (cellMd.jupyter) metadata.jupyter = cellMd.jupyter;
   return Object.keys(metadata).length > 0 ? metadata : undefined;
 }
 
@@ -267,9 +273,7 @@ function getCellType(cell) {
 
 function processCell(cell) {
   const cellData = { cell_type: getCellType(cell), source: cell.document.getText() };
-  let brid = cell.metadata.metadata?.bridget?.id
-  if (!brid) cell.metadata.metadata.bridget = {id: crypto.randomUUID()};
-  const metadata = getCellMetadata(cell);
+  const metadata = setupCellMetadata(cell);
   if (metadata) cellData.metadata = metadata;
   if (cell.kind === vscode.NotebookCellKind.Code && cell.outputs.length > 0) {
       cellData.outputs = cell.outputs.map(processOutput).filter(output => output !== undefined);
