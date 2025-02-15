@@ -53,7 +53,7 @@ debugger;
  * @property {Object} [metadata]
  */
 
-let DEBUG = true;
+let DEBUG = false;
 
 const NBSTATE_FEEDBACK_CLS = 'notebook-state-feedback';
 const NBSTATE_SCRIPT_ID = 'notebook-state-json';
@@ -127,15 +127,18 @@ function renderNBStateFeedback(message, opts) {
   // message.timestamp is a number, convert to Date
   const t = new Date(message.timestamp);
   const ts = timeFormatter.format(t);
+  // opts is an object {feedback: true, watch: true, contentOnly: true, debug: false}; convert to HTML
+  const optsShow = Object.entries(opts).map(
+    ([k, v]) => `<b>${k}</b>: <span style="color:${v?'green':'red'}">${v}</span>`).join(' ');
   if (!opts.feedback) return `
     <div class="${NBSTATE_FEEDBACK_CLS}">
-      <div class="timestamp">Last updated: ${ts}</div>
+      <div class="timestamp">Last updated: ${ts} - ${optsShow}</div>
     </div>
   `;
   const updateClass = "update-flash";
   return `
     <div class="${NBSTATE_FEEDBACK_CLS}">
-      <div class="timestamp">Last updated: ${ts}</div>
+      <div class="timestamp">Last updated: ${ts} - ${optsShow}</div>
       ${SUMMSTL}
       <details class="${updateClass}">
         <summary><strong>Cells:</strong></summary>
@@ -189,7 +192,7 @@ function setupNBState(message, element, outputId, opts) {
 
 class NBStateRenderer {
   /** @type {Options} */
-  static _defaultOpts = { feedback: true, watch: false,  contentOnly: true, debug: false };
+  static _defaultOpts = { feedback: true, watch: false,  contentOnly: false, debug: false };
   static _renderers = new Map();  // Track listeners, options per output
   
   /**
