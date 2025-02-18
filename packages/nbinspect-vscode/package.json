@@ -2,7 +2,7 @@
   "name": "nbinspect",
   "displayName": "Notebook state inspect",
   "description": "Helper extension for notebook state",
-  "version": "0.0.22",
+  "version": "0.0.23",
   "publisher": "spikey-summers",
   "repository": {
     "type": "git",
@@ -26,6 +26,12 @@
   ],
   "main": "./extension.js",
   "contributes": {
+    "commands": [
+      {
+        "command": "nbinspect.testClearOutput",
+        "title": "Test Clear Notebook Output"
+      }
+    ],
     "notebookRenderer": [
       {
         "id": "nbinspect-renderer",

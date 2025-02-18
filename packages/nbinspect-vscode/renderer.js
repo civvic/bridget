@@ -1,57 +1,4 @@
-// This script runs in the notebook output webview
 debugger;
-
-/** @typedef {import('vscode-notebook-renderer').RendererContext} RendererContext */
-/** @typedef {import('vscode-notebook-renderer').OutputItem} OutputItem */
-/**
- * @typedef {Object} ExtensionMessage
- * @property {'state'|'error'} type - Message type identifier
- * @property {Object} cells - Notebook cells
- * @property {Object} NBData - Notebook metadata
- * @property {number} timestamp - Timestamp of the state message
- * @property {'notebookUpdate'} [changeType] - Type of change that triggered update
- * @property {string} [origin] - Origin of the change (window.origin, webview)
- * @property {string} [outputId] - ID of the output requesting state
- * @property {string} [reqid] - ID of the request
- * @property {string} [message] - Error message
- */
-
-/**
- * @typedef {Object} Options
- * @property {boolean} feedback - Show feedback so user can see changes
- * @property {boolean} watch - Watch for changes (extension)
- * @property {boolean} contentOnly - Only estructural changes (extension)
- */
-
-/**
- * @typedef {Object} StateMessage
- * @property {'getState'} type - Message type identifier
- * @property {string} outputId - ID of the output requesting state
- * @property {string} reqid - ID of the request
- * @property {Options} opts - Options for the renderer
- * @property {string} origin - Origin of the request (window)
- */
-
-/** 
- * @typedef {Object} DeregisterMessage
- * @property {'deregister'} type - Message type identifier
- * @property {string} outputId - ID of the output requesting the action
- */
-
-/** 
- * @typedef {Object} CellData
- * @property {'code' | 'markdown' | 'raw'} cell_type
- * @property {string} source
- * @property {Object} [metadata]
- * @property {Array<OutputData>} [outputs]
- */ 
-
-/** 
- * @typedef {Object} OutputData
- * @property {'stream' | 'display_data' | 'execute_result' | 'error'} output_type
- * @property {Object} [data]
- * @property {Object} [metadata]
- */
 
 let DEBUG = false;
 
@@ -164,133 +111,236 @@ function getStateScript() {
   );
 }
 
-/** Setup notebook state in the DOM
- * @param {ExtensionMessage} message
- * @param {HTMLElement} element
- * @param {string} outputId
- * @param {Options} opts
- */
-function setupNBState(message, element, outputId, opts) {
-  element.innerHTML = renderNBStateFeedback(message, opts);
-  // Update state if ts doesn't match
-  const script = getStateScript(); const d = script.dataset;
-  const ts = `${message.timestamp}`; const reqid = `${message.reqid}`;
-  const update =  !d.ts || // first time
-                  !(d.ts === ts);
-  if (DEBUG) {
-    console.group('setupNBState');
-    console.log('outputId:', outputId);
-    console.log('message reqid/ts:', reqid, ts);
-    console.log('script', JSON.stringify(d), ' - update:', update);
-    console.groupEnd();
-  }
-  if (update) {
-    d.ts = ts;
-    script.textContent = JSON.stringify(message);
-  }
-}
-
 class NBStateRenderer {
+  /** @type {RendererContext} */
+  context;
+  /** @type {string} docId - renderer document id */
+  docId;
+  /** @type {Disposable} - listener for messages from the extension */
+  listener;
   /** @type {Options} */
-  static _defaultOpts = { feedback: true, watch: false,  contentOnly: false, debug: false };
-  static _renderers = new Map();  // Track listeners, options per output
+  _defaultOpts = { feedback: true, watch: false,  contentOnly: false, debug: false };
+  opts;
+  /** @type {Map<string, Output>} */
+  _outputs = new Map();  // Track outputs
+  /** @type {Output|null} */
+  _output = null;
+  /** @type {StateMessage|null} */
+  NBState = null;
+  /** @type {boolean} */
+  #useScript = true;
   
-  /**
-   * @param {RendererContext} context
-   * @param {HTMLElement} feedbackEl
-   * @param {string} feedbackItemId
-   * @param {Options} opts
-   * @param {string} docId - renderer document id
-   */
-  constructor(context, feedbackEl, feedbackItemId, opts, docId) {
-    this.feedbackEl = feedbackEl;
-    this.feedbackItemId = feedbackItemId;
-    this.opts = { ...NBStateRenderer._defaultOpts, ...opts };
-    this.listener = context.onDidReceiveMessage(this.onMessage.bind(this));
+  constructor(context, docId=null) {
+    if (!context.postMessage) throw new Error("No postMessage function");
+    this.context = context;
     this.docId = docId;
+    this.opts = {...this._defaultOpts};
+    this.listener = context.onDidReceiveMessage(this.onMessage.bind(this));
+    globalThis.$Ren = this;
   }
   
-  static delete(feedbackItemId) {
-    const stateScript = getStateScript();
+  /** Get active output
+   * @returns {Output|null} */
+  getOutput() {
+    return this._output;
+  }
+
+  /** Set active output
+   * @param {Output} output */
+  setOutput(output) {
+    this.deactivateOutput();
+    this._output = output;
+    if (output) output.active = true;
+  }
+
+  /** Hide output
+   * @param {Output} output */
+  deactivateOutput() {
+    const current = this.getOutput();
+    if (current) {
+      current.active = false;
+      current.el.innerHTML = '';
+      // current.el.style.display = 'none';
+      // this._outputs.delete(current.itemId);
+    }
+  }
+
+  /** @param {Output} output */
+  addOutput(output) {
+    this.setOutput(output);
+    this._outputs.set(output.itemId, output);
+  }
+  
+  deleteOutput(itemId) {
+    if (DEBUG) console.log('disposeOutputItem', itemId);
+    // const stateScript = getStateScript();
     // if (stateScript) {  // If this was the owner, clear ownership
-    //   if (stateScript.dataset.rid === feedbackItemId) delete stateScript.dataset.rid;
+    //   if (stateScript.dataset.rid === itemId) delete stateScript.dataset.rid;
     // }
-    const renderer = this._renderers.get(feedbackItemId);
-    if (renderer) {
-      renderer.listener.dispose();
-      this._renderers.delete(feedbackItemId);
+    const output = this._outputs.get(itemId);
+    if (output) {
+      if (output === this.getOutput()) this._output = null;
+      this._outputs.delete(itemId);
+      this.setOutput([...this._outputs.values()].at(-1));
     }
     // Check for remaining outputs after DOM update
-    globalThis.requestAnimationFrame(() => {
-      if (!globalThis.document.querySelectorAll(`.${NBSTATE_FEEDBACK_CLS}`).length) {
-        stateScript?.remove();
-      }
-    });
+    // globalThis.requestAnimationFrame(() => {
+    //   if (!globalThis.document.querySelectorAll(`.${NBSTATE_FEEDBACK_CLS}`).length) {
+    //     stateScript?.remove();
+    //   }
+    // });
+    /** @type {RendererDeregisterMessage} */
+    const msg = { type: "deregister", outputId: itemId };
+    this.context.postMessage(msg);
   }
 
-  static render(context, outputItem, element, docId) {
-    const feedbackItemId = outputItem.id;
-    const opts = outputItem.json();
-    const reqid = opts.id
-    const update = opts.update
-    if (opts.debug !== undefined) DEBUG = opts.debug;
+  /** Get current notebook state
+   * @returns {ExtensionMessage|null} */
+  getNBState() { return this.NBState; }
+
+  /** Set notebook state
+   * @param {ExtensionMessage} message */
+  setNBState(message) {
+    this.NBState = message;
+    const ts = `${message.timestamp}`, reqid = `${message.reqid}`;
+    let d = null, update = false;
+    if (this.#useScript) {
+      // Update state if ts doesn't match
+      const script = getStateScript(), d = script.dataset;
+      update =  !d.ts || // first time
+                !(d.ts === ts);
+      if (update) {
+        d.ts = ts;
+        script.textContent = JSON.stringify(message);
+      }
+    } else {
+      update = `${this.NBState.timestamp}` !== ts;
+    }
     if (DEBUG) {
-      console.group("render");
-      console.log("feedbackItemId", feedbackItemId);
-      console.log(outputItem.mime, opts);
+      console.group('setupNBState');
+      console.log('outputId:', message.outputId);
+      console.log('message reqid/ts:', reqid, ts);
+      console.log('script', JSON.stringify(d), ' - update:', update);
       console.groupEnd();
     }
-    const nOpts = pickDefined(opts, ...Object.keys(this._defaultOpts));
-    
-    let renderer = this._renderers.get(feedbackItemId);
-    if (!renderer) {
-      renderer = new this(context, element, feedbackItemId, nOpts, docId);
-      this._renderers.set(feedbackItemId, renderer);
-    } else {
-      renderer.opts = { ...renderer.opts, ...nOpts };
-    }  
-    const msgType = update ? 'updateState' : 'getState';
-    /** @type {RendererStateMessage} */
-    const msg = { type: msgType, outputId: feedbackItemId, reqid: reqid, opts: nOpts, origin: renderer.docId };
-    context.postMessage(msg);
-    return renderer;
-  }  
-
-  /** @param {ExtensionMessage} message */
+  }
+  
+  /** Handle direct updates
+   * @param {StateMessage} message */
+  update(message) {
+    if (message.origin && message.origin !== this.docId) return;
+    this.render(null, null, message);
+  }
+  
+  /** Handle message from the extension
+   * @param {ExtensionMessage} message */
   onMessage(message) {
-    if (message.origin !== this.docId) {
-      return;
-    }
+    if (message.origin !== this.docId) return;
+    let output = this._outputs.get(message.outputId);
+    if (!output || !output.active) output = this.getOutput();
+    const el = output ? output.el : null;
     if (message.type === "state") {
-      setupNBState(message, this.feedbackEl, this.feedbackItemId, this.opts);
+      if (el) el.innerHTML = renderNBStateFeedback(message, this.opts);
+      this.setNBState(message);
     } else if (message.type === "error") {
-      this.feedbackEl.innerHTML = `<div class="error">${message.message}</div>`;
+      if (el) el.innerHTML = `<div class="error">${message.message}</div>`;
     }
   }
+
+  updateOpts(opts) {
+    if (opts.debug !== undefined) DEBUG = opts.debug;
+    Object.assign(this.opts, pickDefined(opts, ...Object.keys(this._defaultOpts)));
+  }
+
+  /** Called to display our MIME output
+   * @param {OutputItem} outputItem 
+   * @param {HTMLElement} element
+   */
+  render(outputItem, element, opts={}) {
+    if (!this.docId) this.docId = element.ownerDocument.location.href;
+    if (outputItem) opts = outputItem.json();
+    const itemId = outputItem ? outputItem.id : null;
+    this.updateOpts(opts);
+    if (DEBUG) {
+      console.group("render");
+      console.log("output itemId", itemId);
+      console.log(outputItem ? outputItem.mime : 'no outputItem', opts);
+      console.groupEnd();
+    }
+    if (itemId && !this._outputs.get(itemId)) this.addOutput({ el: element, itemId });
+    const msgType = opts.update ? 'updateState' : 'getState';
+    /** @type {RendererStateMessage} */
+    const msg = { type: msgType, outputId: itemId, reqid: opts.id, opts: this.opts, origin: this.docId };
+    this.context.postMessage(msg);
+  }  
 
 }
 
 /** @param {RendererContext} context */
 export function activate(context) {
-  if (!context.postMessage) throw new Error("No postMessage function");
-
+  const renderer = new NBStateRenderer(context, globalThis.document.location.href);
   return {
-    /** @param {OutputItem} outputItem */
-    /** @param {HTMLElement} element */
-    renderOutputItem(outputItem, element) {
-      const docId = element.ownerDocument.location.href;
-      try { NBStateRenderer.render(context, outputItem, element, docId); }
-      catch (error) {
-        console.error("Error in renderer:", error);
-        element.innerHTML = `<div class="error">Error: ${error.message}</div>`;
-      }
-    },
-    disposeOutputItem(outputItemId) {
-      if (DEBUG) console.log('disposeOutputItem', outputItemId);
-      NBStateRenderer.delete(outputItemId);
-      /** @type {RendererDeregisterMessage} */
-      const msg = { type: "deregister", outputId: outputItemId };
-      context?.postMessage(msg);
-    }
-  };
+    renderOutputItem: renderer.render.bind(renderer),
+    disposeOutputItem: renderer.deleteOutput.bind(renderer)
+  }
 }
+
+/** @typedef {import('vscode-notebook-renderer').RendererContext} RendererContext */
+/** @typedef {import('vscode-notebook-renderer').OutputItem} OutputItem */
+
+/**
+ * @typedef {Object} ExtensionMessage
+ * @property {'state'|'error'} type - Message type identifier
+ * @property {Object} cells - Notebook cells
+ * @property {Object} NBData - Notebook metadata
+ * @property {number} timestamp - Timestamp of the state message
+ * @property {'notebookUpdate'} [changeType] - Type of change that triggered update
+ * @property {string} [origin] - Origin of the change (window.origin, webview)
+ * @property {string} [outputId] - ID of the output requesting state
+ * @property {string} [reqid] - ID of the request
+ * @property {string} [message] - Error message
+ */
+
+/**
+ * @typedef {Object} Options
+ * @property {boolean} feedback - Show feedback so user can see changes
+ * @property {boolean} watch - Watch for changes (extension)
+ * @property {boolean} contentOnly - Only estructural changes (extension)
+ */
+
+/**
+ * @typedef {Object} StateMessage
+ * @property {'getState'} type - Message type identifier
+ * @property {string} outputId - ID of the output requesting state
+ * @property {string} reqid - ID of the request
+ * @property {Options} opts - Options for the renderer
+ * @property {string} origin - Origin of the request (window)
+ */
+
+/** 
+ * @typedef {Object} DeregisterMessage
+ * @property {'deregister'} type - Message type identifier
+ * @property {string} outputId - ID of the output requesting the action
+ */
+
+/** 
+ * @typedef {Object} CellData
+ * @property {'code' | 'markdown' | 'raw'} cell_type
+ * @property {string} source
+ * @property {Object} [metadata]
+ * @property {Array<OutputData>} [outputs]
+ */ 
+
+/** 
+ * @typedef {Object} OutputData
+ * @property {'stream' | 'display_data' | 'execute_result' | 'error'} output_type
+ * @property {Object} [data]
+ * @property {Object} [metadata]
+ */
+
+/** 
+ * @typedef {Object} Output
+ * @property {HTMLElement} el
+ * @property {string} itemId
+ * @property {boolean} active
+ */

@@ -41,16 +41,16 @@ const MIME = 'application/x-notebook-state';  // Renderer MIME type
 
 // ---- Utils ----
 
-const _CACHE = {};
-function getType(obj) {
-  let key;
-  return obj === null ? 'null' // null
-    : obj === globalThis ? 'global' // window in browser or global in nodejs
-    : (key = typeof obj) !== 'object' ? key // basic: string, boolean, number, undefined, function
-    : obj.nodeType ? 'object' // DOM element
-    : _CACHE[key = ({}).toString.call(obj)] // cached. date, regexp, error, object, array, math
-    || (_CACHE[key] = key.slice(8, -1).toLowerCase()); // get XXXX from [object XXXX], and cache it
-}
+// const _CACHE = {};
+// function getType(obj) {
+//   let key;
+//   return obj === null ? 'null' // null
+//     : obj === globalThis ? 'global' // window in browser or global in nodejs
+//     : (key = typeof obj) !== 'object' ? key // basic: string, boolean, number, undefined, function
+//     : obj.nodeType ? 'object' // DOM element
+//     : _CACHE[key = ({}).toString.call(obj)] // cached. date, regexp, error, object, array, math
+//     || (_CACHE[key] = key.slice(8, -1).toLowerCase()); // get XXXX from [object XXXX], and cache it
+// }
 
 // function debounce(func, delay) {
 //   let timer;
@@ -183,7 +183,9 @@ function processOutput(output) {
 /** @param {vscode.NotebookCell} cell */
 function getCellMetadata(cell) {
   const cellMd = cell.metadata;
-  const metadata = { 'brd': cellMd.metadata.brd };
+  const brdId = Bridged.brdId(cell);
+  if (!brdId) throw new Error("Bridged id not found");
+  const metadata = { 'brd': brdId, 'cell_id': cell.document.uri.fragment };
   if (cellMd.tags?.length > 0) metadata.tags = cellMd.tags;
   if (cellMd.jupyter) metadata.jupyter = cellMd.jupyter;
   return Object.keys(metadata).length > 0 ? metadata : undefined;
@@ -195,8 +197,8 @@ function getCellType(cell) {
 }
 
 function processCell(cell) {
-  if (DEBUG) console.log("processCell", cell.index);
-  /* const brd = */ BridgedMap.getBridgedOf(cell);
+  // if (DEBUG) console.log("processCell", cell.index);
+  // /* const brd = */ Bridged.bridgedOf(cell);
   const cellData = { cell_type: getCellType(cell), source: cell.document.getText() };
   const metadata = getCellMetadata(cell);
   if (metadata) cellData.metadata = metadata;
@@ -208,90 +210,6 @@ function processCell(cell) {
 }
 
 // ---- Notebook State monitoring ----
-
-class Bridged {
-    /** @type {Map<string, BridgedOutputMetadata>} */
-    outputs;
-  constructor(cell) {
-    this.id = cell.metadata?.metadata?.brd ?? crypto.randomUUID();
-    this.cell = cell;
-    this.outputs = new Map();
-    this.syncOutputs(cell.outputs);
-  }
-  static fromCell(cell) {
-    return BridgedMap.getBridgedOf(cell);
-  }
-  // ---- Outputs lifecycle ----
-  /** 
-   * @param {vscode.NotebookCellOutput} o 
-   * @returns {vscode.NotebookCellOutput | undefined} */
-  #addOutput(o, relevant=false) {
-    if (this.outputs.has(o.id)) return;
-    const md = o.metadata?.metadata?.bridge;
-    const brdMd = { 
-      metadata: md,
-      skip: md?.skip,
-      renderer: o.items?.some(it => it.mime === MIME),
-    };
-    this.outputs.set(o.id, brdMd);
-    return relevant ? (brdMd.renderer || brdMd.skip ? undefined : o) : o;
-  }
-  /** 
-   * @param {string} oId 
-   * @returns {BridgedOutputMetadata | undefined} */
-  #delOutput(oId, relevant=false) {
-    if (!this.outputs.has(oId)) return;
-    const brdOMd = this.outputs.get(oId);
-    this.outputs.delete(oId);
-    return relevant ? (brdOMd.renderer || brdOMd.skip ? undefined : brdOMd) : brdOMd;
-  }
-  /** 
-   * @param {vscode.NotebookCellOutput[]} outputs 
-   * @param {boolean} relevant - if true, only return relevant outputs (not skipped or renderer)
-   * @returns {{added: vscode.NotebookCellOutput[], removed: BridgedOutputMetadata[]}} */
-  syncOutputs(outputs, relevant=false) {
-    const outputIds = new Set(outputs.map(o => o.id));
-    return { 
-      added: outputs.map(o => this.#addOutput(o, relevant)).filter(Boolean), 
-      removed: [...this.outputs.keys()]
-        .map(oId => !outputIds.has(oId) && this.#delOutput(oId, relevant)).filter(Boolean)};
-  }
-  asJSON() {
-    return this.id;
-    // return {
-    //   id: this.id,
-    //   cell_index: this.cell_index,
-    //   cell_uri: this.cell_uri.toString(),
-    //   outputs: this.outputs.size ? Array.from(this.outputs) : null
-    // };
-  }
-}
-
-/** @type {Map<string, Bridged>} - bridged.id -> Bridged */
-class BridgedMap extends Map {
-  /** 
-   * @param {vscode.NotebookCell} cell 
-   * @returns {Bridged} */
-  static getBridgedOf(cell) {
-    const brdMap = NBStateMonitor.get(cell.notebook).bridged;
-    const cellMd = cell.metadata;
-    const brdId = cellMd.metadata?.brd;
-    let brd = brdMap.get(brdId);
-    if (!brd) {
-      brd = new Bridged(cell);
-      cellMd.metadata.brd = brd.id;
-      brdMap.set(brd.id, brd);
-      if (DEBUG) console.log("---- added brd of cell", cell.index);
-    }
-    return brd;
-  }
-  /** @param {string | number | vscode.NotebookCell} k */
-  get(k) {
-    return super.get(k) ?? super.get(k?.metadata?.metadata?.brd ?? 
-      (typeof k === 'number' ? this.nb.cellAt(k)?.metadata?.metadata?.brd : undefined)
-    );
-  }
-}
 
 class BridgeNBEventsFilter {
   nb;
@@ -310,7 +228,7 @@ class BridgeNBEventsFilter {
     const cell = nb.cellAt(cellIndex);
 
     // brand new cell; this should be detected previously, but just in case.
-    const brdId = cell.metadata?.metadata?.brd;
+    const brdId = Bridged.brdId(cell);
     if (!brdId) return true;
     const brd = NBStateMonitor.get(nb).bridged.get(brdId);
     if (brd === undefined) throw new Error("Bridged not found");
@@ -415,6 +333,110 @@ class ChangeCollator extends Map {
   }
 }
 
+class Bridged {
+  /** @type {Map<string, BridgedOutputMetadata>} */
+  outputs;
+  constructor(cell) {
+    this.id = Bridged.brdId(cell) ?? crypto.randomUUID();
+    this.cell = cell;
+    this.outputs = new Map();
+    this.syncOutputs(cell.outputs);
+  }
+  /** 
+   * @param {vscode.NotebookCell} cell 
+   * @returns {string|undefined} */
+  static brdId(cell) { return cell.metadata.metadata?.brd; }
+  static setBrdId(cell, id) { cell.metadata.metadata.brd = id; }
+
+  /** Get or create a Bridged for a cell.
+   * @param {vscode.NotebookCell} cell 
+   * @returns {Bridged} */
+  static bridgedOf(cell) {
+    const brdMap = NBStateMonitor.get(cell.notebook).bridged;
+    const brdId = Bridged.brdId(cell);
+    let brd = brdMap.get(brdId);
+    if (!brd) {
+      brd = new Bridged(cell);
+      Bridged.setBrdId(cell, brd.id);
+      brdMap.set(brd.id, brd);
+      if (DEBUG) console.log("---- added brd of cell", cell.index, cell.document.uri.fragment);
+    }
+    return brd;
+  }
+
+  // ---- Outputs lifecycle ----
+  /** 
+   * @param {vscode.NotebookCellOutput} o 
+   * @returns {vscode.NotebookCellOutput | undefined} */
+  #addOutput(o, relevant=false) {
+    if (this.outputs.has(o.id)) return;
+    const md = o.metadata?.metadata?.bridge;
+    const brdMd = { 
+      metadata: md,
+      skip: md?.skip,
+      renderer: o.items?.some(it => it.mime === MIME),
+    };
+    this.outputs.set(o.id, brdMd);
+    return relevant ? (brdMd.renderer || brdMd.skip ? undefined : o) : o;
+  }
+  /** 
+   * @param {string} oId 
+   * @returns {BridgedOutputMetadata | undefined} */
+  #delOutput(oId, relevant=false) {
+    if (!this.outputs.has(oId)) return;
+    const brdOMd = this.outputs.get(oId);
+    this.outputs.delete(oId);
+    return relevant ? (brdOMd.renderer || brdOMd.skip ? undefined : brdOMd) : brdOMd;
+  }
+  /** 
+   * @param {vscode.NotebookCellOutput[]} outputs 
+   * @param {boolean} relevant - if true, only return relevant outputs (not skipped or renderer)
+   * @returns {{added: vscode.NotebookCellOutput[], removed: BridgedOutputMetadata[]}} */
+  syncOutputs(outputs, relevant=false) {
+    const outputIds = new Set(outputs.map(o => o.id));
+    return { 
+      added: outputs.map(o => this.#addOutput(o, relevant)).filter(Boolean), 
+      removed: [...this.outputs.keys()]
+        .map(oId => !outputIds.has(oId) && this.#delOutput(oId, relevant)).filter(Boolean)};
+  }
+  asJSON() {
+    return this.id;
+    // return {
+    //   id: this.id,
+    //   cell_index: this.cell_index,
+    //   cell_uri: this.cell_uri.toString(),
+    //   outputs: this.outputs.size ? Array.from(this.outputs) : null
+    // };
+  }
+}
+
+// /** @type {Map<string, Bridged>} - bridged.id -> Bridged */
+// class BridgedMap extends Map {
+//   /** 
+//    * @param {vscode.NotebookCell} cell 
+//    * @returns {Bridged} */
+//   static getBridgedOf(cell) {
+//     const brdMap = NBStateMonitor.get(cell.notebook).bridged;
+//     const cellMd = cell.metadata;
+//     const brdId = Bridged.brdId(cell);
+//     let brd = brdMap.get(brdId);
+//     if (!brd) {
+//       brd = new Bridged(cell);
+//       // cellMd.metadata.brd = brd.id;
+//       // Bridged.setBrdId(cell, brd.id);
+//       brdMap.set(brd.id, brd);
+//       if (DEBUG) console.log("---- added brd of cell", cell.index);
+//     }
+//     return brd;
+//   }
+//   // /** @param {string | number | vscode.NotebookCell} k */
+//   // get(k) {
+//   //   return super.get(k) ?? super.get(k?.metadata?.metadata?.brd ?? 
+//   //     (typeof k === 'number' ? this.nb.cellAt(k)?.metadata?.metadata?.brd : undefined)
+//   //   );
+//   // }
+// }
+
 class NBStateMonitor {
   /** @type {Map<string, NBStateMonitor>} - notebook.uri -> NBStateMonitor */
   static monitors = new Map();
@@ -433,7 +455,7 @@ class NBStateMonitor {
   #opts;  // options
   /** @type {BridgeNBEventsFilter} */
   #filterer;  // filter events
-  /** @type {BridgedMap} */
+  /** @type {Map<string, Bridged>} - bridged.id -> Bridged */
   bridged;
   debounce = true;
   #debounceDelay = NBStateMonitor.defaultDebounceDelay;
@@ -443,14 +465,15 @@ class NBStateMonitor {
     this.#origin = origin;
     this.#opts = { ...NBStateMonitor.defaultOpts, ...opts };
     this.#filterer = new BridgeNBEventsFilter(notebook);
-    this.bridged = new BridgedMap();
+    this.bridged = new Map();
   }
-  
+    
   static get(notebook) { return this.monitors.get(notebook.uri.toString()); }
   static delete(notebook) { this.monitors.delete(notebook.uri.toString()); }
   static create(notebook, origin, opts = {}) {
     const monitor = new NBStateMonitor(notebook, origin, opts);
     this.monitors.set(notebook.uri.toString(), monitor);
+    notebook.getCells().forEach(cell => Bridged.bridgedOf(cell));
     return monitor;
   }
   
@@ -481,32 +504,34 @@ class NBStateMonitor {
     // if (DEBUG) console.group("render");
     const cells = nb.getCells().map(processCell);
     // if (DEBUG) console.groupEnd();
-    const nbData = { metadata: nb.metadata, cellCount: nb.cellCount, notebookType: nb.notebookType };
+    const nbData = { metadata: nb.metadata, cellCount: nb.cellCount, 
+      notebookType: nb.notebookType, notebookUri: nb.uri.toString() };
     const t = Date.now();
     if (DEBUG) console.log("sentNBState", t);
     /** @type {StateMessage} */
-    const message = { type: "state", cells: cells, nbData: nbData, timestamp: t, origin: reqMsg.origin };
+    const message = { type: "state", cells: cells, nbData: nbData, 
+      timestamp: t, origin: reqMsg.origin, outputId: reqMsg.outputId, reqid: reqMsg.reqid };
     if (changeType) message.changeType = changeType;
     NBStateMonitor.messaging.postMessage(message);
   }
 
-  /** @param {{message: RendererStateMessage | RendererDeregisterMessage}} e */
-  static onRendererMessage(e) {
-    const editor = vscode.window.activeNotebookEditor;
-    if (!editor) return;
-    /** @type {RendererStateMessage | RendererDeregisterMessage} */
-    const nb = editor.notebook; const msg = e.message;
-    const nOpts = msg.opts;
+  /** 
+   * @param {vscode.NotebookEditor} editor
+   * @param {{message: RendererStateMessage | RendererDeregisterMessage}} message
+   */
+  static onRendererMessage({ editor, message }) {
+    const nOpts = message.opts;
     if (nOpts && nOpts.debug !== undefined) DEBUG = nOpts.debug;
     if (DEBUG) console.log("Message from renderer");
-    if (DEBUG) console.log(msg.type, 'from:', msg.outputId);
-    const monitor = NBStateMonitor.get(nb) ?? NBStateMonitor.create(nb, msg.origin);
-    if (msg.type === "deregister") {
-      monitor.active = false;
-      if (DEBUG) console.log("---- deregister", msg.outputId);
+    if (DEBUG) console.log(message.type, 'from:', message.outputId);
+    const nb = editor.notebook;
+    const monitor = NBStateMonitor.get(nb) ?? NBStateMonitor.create(nb, message.origin);
+    if (message.type === "deregister") {
+      // monitor.active = false;
+      if (DEBUG) console.log("---- deregister", message.outputId);
       if (!hasMimeOutputs(nb, MIME)) {
         NBStateMonitor.delete(nb);
-        if (DEBUG) console.log("---- deleted monitor", monitor.nb.uri);
+        if (DEBUG) console.log("---- deleted monitor", monitor.nb.uri.toString());
       }
       if (DEBUG) console.log("----"); return;
     }
@@ -516,24 +541,30 @@ class NBStateMonitor {
     if (nOpts.contentOnly !== undefined) monitor.contentOnly = nOpts.contentOnly;
     if (nOpts.debug !== undefined) monitor.#opts.debug = nOpts.debug;
     if (!monitor.watch) {
-      monitor.sentNBState(msg);
+      monitor.sentNBState(message);
     } else {
-      if (msg.type === "getState") {
+      if (message.type === "getState") {
         monitor.oneShotDelay();  // reduce delay for renderer cell changes
       } else {  // updateState
         monitor.oneShotDelay();  // reduce delay for renderer cell changes
       }
-      monitor.sentNBState(msg);
+      monitor.sentNBState(message);
     }
     monitor.active = true;
   }
   
+  static onCloseNotebook(nb) {
+    const monitor = NBStateMonitor.get(nb);
+    if (monitor) NBStateMonitor.delete(nb);
+  }
+
   /** @param {ChangeCollator} chs */
   changed(chs, transient = false) {
+    if (chs.added) chs.added.forEach(cell => Bridged.bridgedOf(cell));
     if (chs.removed) {
       chs.removed.forEach(cell => {
-        const brd = this.bridged.get(cell);
-        if (brd) this.bridged.delete(brd.id);
+        const brd = this.bridged.get(Bridged.brdId(cell));
+        if (brd && brd.cell.index === -1) this.bridged.delete(brd.id);
       });
     }
     // newly added cells will be handled in `filterChanges`
@@ -586,13 +617,15 @@ class NBStateMonitor {
 
 /** @param {vscode.ExtensionContext} context */
 function activate(context) {
-  if (DEBUG) console.log('Extension "nbinspect" is now active!', getType(context));
+  /* if (DEBUG) */console.log('Nnbinspect extension is now active.');
   const messaging = vscode.notebooks.createRendererMessaging("nbinspect-renderer");
   NBStateMonitor.messaging = messaging;
   messaging.onDidReceiveMessage(NBStateMonitor.onRendererMessage);
-  const listener = vscode.workspace.onDidChangeNotebookDocument(
-    NBStateMonitor.onChange);
-  context.subscriptions.push(messaging, listener);
+  context.subscriptions.push(
+    messaging,
+    vscode.workspace.onDidChangeNotebookDocument(NBStateMonitor.onChange),  
+    vscode.workspace.onDidCloseNotebookDocument(NBStateMonitor.onCloseNotebook)
+  );
 }
 
 function deactivate() {
