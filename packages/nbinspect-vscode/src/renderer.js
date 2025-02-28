@@ -1,6 +1,6 @@
 debugger;
 
-let DEBUG = false;
+let DEBUG = true;
 
 const NBSTATE_FEEDBACK_CLS = 'notebook-state-feedback';
 const NBSTATE_SCRIPT_ID = 'notebook-state-json';
@@ -40,11 +40,20 @@ const pickDefined = (obj, ...keys) => Object.fromEntries(
  * @returns {string} HTML string
  */
 function summaryHTML(message) {
-  return message.cells.map((cell, idx) => {
+  let {cells, changed, added, removed} = message;
+  if (!cells) {
+    cells = changed;
+    cells.push(...added);
+  }
+  const r = removed && removed.length > 0 ? `Removed: ${removed}\n` : '';
+  const a = added && added.length > 0 ? `Added: ${added.map(c => c.idx).join(', ')}\n` : '';
+  const c = changed && changed.length > 0 ? `Changed: ${changed.map(c => c.idx).join(', ')}\n` : '';
+  return r + a + c + cells.map((cell, idx) => {
     let src = cell.source;
     // source possibly has HTML content, sanitize it
     src = src.replace(/<[^>]*>?/gm, '');
     src = _truncate(JSON.stringify(src));
+    idx = cell.idx;
     return `
     <div class="cell-info">
       <strong>Cell ${idx}</strong> (${cell.cell_type})
@@ -74,7 +83,7 @@ function renderNBStateFeedback(message, opts) {
   // message.timestamp is a number, convert to Date
   const t = new Date(message.timestamp);
   const ts = timeFormatter.format(t);
-  // opts is an object {feedback: true, watch: true, contentOnly: true, debug: false}; convert to HTML
+  // opts is an object {feedback: true, watch: true, debug: false}; convert to HTML
   const optsShow = Object.entries(opts).map(
     ([k, v]) => `<b>${k}</b>: <span style="color:${v?'green':'red'}">${v}</span>`).join(' ');
   if (!opts.feedback) return `
@@ -119,7 +128,7 @@ class NBStateRenderer {
   /** @type {Disposable} - listener for messages from the extension */
   listener;
   /** @type {Options} */
-  _defaultOpts = { feedback: true, watch: false,  contentOnly: false, debug: false };
+  _defaultOpts = { feedback: true, watch: false, debug: false };
   opts;
   /** @type {Map<string, Output>} */
   _outputs = new Map();  // Track outputs
@@ -217,7 +226,7 @@ class NBStateRenderer {
       update = `${this.NBState.timestamp}` !== ts;
     }
     if (DEBUG) {
-      console.group('setupNBState');
+      console.group(`setNBState:${message.type}`);
       console.log('outputId:', message.outputId);
       console.log('message reqid/ts:', reqid, ts);
       console.log('script', JSON.stringify(d), ' - update:', update);
@@ -232,14 +241,16 @@ class NBStateRenderer {
     this.render(null, null, message);
   }
   
+  
   /** Handle message from the extension
    * @param {ExtensionMessage} message */
   onMessage(message) {
+    console.log(Date.now(),'onMessage');
     if (message.origin !== this.docId) return;
     let output = this._outputs.get(message.outputId);
     if (!output || !output.active) output = this.getOutput();
     const el = output ? output.el : null;
-    if (message.type === "state") {
+    if (message.type === "state" || message.type === "stateDiff") {
       if (el) el.innerHTML = renderNBStateFeedback(message, this.opts);
       this.setNBState(message);
     } else if (message.type === "error") {
@@ -262,7 +273,7 @@ class NBStateRenderer {
     const itemId = outputItem ? outputItem.id : null;
     this.updateOpts(opts);
     if (DEBUG) {
-      console.group("render");
+      console.group(`${Date.now()} render`);
       console.log("output itemId", itemId);
       console.log(outputItem ? outputItem.mime : 'no outputItem', opts);
       console.groupEnd();
@@ -305,7 +316,6 @@ export function activate(context) {
  * @typedef {Object} Options
  * @property {boolean} feedback - Show feedback so user can see changes
  * @property {boolean} watch - Watch for changes (extension)
- * @property {boolean} contentOnly - Only estructural changes (extension)
  */
 
 /**

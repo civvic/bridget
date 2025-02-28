@@ -2,7 +2,7 @@
   "name": "nbinspect",
   "displayName": "Notebook state inspect",
   "description": "Helper extension for notebook state",
-  "version": "0.0.23",
+  "version": "0.0.24",
   "publisher": "spikey-summers",
   "repository": {
     "type": "git",
@@ -24,7 +24,7 @@
   "activationEvents": [
     "onNotebook:*"
   ],
-  "main": "./extension.js",
+  "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
@@ -39,12 +39,14 @@
         "mimeTypes": [
           "application/x-notebook-state"
         ],
-        "entrypoint": "./renderer.js",
+        "entrypoint": "./dist/renderer.js",
         "requiresMessaging": "optional"
       }
     ]
   },
   "scripts": {
+    "compile": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
     "lint": "eslint ."
   },
   "devDependencies": {
@@ -53,6 +55,8 @@
     "@types/node": "20.x",
     "eslint": "^9.16.0",
     "@vscode/test-cli": "^0.0.10",
-    "@vscode/test-electron": "^2.4.1"
+    "@vscode/test-electron": "^2.4.1",
+    "esbuild": "^0.25.0",
+    "debug": "^4.4.0"
   }
 }
