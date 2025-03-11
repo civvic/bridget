@@ -1,9 +1,6 @@
 import * as vscode from 'vscode';
-// import debug from 'debug';
 
-// const log = debug('nbinspect:cell');
-
-import { Bridged } from './bridged.js';
+import { Bridged } from './bridged.mjs';
 
 /** 
  * @typedef {Object} StateCell

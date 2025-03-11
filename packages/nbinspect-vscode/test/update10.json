@@ -1,0 +1,42 @@
+{
+  "type": "state",
+  "timestamp": 1741430968452,
+  "origin": "vscode-webview://1ql27b0grt14rkuj26idbt9ktekivp44iu2s8pgfndvblm2j3iep/index…n.net&parentOrigin=vscode-file%3A%2F%2Fvscode-app&purpose=notebookRenderer",
+  "changes": [
+    {
+      "cells": [
+        {
+          "idx": 36,
+          "cell_type": "code",
+          "source": "# cell 36\nthis_id = next(counter)\n_ = displaydh(metadata={'bridge': {'cell': 36, 'this': this_id}})\n# nb.source.send({'cmd': 'get_state'}, timeout=5)\n# clear_output(wait=True)",
+          "metadata": {
+            "brd": "d3bf0496-720b-4281-b4fb-75c7ceb3d584",
+            "cell_id": "X51sZmlsZQ=="
+          },
+          "outputs": [
+            {
+              "output_type": "display_data",
+              "data": {},
+              "metadata": {
+                "transient": {
+                  "display_id": "96de372a7fa82a5763e56789a1bb9fb2"
+                },
+                "bridge": {
+                  "cell": 36,
+                  "this": 1
+                }
+              }
+            }
+          ],
+          "execution_count": 6
+        }
+      ],
+      "added": [],
+      "removed": [],
+      "cellCount": 38
+    }
+  ],
+  "nbData": {
+    "cellCount": 38
+  }
+}

@@ -21,3 +21,4 @@ package-lock.json
 .gitignore
 .eslintcache
 esbuild.js
+.mocharc.yml

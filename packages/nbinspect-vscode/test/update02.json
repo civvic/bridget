@@ -1,0 +1,59 @@
+{
+  "type": "state",
+  "timestamp": 1741429407060,
+  "origin": "vscode-webview://1ql27b0grt14rkuj26idbt9ktekivp44iu2s8pgfndvblm2j3iep/index.html?id=1b139285-f119-47e8-a220-6087758db500&origin=1e95bb6a-280d-4f6e-8090-7f55f54cbfbd&swVersion=4&extensionId=&platform=electron&vscode-resource-base-authority=vscode-resource.vscode-cdn.net&parentOrigin=vscode-file%3A%2F%2Fvscode-app&purpose=notebookRenderer",
+  "changes": [
+    {
+      "cells": [
+        {
+          "idx": 7,
+          "cell_type": "code",
+          "source": "# cell 7\ndisplaydh(HTML('cell 7.1'), metadata={'bridge': {'cell': 7.1}})\ndisplaydh(HTML('cell 7.2'), metadata={'bridge': {'cell': 7.2}});",
+          "metadata": {
+            "brd": "c9a70884-e800-4a43-adbf-309278d05df5",
+            "cell_id": "X10sZmlsZQ=="
+          },
+          "outputs": [
+            {
+              "output_type": "display_data",
+              "data": {
+                "text/html": "cell 7.1",
+                "text/plain": "<IPython.core.display.HTML object>"
+              },
+              "metadata": {
+                "transient": {
+                  "display_id": "e14d1648aa6d649a034ff1a08cb27341"
+                },
+                "bridge": {
+                  "cell": 7.1
+                }
+              }
+            },
+            {
+              "output_type": "display_data",
+              "data": {
+                "text/html": "cell 7.2",
+                "text/plain": "<IPython.core.display.HTML object>"
+              },
+              "metadata": {
+                "transient": {
+                  "display_id": "e064ed67a1791692dd571fd5edaea7ec"
+                },
+                "bridge": {
+                  "cell": 7.2
+                }
+              }
+            }
+          ],
+          "execution_count": 3
+        }
+      ],
+      "added": [],
+      "removed": [],
+      "cellCount": 38
+    }
+  ],
+  "nbData": {
+    "cellCount": 38
+  }
+}

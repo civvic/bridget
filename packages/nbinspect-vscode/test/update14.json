@@ -1,0 +1,67 @@
+{
+  "type": "state",
+  "timestamp": 1741431477576,
+  "origin": "vscode-webview://1ql27b0grt14rkuj26idbt9ktekivp44iu2s8pgfndvblm2j3iep/index.html?id=0294abc7-231a-4f6e-acd4-fb7ebf513fec&origin=1e95bb6a-280d-4f6e-8090-7f55f54cbfbd&swVersion=4&extensionId=&platform=electron&vscode-resource-base-authority=vscode-resource.vscode-cdn.net&parentOrigin=vscode-file%3A%2F%2Fvscode-app&purpose=notebookRenderer",
+  "changes": [
+    {
+      "cells": [],
+      "added": [
+        {
+          "idx": 2,
+          "cell_type": "code",
+          "source": "# cell 2\nimport time\n# time.sleep(2)\nprint(1)",
+          "metadata": {
+            "brd": "7052fadb-eba5-4a37-9b05-44a9c947fc86",
+            "cell_id": "X55sZmlsZQ=="
+          },
+          "outputs": [],
+          "execution_count": null
+        },
+        {
+          "idx": 3,
+          "cell_type": "code",
+          "source": "# cell 3\ndisplaydh('cell 3', metadata={'bridge': {'cell': 3}});",
+          "metadata": {
+            "brd": "c476ce5a-f7ac-47c0-85f2-5a316654a830",
+            "cell_id": "X56sZmlsZQ=="
+          },
+          "outputs": [
+            {
+              "output_type": "display_data",
+              "data": {
+                "text/plain": "'cell 3'"
+              },
+              "metadata": {}
+            }
+          ],
+          "execution_count": null
+        },
+        {
+          "idx": 4,
+          "cell_type": "code",
+          "source": "# cell 5\ndisplaydh(Javascript('console.log(\"cell 5\")'), metadata={'bridge': {'cell': 5}});",
+          "metadata": {
+            "brd": "7825d128-08ea-41cc-8369-237fa626ee17",
+            "cell_id": "X60sZmlsZQ=="
+          },
+          "outputs": [
+            {
+              "output_type": "display_data",
+              "data": {
+                "application/javascript": "console.log(\"cell 5\")",
+                "text/plain": "<IPython.core.display.Javascript object>"
+              },
+              "metadata": {}
+            }
+          ],
+          "execution_count": null
+        }
+      ],
+      "removed": [],
+      "cellCount": 38
+    }
+  ],
+  "nbData": {
+    "cellCount": 38
+  }
+}

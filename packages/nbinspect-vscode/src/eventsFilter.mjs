@@ -1,9 +1,8 @@
-import debug from 'debug';
+import { debug } from './debug.mjs';
+import { NBStateMonitor } from './stateMonitor.mjs';
+import { Bridged } from './bridged.mjs';
 
-import { NBStateMonitor } from './stateMonitor.js';
-import { Bridged } from './bridged.js';
-
-const log = debug('nbinspect:monitor');
+const log = debug('nbinspect:filter');
 
 class BridgeNBEventsFilter {
   nb;
@@ -24,7 +23,7 @@ class BridgeNBEventsFilter {
     const brdId = Bridged.brdId(cell);
     if (!brdId) return true;
     const brd = NBStateMonitor.get(nb).bridged.get(brdId);
-    if (log.enabled) {
+    if (debug.enabled) {
       if (brd === undefined) throw new Error("Bridged not found");
       if (brd.id !== brdId) throw new Error("Bridged id mismatch");
     }

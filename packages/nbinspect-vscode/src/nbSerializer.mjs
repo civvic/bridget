@@ -1,7 +1,8 @@
 // nbSerializer.js - Adapted from VSCode ipynb serializers.ts
 import * as vscode from 'vscode';
-import { Bridged } from './bridged.js';
-import { defaultNotebookFormat } from './utils.js';
+
+import { Bridged } from './bridged.mjs';
+import { defaultNotebookFormat } from './utils.mjs';
 
 const textDecoder = new TextDecoder();
 

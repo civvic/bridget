@@ -7,7 +7,7 @@ const watch = process.argv.includes('--watch');
 
 async function main() {
   const ctx = await esbuild.context({
-    entryPoints: ['src/extension.js'],
+    entryPoints: ['src/extension.mjs'],
     bundle: true,
     outdir: 'dist',
     format: 'cjs',
@@ -15,7 +15,7 @@ async function main() {
     sourcemap: watch,
     sourcesContent: false,
     platform: 'node',
-    external: ['vscode', 'lodash', 'crypto'],
+    external: ['vscode', 'crypto'],
     logLevel: 'warning',
     // target: 'es2020',
     plugins: [

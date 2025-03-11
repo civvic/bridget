@@ -1,0 +1,184 @@
+{
+  "type": "state",
+  "timestamp": 1741431650990,
+  "origin": "vscode-webview://1ql27b0grt14rkuj26idbt9ktekivp44iu2s8pgfndvblm2j3iep/index.html?id=3e5077db-ef65-4cbd-9150-c1c001e815ff&origin=1e95bb6a-280d-4f6e-8090-7f55f54cbfbd&swVersion=4&extensionId=&platform=electron&vscode-resource-base-authority=vscode-resource.vscode-cdn.net&parentOrigin=vscode-file%3A%2F%2Fvscode-app&purpose=notebookRenderer",
+  "changes": [
+    {
+      "cells": [
+        {
+          "idx": 1,
+          "cell_type": "code",
+          "source": "# cell 1\nfrom itertools import count\n\nimport ipywidgets as W\nimport matplotlib.pyplot as plt\nfrom bridget.display_helpers import displaydh\nfrom IPython.display import HTML, Image, Javascript, JSON, DisplayHandle, clear_output\ncounter = count()",
+          "metadata": {
+            "brd": "ca92cce1-b16c-487b-9869-899330cec0ac",
+            "cell_id": "W1sZmlsZQ=="
+          },
+          "outputs": [],
+          "execution_count": 2
+        },
+        {
+          "idx": 2,
+          "cell_type": "code",
+          "source": "# cell 2\nimport time\n# time.sleep(2)\nprint(1)",
+          "metadata": {
+            "brd": "d6eeecf8-fe3f-46ea-bb44-1d2c24f8d601",
+            "cell_id": "W2sZmlsZQ=="
+          },
+          "outputs": [
+            {
+              "output_type": "stream",
+              "name": "stdout",
+              "text": "1\n"
+            }
+          ],
+          "execution_count": 3
+        },
+        {
+          "idx": 3,
+          "cell_type": "code",
+          "source": "# cell 3\ndisplaydh('cell 3', metadata={'bridge': {'cell': 3}});",
+          "metadata": {
+            "brd": "asdf-qwer",
+            "cell_id": "W3sZmlsZQ=="
+          },
+          "outputs": [
+            {
+              "output_type": "display_data",
+              "data": {
+                "text/plain": "'cell 3'"
+              },
+              "metadata": {
+                "transient": {
+                  "display_id": "fedc536c57a62a53eb7bf2fc51305438"
+                },
+                "bridge": {
+                  "cell": 3
+                }
+              }
+            }
+          ],
+          "execution_count": 4
+        },
+        {
+          "idx": 4,
+          "cell_type": "code",
+          "source": "# cell 4\ndisplaydh(HTML('cell 4'), metadata={'bridge': {'cell': 4}});",
+          "metadata": {
+            "brd": "40846a3a-1851-48b8-b3eb-53a66addc66f",
+            "cell_id": "W4sZmlsZQ=="
+          },
+          "outputs": [
+            {
+              "output_type": "display_data",
+              "data": {
+                "text/html": "cell 4",
+                "text/plain": "<IPython.core.display.HTML object>"
+              },
+              "metadata": {
+                "transient": {
+                  "display_id": "e5aa2d43212d752cd1ed7b296b8ea3a4"
+                },
+                "bridge": {
+                  "cell": 4
+                }
+              }
+            }
+          ],
+          "execution_count": 5
+        },
+        {
+          "idx": 5,
+          "cell_type": "code",
+          "source": "# cell 5\ndisplaydh(Javascript('console.log(\"cell 5\")'), metadata={'bridge': {'cell': 5}});",
+          "metadata": {
+            "brd": "29ec7a36-9ec4-441d-8f34-f98ff9578ef5",
+            "cell_id": "W5sZmlsZQ=="
+          },
+          "outputs": [
+            {
+              "output_type": "display_data",
+              "data": {
+                "application/javascript": "console.log(\"cell 5\")",
+                "text/plain": "<IPython.core.display.Javascript object>"
+              },
+              "metadata": {
+                "transient": {
+                  "display_id": "4d9300fb269af0049034f5aa9d59fb8d"
+                },
+                "bridge": {
+                  "cell": 5
+                }
+              }
+            }
+          ],
+          "execution_count": 6
+        },
+        {
+          "idx": 6,
+          "cell_type": "code",
+          "source": "# cell 6\nprint(6.1)\nprint(6.2)",
+          "metadata": {
+            "brd": "045e164b-a793-4084-a51a-6003c749659e",
+            "cell_id": "W6sZmlsZQ=="
+          },
+          "outputs": [
+            {
+              "output_type": "stream",
+              "name": "stdout",
+              "text": "6.1\n6.2\n"
+            }
+          ],
+          "execution_count": 7
+        },
+        {
+          "idx": 7,
+          "cell_type": "code",
+          "source": "# cell 7\ndisplaydh(HTML('cell 7.1'), metadata={'bridge': {'cell': 7.1}})\ndisplaydh(HTML('cell 7.2'), metadata={'bridge': {'cell': 7.2}});",
+          "metadata": {
+            "brd": "7bdaa174-01eb-4cba-b2d8-24a2fdc6ccea",
+            "cell_id": "X10sZmlsZQ=="
+          },
+          "outputs": [
+            {
+              "output_type": "display_data",
+              "data": {
+                "text/html": "cell 7.1",
+                "text/plain": "<IPython.core.display.HTML object>"
+              },
+              "metadata": {
+                "transient": {
+                  "display_id": "ff9d4c680958a97fc69c02f7a775ec58"
+                },
+                "bridge": {
+                  "cell": 7.1
+                }
+              }
+            },
+            {
+              "output_type": "display_data",
+              "data": {
+                "text/html": "cell 7.2",
+                "text/plain": "<IPython.core.display.HTML object>"
+              },
+              "metadata": {
+                "transient": {
+                  "display_id": "4dbef9291ef85b12c5b5ef2e974e35d5"
+                },
+                "bridge": {
+                  "cell": 7.2
+                }
+              }
+            }
+          ],
+          "execution_count": 8
+        }
+      ],
+      "added": [],
+      "removed": [],
+      "cellCount": 38
+    }
+  ],
+  "nbData": {
+    "cellCount": 38
+  }
+}

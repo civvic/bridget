@@ -1,31 +1,27 @@
 import * as vscode from 'vscode';
-// import debug from 'debug';
-// debug.enable('nbinspect:*');
-// debug.log = console.info.bind(console);
-// const log = debug('nbinspect:ext');
 
-import { debug as debug2 } from './utils.js';
-import { NBStateMonitor } from './stateMonitor.js';
-// import { getType } from './utils.js';
+import { debug } from './debug.mjs';
+import { NBStateMonitor } from './stateMonitor.mjs';
 
 
-const log = debug2('nbinspect:ext', 'darkgreen');
+const log = debug('nbinspect:ext', 'darkgreen');
 
 /** @param {vscode.ExtensionContext} context */
 export function activate(context) {
   log('Activating NBInspect extension');
-  // (debug.inspectOpts ??= {}).hideDate ??= !!process.env.DEBUG_HIDE_DATE;
-  // debug.inspectOpts.hideDate = true;
-  // debug.inspectOpts.colors = true;
-  // log(debug.inspectOpts);
   const messaging = vscode.notebooks.createRendererMessaging("nbinspect-renderer");
   NBStateMonitor.messaging = messaging;
   messaging.onDidReceiveMessage(NBStateMonitor.onRendererMessage);
   context.subscriptions.push(
     messaging,
     vscode.workspace.onDidChangeNotebookDocument(NBStateMonitor.onChange),  
-    vscode.workspace.onDidCloseNotebookDocument(NBStateMonitor.onCloseNotebook)
+    vscode.workspace.onDidCloseNotebookDocument(NBStateMonitor.onCloseNotebook),
+    vscode.window.onDidChangeNotebookEditorSelection(NBStateMonitor.onChangeSelection),
+    vscode.window.onDidChangeActiveNotebookEditor(NBStateMonitor.onChangeActiveEditor),
   );
+  if (vscode.window.activeNotebookEditor) {
+    NBStateMonitor.onChangeActiveEditor(vscode.window.activeNotebookEditor);
+  }
 }
 
 export function deactivate() {

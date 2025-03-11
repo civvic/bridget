@@ -1,0 +1,47 @@
+{
+  "type": "state",
+  "timestamp": 1741430571780,
+  "origin": "vscode-webview://1ql27b0grt14rkuj26idbt9ktekivp44iu2s8pgfndvblm2j3iep/index.html?id=2356f3bb-fcb3-4e1e-b74d-8e3b9e611f34&origin=1e95bb6a-280d-4f6e-8090-7f55f54cbfbd&swVersion=4&extensionId=&platform=electron&vscode-resource-base-authority=vscode-resource.vscode-cdn.net&parentOrigin=vscode-file%3A%2F%2Fvscode-app&purpose=notebookRenderer",
+  "changes": [
+    {
+      "cells": [
+        {
+          "idx": 20,
+          "cell_type": "code",
+          "source": "# cell 20\ndisplay(W.IntSlider(20, description='cell'), metadata={'bridge': {'cell': 20, 'skip': True}})",
+          "metadata": {
+            "brd": "e7a4ba74-db1a-4e52-93a5-61046d2cdf1f",
+            "cell_id": "X26sZmlsZQ=="
+          },
+          "outputs": [
+            {
+              "output_type": "display_data",
+              "data": {
+                "application/vnd.jupyter.widget-view+json": {
+                  "version_major": 2,
+                  "version_minor": 0,
+                  "model_id": "23525aa79b4649f890a852b1b8c6427d"
+                },
+                "text/plain": "IntSlider(value=20, description='cell')"
+              },
+              "metadata": {
+                "transient": {},
+                "bridge": {
+                  "cell": 20,
+                  "skip": true
+                }
+              }
+            }
+          ],
+          "execution_count": 8
+        }
+      ],
+      "added": [],
+      "removed": [],
+      "cellCount": 38
+    }
+  ],
+  "nbData": {
+    "cellCount": 38
+  }
+}

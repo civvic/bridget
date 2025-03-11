@@ -1,7 +1,6 @@
-// import * as vscode from 'vscode';
 import { randomUUID } from 'crypto';
-import { NBStateMonitor } from './stateMonitor.js';
-import { MIME } from './utils.js';
+import { NBStateMonitor } from './stateMonitor.mjs';
+import { MIME } from './utils.mjs';
 
 /** 
  * @typedef {Object} BridgedOutputMetadata

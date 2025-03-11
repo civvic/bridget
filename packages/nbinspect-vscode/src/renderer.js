@@ -1,6 +1,14 @@
-debugger;
-
 let DEBUG = true;
+function log(...args) { if (DEBUG) console.log(...args); }
+function logGroup(...args) { if (DEBUG) console.group(...args); }
+function logGroupEnd() { if (DEBUG) console.groupEnd(); }
+function logAll(...args) { 
+  if (DEBUG && args.length > 0) {
+    console.group(...(args.splice(0, 1)[0]));
+    args.forEach(arg => console.log(...arg));
+    console.groupEnd();
+  } 
+}
 
 const NBSTATE_FEEDBACK_CLS = 'notebook-state-feedback';
 const NBSTATE_SCRIPT_ID = 'notebook-state-json';
@@ -20,6 +28,11 @@ const timeFormatter = new Intl.DateTimeFormat(undefined, TSFMT);
 
 // ---- utils ----
 
+let count = 0;
+function kounter() {
+  return count++;
+}
+
 function _truncate(str, maxLength = 100) {
   return str.length > maxLength ? str.substring(0, maxLength) + "..." : str;
 }
@@ -35,20 +48,17 @@ const pickDefined = (obj, ...keys) => Object.fromEntries(
 
 // ---- rendering ----
 
-/** summary for debugging
- * @param {StateMessage}
- * @returns {string} HTML string
- */
-function summaryHTML(message) {
-  let {cells, changed, added, removed} = message;
-  if (!cells) {
-    cells = changed;
-    cells.push(...added);
-  }
+function changeHTML(message) {
+  let {cells, /* changed,  */added, removed, cellCount} = message;
+  // if (!cells) {
+  //   cells = changed;
+  //   cells.push(...added);
+  // }
+  const cc = `Cell count: ${cellCount}\n`;
   const r = removed && removed.length > 0 ? `Removed: ${removed}\n` : '';
   const a = added && added.length > 0 ? `Added: ${added.map(c => c.idx).join(', ')}\n` : '';
-  const c = changed && changed.length > 0 ? `Changed: ${changed.map(c => c.idx).join(', ')}\n` : '';
-  return r + a + c + cells.map((cell, idx) => {
+  // const c = changed && changed.length > 0 ? `Changed: ${changed.map(c => c.idx).join(', ')}\n` : '';
+  return cc + r + a/*  + c */ + cells.map((cell, idx) => {
     let src = cell.source;
     // source possibly has HTML content, sanitize it
     src = src.replace(/<[^>]*>?/gm, '');
@@ -72,6 +82,14 @@ function summaryHTML(message) {
       ` : ''}
     </div>
   `}).join('');
+}
+
+/** summary for debugging
+ * @param {StateMessage}
+ * @returns {string} HTML string
+ */
+function messageSummary(message) {
+  return message.changes.map(change => changeHTML(change)).join('\n');
 }
 
 /** feedback for debugging
@@ -98,7 +116,7 @@ function renderNBStateFeedback(message, opts) {
       ${SUMMSTL}
       <details class="${updateClass}">
         <summary><strong>Cells:</strong></summary>
-        ${summaryHTML(message)}
+        ${messageSummary(message)}
       </details>
     </div>
   `;
@@ -131,86 +149,96 @@ class NBStateRenderer {
   _defaultOpts = { feedback: true, watch: false, debug: false };
   opts;
   /** @type {Map<string, Output>} */
-  _outputs = new Map();  // Track outputs
+  outputs = new Map();  // Track outputs
   /** @type {Output|null} */
-  _output = null;
-  /** @type {StateMessage|null} */
-  NBState = null;
+  #output = null;
+  /** @type {StateMessage[]} */
+  #NBState = [];
   /** @type {boolean} */
   #useScript = true;
+  /** @type {Map<string, {resolve: (value: any) => void, reject: (reason?: any) => void, timeoutId: number}>} */
+  #pendingResponses = new Map();  // reqId -> {resolve, reject, timeoutId}
+  #observers = new Set();
   
   constructor(context, docId=null) {
     if (!context.postMessage) throw new Error("No postMessage function");
     this.context = context;
     this.docId = docId;
     this.opts = {...this._defaultOpts};
+    // General listener for messages from the extension
     this.listener = context.onDidReceiveMessage(this.onMessage.bind(this));
+    // Global variable for easy access to the renderer by others in the webview, i.e., widgets
     globalThis.$Ren = this;
   }
   
   /** Get active output
    * @returns {Output|null} */
-  getOutput() {
-    return this._output;
+  get output() {
+    return this.#output;
   }
 
   /** Set active output
    * @param {Output} output */
-  setOutput(output) {
+  set output(output) {
+    log('set output', output?.itemId);
     this.deactivateOutput();
-    this._output = output;
+    this.#output = output;
     if (output) output.active = true;
   }
 
   /** Hide output
    * @param {Output} output */
   deactivateOutput() {
-    const current = this.getOutput();
+    const current = this.output;
     if (current) {
       current.active = false;
       current.el.innerHTML = '';
-      // current.el.style.display = 'none';
-      // this._outputs.delete(current.itemId);
+      log('deactivateOutput', current.itemId);
     }
   }
 
   /** @param {Output} output */
   addOutput(output) {
-    this.setOutput(output);
-    this._outputs.set(output.itemId, output);
+    this.output = output;
+    this.outputs.set(output.itemId, output);
   }
   
   deleteOutput(itemId) {
-    if (DEBUG) console.log('disposeOutputItem', itemId);
-    // const stateScript = getStateScript();
-    // if (stateScript) {  // If this was the owner, clear ownership
-    //   if (stateScript.dataset.rid === itemId) delete stateScript.dataset.rid;
-    // }
-    const output = this._outputs.get(itemId);
+    log('disposeOutputItem', itemId);
+    const output = this.outputs.get(itemId);
     if (output) {
-      if (output === this.getOutput()) this._output = null;
-      this._outputs.delete(itemId);
-      this.setOutput([...this._outputs.values()].at(-1));
+      this.outputs.delete(itemId);
+      if (output === this.output) {
+        this.output = null;
+        this.output = [...this.outputs.values()].at(-1);
+      }
     }
-    // Check for remaining outputs after DOM update
-    // globalThis.requestAnimationFrame(() => {
-    //   if (!globalThis.document.querySelectorAll(`.${NBSTATE_FEEDBACK_CLS}`).length) {
-    //     stateScript?.remove();
-    //   }
-    // });
-    /** @type {RendererDeregisterMessage} */
-    const msg = { type: "deregister", outputId: itemId };
-    this.context.postMessage(msg);
+    if (this.outputs.size === 0) {
+      this.output = null;
+      /** @type {RendererDeregisterMessage} */
+      const msg = { type: "deregister" };
+      this.context.postMessage(msg);
+    }
+  }
+
+  /** Add a callback to be called when the notebook state changes
+   * @param {Function<StateChange[], NBData>} callback
+   * @returns {Function} cleanup function */
+  addStateObserver(callback) {
+    this.#observers.add(callback);
+    return () => this.#observers.delete(callback); // returns cleanup function
   }
 
   /** Get current notebook state
-   * @returns {ExtensionMessage|null} */
-  getNBState() { return this.NBState; }
+   * @returns {StateMessage|null} */
+  get NBState() { return this.#NBState; }
+  getNBState() { return this.#NBState; }
 
   /** Set notebook state
-   * @param {ExtensionMessage} message */
-  setNBState(message) {
-    this.NBState = message;
+   * @param {StateMessage} message */
+  set NBState(message) {
+    this.#NBState.push(message);
+    this.#observers.forEach(cb => cb(message.changes, message.nbData));
     const ts = `${message.timestamp}`, reqid = `${message.reqid}`;
     let d = null, update = false;
     if (this.#useScript) {
@@ -223,67 +251,97 @@ class NBStateRenderer {
         script.textContent = JSON.stringify(message);
       }
     } else {
-      update = `${this.NBState.timestamp}` !== ts;
+      update = `${this.message.timestamp}` !== ts;
     }
-    if (DEBUG) {
-      console.group(`setNBState:${message.type}`);
-      console.log('outputId:', message.outputId);
-      console.log('message reqid/ts:', reqid, ts);
-      console.log('script', JSON.stringify(d), ' - update:', update);
-      console.groupEnd();
-    }
+    if (DEBUG) logAll(
+      [`set NBState:${message.type}`],
+      [`message reqid/ts: ${reqid} ${ts}`],
+      [`script: ${JSON.stringify(d)}`, ' - update:', update]
+    );
   }
-  
-  /** Handle direct updates
-   * @param {StateMessage} message */
-  update(message) {
-    if (message.origin && message.origin !== this.docId) return;
-    this.render(null, null, message);
-  }
-  
   
   /** Handle message from the extension
-   * @param {ExtensionMessage} message */
-  onMessage(message) {
-    console.log(Date.now(),'onMessage');
-    if (message.origin !== this.docId) return;
-    let output = this._outputs.get(message.outputId);
-    if (!output || !output.active) output = this.getOutput();
+   * @param {StateMessage} msg 
+   */
+  onMessage(msg) {
+    logGroup(Date.now(), `onMessage:${msg.changes.length}`);
+    if (msg.origin !== this.docId) return;
+    const output = this.output;
     const el = output ? output.el : null;
-    if (message.type === "state" || message.type === "stateDiff") {
-      if (el) el.innerHTML = renderNBStateFeedback(message, this.opts);
-      this.setNBState(message);
-    } else if (message.type === "error") {
-      if (el) el.innerHTML = `<div class="error">${message.message}</div>`;
+    if (msg.type === "state" || msg.type === "stateDiff") {
+      if (el) el.innerHTML = renderNBStateFeedback(msg, this.opts);
+      this.NBState = msg;
+    } else if (msg.type === "error") {
+      if (el) el.innerHTML = `<div class="error">${msg.message}</div>`;
     }
+    logGroupEnd();
   }
 
-  updateOpts(opts) {
-    if (opts.debug !== undefined) DEBUG = opts.debug;
-    Object.assign(this.opts, pickDefined(opts, ...Object.keys(this._defaultOpts)));
+  /** Called from elsewhere in the webview or other renderers to handle direct updates
+   * @param {RendererStateMessage} message 
+   * @returns {Promise<void>} */
+  async aupdate(message) {
+    if (message.origin && message.origin !== this.docId) return;
+    const [opts] = this.#updateOpts(null, null, message);
+    const reqId = message.reqid;
+    // Create a promise that will resolve when we get a response
+    return new Promise((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        this.#pendingResponses.delete(reqId);
+        reject(new Error("Timeout waiting for response"));
+      }, 5000); // the extension shouldn't perform any long running operations, 1 second should be 
+                // more than enough, but we'll play it safe
+      
+      this.#pendingResponses.set(reqId, {resolve, reject, timeoutId});
+      this.#render({...opts, reqid: reqId});
+    });
+  }
+  
+  /** Called from elsewhere in the webview or other renderers to handle direct updates
+   * @param {RendererStateMessage} message 
+   */
+  update(message) {
+    if (message.origin && message.origin !== this.docId) return;
+    const [opts] = this.#updateOpts(null, null, message);
+    // this.#render(opts);
+    /** @type {RendererStateMessage} */
+    const msg = { opts, origin: this.docId };
+    this.context.postMessage(msg);
+  }
+  
+  #render(opts={}, itemId, mime) {
+    if (DEBUG) logAll(
+        [`${Date.now()} render`],
+        [`output:`, itemId, mime],
+        [`opts: ${JSON.stringify(opts)}`]
+      );
+    const msgType = opts.update ? 'updateState' : 'getState';
+    /** @type {RendererStateMessage} */
+    const msg = { type: msgType, reqid: opts.id ?? kounter(), opts: this.opts, origin: this.docId };
+    this.context.postMessage(msg);
   }
 
-  /** Called to display our MIME output
+  #updateOpts(outputItem, element, opts) {
+    if (element && this.docId) this.docId = element.ownerDocument.location.href;
+    if (outputItem) {
+      opts = outputItem.json();
+      const itemId = outputItem.id;
+      if (itemId && !this.outputs.get(itemId)) this.addOutput({ el: element, itemId: itemId });
+    }
+    if (opts) {
+      if (opts.debug !== undefined) DEBUG = opts.debug;
+      Object.assign(this.opts, pickDefined(opts, ...Object.keys(this._defaultOpts)));
+    }
+    return [opts, outputItem?.id, outputItem?.mime];
+  }
+
+  /** Called by the editor to display our MIME output
    * @param {OutputItem} outputItem 
    * @param {HTMLElement} element
    */
-  render(outputItem, element, opts={}) {
-    if (!this.docId) this.docId = element.ownerDocument.location.href;
-    if (outputItem) opts = outputItem.json();
-    const itemId = outputItem ? outputItem.id : null;
-    this.updateOpts(opts);
-    if (DEBUG) {
-      console.group(`${Date.now()} render`);
-      console.log("output itemId", itemId);
-      console.log(outputItem ? outputItem.mime : 'no outputItem', opts);
-      console.groupEnd();
-    }
-    if (itemId && !this._outputs.get(itemId)) this.addOutput({ el: element, itemId });
-    const msgType = opts.update ? 'updateState' : 'getState';
-    /** @type {RendererStateMessage} */
-    const msg = { type: msgType, outputId: itemId, reqid: opts.id, opts: this.opts, origin: this.docId };
-    this.context.postMessage(msg);
-  }  
+  render(outputItem, element) {
+    this.#render(...this.#updateOpts(outputItem, element));
+  }
 
 }
 
@@ -292,60 +350,29 @@ export function activate(context) {
   const renderer = new NBStateRenderer(context, globalThis.document.location.href);
   return {
     renderOutputItem: renderer.render.bind(renderer),
-    disposeOutputItem: renderer.deleteOutput.bind(renderer)
+    disposeOutputItem: renderer.deleteOutput.bind(renderer),
+    update: (msg) => renderer.update(msg),
+    aupdate: async (msg) => renderer.update(msg),
+    getNBState: () => renderer.getNBState()
   }
 }
 
-/** @typedef {import('vscode-notebook-renderer').RendererContext} RendererContext */
-/** @typedef {import('vscode-notebook-renderer').OutputItem} OutputItem */
+/** 
+ * @typedef {import('vscode-notebook-renderer').RendererContext} RendererContext 
+ * @typedef {import('vscode-notebook-renderer').OutputItem} OutputItem 
+ */
 
-/**
- * @typedef {Object} ExtensionMessage
- * @property {'state'|'error'} type - Message type identifier
- * @property {Object} cells - Notebook cells
- * @property {Object} NBData - Notebook metadata
- * @property {number} timestamp - Timestamp of the state message
- * @property {'notebookUpdate'} [changeType] - Type of change that triggered update
- * @property {string} [origin] - Origin of the change (window.origin, webview)
- * @property {string} [outputId] - ID of the output requesting state
- * @property {string} [reqid] - ID of the request
- * @property {string} [message] - Error message
+/** 
+ * @typedef {import('./types.mjs').NBData} NBData
+ * @typedef {import('./types.mjs').StateMessage} StateMessage
+ * @typedef {import('./types.mjs').RendererStateMessage} RendererStateMessage
+ * @typedef {import('./types.mjs').RendererDeregisterMessage} RendererDeregisterMessage
  */
 
 /**
  * @typedef {Object} Options
  * @property {boolean} feedback - Show feedback so user can see changes
  * @property {boolean} watch - Watch for changes (extension)
- */
-
-/**
- * @typedef {Object} StateMessage
- * @property {'getState'} type - Message type identifier
- * @property {string} outputId - ID of the output requesting state
- * @property {string} reqid - ID of the request
- * @property {Options} opts - Options for the renderer
- * @property {string} origin - Origin of the request (window)
- */
-
-/** 
- * @typedef {Object} DeregisterMessage
- * @property {'deregister'} type - Message type identifier
- * @property {string} outputId - ID of the output requesting the action
- */
-
-/** 
- * @typedef {Object} CellData
- * @property {'code' | 'markdown' | 'raw'} cell_type
- * @property {string} source
- * @property {Object} [metadata]
- * @property {Array<OutputData>} [outputs]
- */ 
-
-/** 
- * @typedef {Object} OutputData
- * @property {'stream' | 'display_data' | 'execute_result' | 'error'} output_type
- * @property {Object} [data]
- * @property {Object} [metadata]
  */
 
 /** 
