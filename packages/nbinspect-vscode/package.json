@@ -2,7 +2,7 @@
   "name": "nbinspect",
   "displayName": "Notebook state inspect",
   "description": "Helper extension for notebook state",
-  "version": "0.0.25",
+  "version": "0.0.26",
   "publisher": "spikey-summers",
   "repository": {
     "type": "git",

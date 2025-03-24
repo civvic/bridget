@@ -26,7 +26,7 @@ function consoleFmt(ts, ns, color, msg) {
   return `%c${ts}${ns?` ${ns}`:''}`, `color: ${color}`, `\x1B[1;34m${msg}\x1B[m`;
 }
 
-function debugFactory(namespace, color, fmt) {
+function debugFactory(namespace, color, fmt, sink) {
   let prevTime;
   function debug(...args) {
     if (!debugFactory.enabled) return;
@@ -45,7 +45,7 @@ function debugFactory(namespace, color, fmt) {
   self.namespace = namespace;
   self.useColors = true;
   self.color = color ?? selectColor(namespace);
-  self.sink = console.info.bind(console);
+  self.sink = sink ?? console.info.bind(console);
   self.fmt = fmt ?? consoleFmt;
   self.reset = () => {
     prevTime = 0;
@@ -57,5 +57,6 @@ function debugFactory(namespace, color, fmt) {
 debugFactory.enable = (namespace) => { debugFactory.enabled = true; }
 debugFactory.disable = () => { debugFactory.enabled = false; }
 debugFactory.enabled = true;
+const debug = debugFactory;
 
-export { debugFactory as debug };
+export { debug };

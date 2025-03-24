@@ -209,6 +209,7 @@ function getCellMetadata(cell) {
  * @returns {StateCell} nbformat cell
  */
 export function processCell(cell) {
+  Bridged.bridgedOf(cell);
   const cellType = getCellType(cell);
   const source = cell.document.getText();//splitMultilineString(cell.document.getText());
   const metadata = getCellMetadata(cell);

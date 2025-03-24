@@ -152,7 +152,6 @@ export class NBStateMonitor {
       changed = changed.map(idx => processCell(nb.cellAt(idx)));
       added = added.flatMap(({cellIdxs}) => cellIdxs.map(idx => {
         const cell = nb.cellAt(idx);
-        Bridged.bridgedOf(cell);
         return processCell(cell)})
       );
       removed = removed.flatMap((r) => Array.from({length: r.end - r.start}, (_, i) => i + r.start));
