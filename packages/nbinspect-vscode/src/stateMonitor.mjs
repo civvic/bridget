@@ -137,7 +137,7 @@ export class NBStateMonitor {
       notebookType: nb.notebookType, notebookUri: this.nb.uri.toString() };
     /** @type {StateMessage} */
     const message = { type: "state", timestamp: ts, origin: reqMsg?.origin || this.renderer, 
-      changes, nbData: nbData, reqid: reqMsg?.reqid }
+      changes, nbData: nbData, reqId: reqMsg?.reqId }
     NBStateMonitor.messaging.postMessage(message);
     log(">>>> ", this.renderer ? '' : '(no renderer)');
   }
@@ -173,21 +173,26 @@ export class NBStateMonitor {
     const reqMsg = this.#pendingRendererMessage;
     this.#pendingRendererMessage = null;
     if (!this.renderer && reqMsg) this.renderer = reqMsg.origin;
-    if (diffs.length && this.#lastTs) {
+    if (/* diffs.length &&  */this.#lastTs) {
       const ts = this.#lastTs = Date.now();
       if ((diffs.length+this.#pending.length) < this.nb.cellCount/2) {
         const changes = this.#getNBStateChanges(diffs);
-        /* if (this.watch) { */
-          const msg = { type: "state", timestamp: ts, origin: this.renderer, 
-            changes: this.#pending.concat(changes), 
-            nbData: { cellCount: this.nb.cellCount }, reqid: reqMsg?.reqid }
-          this.#pending.length = 0;
-          NBStateMonitor.messaging.postMessage(msg);
-          log.reset()(">>>> sent >>>>", this.renderer ? '' : '(no renderer)');
+        if (changes.length > 0) {
+          /* if (this.watch) { */
+            const msg = { type: "state", timestamp: ts, origin: this.renderer, 
+              changes: this.#pending.concat(changes), 
+              nbData: { cellCount: this.nb.cellCount }, reqId: reqMsg?.reqId }
+            this.#pending.length = 0;
+            NBStateMonitor.messaging.postMessage(msg);
+            log.reset()(">>>> sent >>>>", this.renderer ? '' : '(no renderer)');
+            return;
+          /* } */
+          this.#pending.push(...changes);
+          log(">>>> pending", this.#pending.length);
           return;
-        /* } */
-        this.#pending.push(...changes);
-        log(">>>> pending", this.#pending.length);
+        } else {
+          log(">>>> no changes");
+        }
         return;
       }
     }
@@ -206,8 +211,8 @@ export class NBStateMonitor {
     const nb = editor.notebook;
     const monitor = NBStateMonitor.get(nb);
     log.reset()(`---- Message from renderer @${monitor.nb.uri.toString()}:`);
-    const { type, reqid, origin } = message;
-    log(`---- ${JSON.stringify({ type, reqid })}`);
+    const { type, reqId, origin } = message;
+    log(`---- ${JSON.stringify({ type, reqId })}`);
 
     if (message.type === "deregister") {
       // monitor.active = false;
@@ -217,7 +222,7 @@ export class NBStateMonitor {
       //   log("---- deleted monitor", monitor.nb.uri.toString());
       // }
       // log("----");
-      return; 
+      return;
     }
 
     log('---- nOpts:', nOpts);
@@ -228,9 +233,11 @@ export class NBStateMonitor {
     }
     monitor.active = true;
     if (monitor.#changeTracker.collator.isEmpty) {  // direct message
-      if (message.type === "getState") {
+      if (message.type === "getState") {  // will send full state
         monitor.#sentNBState(message);
-      } else {
+      } else if (message.type === "updateOpts") {  // do nothing
+        monitor.#pendingRendererMessage = message;
+      } else {                           // will send pending diffs
         monitor.#pendingRendererMessage = message;
         monitor.sentNBState([]);
       }
@@ -241,12 +248,11 @@ export class NBStateMonitor {
     if (nOpts.debug !== undefined) monitor.#opts.debug = nOpts.debug;
     
     monitor.#pendingRendererMessage = message;
-    if (message.type === "getState") {
+    if (first || message.type === "getState") {
       monitor.#lastTs = 0;
-      monitor.oneShotDelay();  // reduce delay for renderer cell changes
-    } else {  // updateState
-      monitor.oneShotDelay();  // reduce delay for renderer cell changes
+    } else {
     }
+    monitor.oneShotDelay();  // reduce delay for renderer cell changes
   }
   
   /**

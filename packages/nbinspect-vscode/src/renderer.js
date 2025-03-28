@@ -26,6 +26,8 @@ const SUMMSTL = `
 const TSFMT = { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 };
 const timeFormatter = new Intl.DateTimeFormat(undefined, TSFMT);
 
+const MSG_TYPE = {full: 'getState', diff: 'updateState', opts: 'updateOpts'};
+
 // ---- utils ----
 
 let count = 0;
@@ -152,8 +154,8 @@ class NBStateRenderer {
   outputs = new Map();  // Track outputs
   /** @type {Output|null} */
   #output = null;
-  /** @type {StateMessage[]} */
-  #NBState = [];
+  /** @type {StateMessage} */
+  #NBState = null;
   /** @type {boolean} */
   #useScript = true;
   /** @type {Map<string, {resolve: (value: any) => void, reject: (reason?: any) => void, timeoutId: number}>} */
@@ -237,9 +239,15 @@ class NBStateRenderer {
   /** Set notebook state
    * @param {StateMessage} message */
   set NBState(message) {
-    this.#NBState.push(message);
-    this.#observers.forEach(cb => cb(message.changes, message.nbData));
-    const ts = `${message.timestamp}`, reqid = `${message.reqid}`;
+    const ts = `${message.timestamp}`, reqId = `${message.reqId}`;
+    if (this.#pendingResponses.has(reqId)) {
+      const {resolve, timeoutId} = this.#pendingResponses.get(reqId);
+      clearTimeout(timeoutId);
+      this.#pendingResponses.delete(reqId);
+      resolve(message);
+    }
+    this.#NBState = message;
+    this.#observers.forEach(cb => cb(message));
     let d = null, update = false;
     if (this.#useScript) {
       // Update state if ts doesn't match
@@ -253,11 +261,21 @@ class NBStateRenderer {
     } else {
       update = `${this.message.timestamp}` !== ts;
     }
-    if (DEBUG) logAll(
-      [`set NBState:${message.type}`],
-      [`message reqid/ts: ${reqid} ${ts}`],
-      [`script: ${JSON.stringify(d)}`, ' - update:', update]
-    );
+    if (DEBUG) {
+      logAll(
+        [`set NBState:${message.type}`],
+        [`script: ${JSON.stringify(d)}`, ' - update:', update],
+        [`message reqId/ts: ${reqId} ${ts} changes: ${message.changes.length}, nbData: ${message.nbData}`],
+        //         (c, i) => [`    ${i}: added: ${c.added.map(c => c.idx).join(', ')}, removed: ${c.removed.map(c => c.idx).join(', ')}, changed: ${c.changed.map(c => c.idx).join(', ')}`]),
+        ...message.changes.map(
+          (c, i) => {
+            const added = c.added && c.added.length ? `added: ${c.added.map(c => c.idx).join(', ')}` : '';
+            const removed = c.removed && c.removed.length ? `removed: ${c.removed.join(', ')}` : '';
+            return [`    ${i}: ${added} ${removed} cells: ${c.cells.map(c => c.idx).join(', ')}`]
+          }),
+        // [`changes[0]: cells ${message.changes[0].cells.map(c => c.idx).join(', ')}`],
+      ); 
+    }
   }
   
   /** Handle message from the extension
@@ -283,7 +301,7 @@ class NBStateRenderer {
   async aupdate(message) {
     if (message.origin && message.origin !== this.docId) return;
     const [opts] = this.#updateOpts(null, null, message);
-    const reqId = message.reqid;
+    const reqId = message.reqId;
     // Create a promise that will resolve when we get a response
     return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
@@ -293,7 +311,7 @@ class NBStateRenderer {
                 // more than enough, but we'll play it safe
       
       this.#pendingResponses.set(reqId, {resolve, reject, timeoutId});
-      this.#render({...opts, reqid: reqId});
+      this.#render({...opts, reqId: reqId});
     });
   }
   
@@ -302,11 +320,7 @@ class NBStateRenderer {
    */
   update(message) {
     if (message.origin && message.origin !== this.docId) return;
-    const [opts] = this.#updateOpts(null, null, message);
-    // this.#render(opts);
-    /** @type {RendererStateMessage} */
-    const msg = { opts, origin: this.docId };
-    this.context.postMessage(msg);
+    this.#render(...this.#updateOpts(null, null, message));
   }
   
   #render(opts={}, itemId, mime) {
@@ -315,12 +329,17 @@ class NBStateRenderer {
         [`output:`, itemId, mime],
         [`opts: ${JSON.stringify(opts)}`]
       );
-    const msgType = opts.update ? 'updateState' : 'getState';
+    const msgType = opts.update ? MSG_TYPE[opts.update] : 'updateState';
     /** @type {RendererStateMessage} */
-    const msg = { type: msgType, reqid: opts.id ?? kounter(), opts: this.opts, origin: this.docId };
+    const msg = { type: msgType, reqId: opts.id ?? kounter(), opts: this.opts, origin: this.docId };
     this.context.postMessage(msg);
   }
 
+  /** 
+   * @param {OutputItem?} outputItem
+   * @param {HTMLElement?} element
+   * @param {MIMEMessage?} opts
+   * @returns {[Options, string?, string?]} */
   #updateOpts(outputItem, element, opts) {
     if (element && this.docId) this.docId = element.ownerDocument.location.href;
     if (outputItem) {
@@ -371,8 +390,18 @@ export function activate(context) {
 
 /**
  * @typedef {Object} Options
- * @property {boolean} feedback - Show feedback so user can see changes
- * @property {boolean} watch - Watch for changes (extension)
+ * @property {boolean?} feedback - Show feedback so user can see changes
+ * @property {boolean?} watch - Watch for changes (extension)
+ * @property {boolean?} debug - Show debug messages
+ */
+
+/** 
+ * @typedef {Object} MIMEMessage
+ * @property {string} id - ID of the message
+ * @property {'full'|'diff'|'opts'|null} update - full or diff update or only options, default is diff
+ * @property {boolean?} feedback - Show feedback so user can see changes
+ * @property {boolean?} watch - Watch for changes (extension)
+ * @property {boolean?} debug - Show debug messages
  */
 
 /** 
