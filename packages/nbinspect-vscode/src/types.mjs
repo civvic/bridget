@@ -19,6 +19,17 @@
  * @property {'state'} type - Message type identifier
  * @property {string} origin - Notebook URI
  * @property {number} timestamp - Timestamp of the state message
+ * @property {StateCell[]} cells - list of state cells
+ * @property {NBData|undefined} NBData - Notebook metadata
+ * @property {string|undefined} reqId - ID of the request
+ * @property {string|undefined} message - Error message
+ */
+
+/**
+ * @typedef {Object} DiffsMessage
+ * @property {'diffs'} type - Message type identifier
+ * @property {string} origin - Notebook URI
+ * @property {number} timestamp - Timestamp of the state message
  * @property {StateChange[]} changes - list of state changes
  * @property {NBData|undefined} NBData - Notebook metadata
  * @property {string|undefined} reqId - ID of the request

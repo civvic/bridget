@@ -24,6 +24,7 @@ const log = debug('nbinspect:monitor', 'darkblue');
 /** 
  * @typedef {import('./types.mjs').NBData} NBData
  * @typedef {import('./types.mjs').StateMessage} StateMessage
+ * @typedef {import('./types.mjs').DiffsMessage} DiffsMessage
  * @typedef {import('./types.mjs').RendererStateMessage} RendererStateMessage
  * @typedef {import('./types.mjs').RendererDeregisterMessage} RendererDeregisterMessage
  */
@@ -132,12 +133,13 @@ export class NBStateMonitor {
     this.#pending.length = 0;
     this.#lastTs = ts;
     const nb = this.nb;
-    const changes = [{cells: nb.getCells().map(processCell), cellCount: nb.cellCount}]
+    // const changes = [{cells: nb.getCells().map(processCell), cellCount: nb.cellCount}]
+    const cells = nb.getCells().map(processCell)
     const nbData = { cellCount: nb.cellCount, metadata: nb.metadata, 
       notebookType: nb.notebookType, notebookUri: this.nb.uri.toString() };
     /** @type {StateMessage} */
     const message = { type: "state", timestamp: ts, origin: reqMsg?.origin || this.renderer, 
-      changes, nbData: nbData, reqId: reqMsg?.reqId }
+      cells, nbData, reqId: reqMsg?.reqId }
     NBStateMonitor.messaging.postMessage(message);
     log(">>>> ", this.renderer ? '' : '(no renderer)');
   }
@@ -179,7 +181,8 @@ export class NBStateMonitor {
         const changes = this.#getNBStateChanges(diffs);
         if (changes.length > 0) {
           /* if (this.watch) { */
-            const msg = { type: "state", timestamp: ts, origin: this.renderer, 
+            /** @type {DiffsMessage} */
+            const msg = { type: "diffs", timestamp: ts, origin: this.renderer, 
               changes: this.#pending.concat(changes), 
               nbData: { cellCount: this.nb.cellCount }, reqId: reqMsg?.reqId }
             this.#pending.length = 0;

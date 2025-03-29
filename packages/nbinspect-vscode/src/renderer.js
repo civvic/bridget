@@ -50,8 +50,7 @@ const pickDefined = (obj, ...keys) => Object.fromEntries(
 
 // ---- rendering ----
 
-function changeHTML(message) {
-  let {cells, /* changed,  */added, removed, cellCount} = message;
+function changeHTML({cells, added, removed, cellCount}) {
   // if (!cells) {
   //   cells = changed;
   //   cells.push(...added);
@@ -87,15 +86,18 @@ function changeHTML(message) {
 }
 
 /** summary for debugging
- * @param {StateMessage}
+ * @param {StateMessage|DiffsMessage} message
  * @returns {string} HTML string
  */
 function messageSummary(message) {
-  return message.changes.map(change => changeHTML(change)).join('\n');
+  const changes = message.type === 'diffs' 
+      ? message.changes 
+      : [{ cells:message.cells, cellCount: message.nbData.cellCount }];
+  return changes.map(change => changeHTML(change)).join('\n');
 }
 
 /** feedback for debugging
- * @param {StateMessage} message
+ * @param {StateMessage|DiffsMessage} message
  * @param {Options} opts
  * @returns {string} HTML string
  */
@@ -262,31 +264,31 @@ class NBStateRenderer {
       update = `${this.message.timestamp}` !== ts;
     }
     if (DEBUG) {
-      logAll(
-        [`set NBState:${message.type}`],
-        [`script: ${JSON.stringify(d)}`, ' - update:', update],
-        [`message reqId/ts: ${reqId} ${ts} changes: ${message.changes.length}, nbData: ${message.nbData}`],
-        //         (c, i) => [`    ${i}: added: ${c.added.map(c => c.idx).join(', ')}, removed: ${c.removed.map(c => c.idx).join(', ')}, changed: ${c.changed.map(c => c.idx).join(', ')}`]),
-        ...message.changes.map(
-          (c, i) => {
-            const added = c.added && c.added.length ? `added: ${c.added.map(c => c.idx).join(', ')}` : '';
-            const removed = c.removed && c.removed.length ? `removed: ${c.removed.join(', ')}` : '';
-            return [`    ${i}: ${added} ${removed} cells: ${c.cells.map(c => c.idx).join(', ')}`]
-          }),
-        // [`changes[0]: cells ${message.changes[0].cells.map(c => c.idx).join(', ')}`],
-      ); 
+      logGroup(`set NBState:${message.type}`);
+      log(`script: ${JSON.stringify(d)}`, ' - update:', update);
+      if (message.type === 'diffs') {
+        log(`message reqId/ts: ${reqId} ${ts} changes: ${message.changes.length}, nbData: ${message.nbData}`);
+        message.changes.forEach((c, i) => {
+          const added = c.added && c.added.length ? `added: ${c.added.map(c => c.idx).join(', ')}` : '';
+          const removed = c.removed && c.removed.length ? `removed: ${c.removed.join(', ')}` : '';
+          log(`    ${i}: ${added} ${removed} cells: ${c.cells.map(c => c.idx).join(', ')}`);
+        });
+      } else {
+        log(`cells ${message.cells.map(c => c.idx).join(', ')}`);
+      }
+      logGroupEnd();
     }
   }
   
   /** Handle message from the extension
-   * @param {StateMessage} msg 
+   * @param {StateMessage|DiffsMessage} msg 
    */
   onMessage(msg) {
-    logGroup(Date.now(), `onMessage:${msg.changes.length}`);
+    logGroup(Date.now(), `onMessage:${msg.changes?.length ?? msg.cells?.length}`);
     if (msg.origin !== this.docId) return;
     const output = this.output;
     const el = output ? output.el : null;
-    if (msg.type === "state" || msg.type === "stateDiff") {
+    if (msg.type === "state" || msg.type === "diffs") {
       if (el) el.innerHTML = renderNBStateFeedback(msg, this.opts);
       this.NBState = msg;
     } else if (msg.type === "error") {
@@ -384,6 +386,7 @@ export function activate(context) {
 /** 
  * @typedef {import('./types.mjs').NBData} NBData
  * @typedef {import('./types.mjs').StateMessage} StateMessage
+ * @typedef {import('./types.mjs').DiffsMessage} DiffsMessage
  * @typedef {import('./types.mjs').RendererStateMessage} RendererStateMessage
  * @typedef {import('./types.mjs').RendererDeregisterMessage} RendererDeregisterMessage
  */
