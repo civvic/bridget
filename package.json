@@ -2,5 +2,13 @@
   "name": "@bridget/monorepo",
   "version": "0.0.1",
   "private": true,
-  "packageManager": "pnpm@9.15.0"
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "compile": "node esbuild.js",
+    "watch": "node esbuild.js --watch"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "@anywidget/types": "^0.2.0"
+  }
 }

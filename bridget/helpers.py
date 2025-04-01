@@ -6,39 +6,33 @@
 from __future__ import annotations
 
 # %% auto 0
-__all__ = ['bridge_cfg', 'BridgeCfg', 'Singleling', 'cleanupwidgets', 'pretty_repr', 'rich_display', 'CLog', 'kounter',
-           'simple_id', 'id_gen', 'find', 'read_vfile', 'ScriptV', 'StyleV', 'nb_app']
+__all__ = ['emptyd', 'emptyl', 'emptyt', 'bridge_cfg', 'kounter', 'BridgeCfg', 'bundle_path', 'arun_command', 'run_command',
+           'Singleling', 'Kounter', 'simple_id', 'id_gen', 'patch_cached', 'patch_cached_property', 'cached_property',
+           'bridge_metadata', 'skip', 'compose_first']
 
 # %% ../nbs/01_helpers.ipynb
 import dataclasses
-import json
+import functools
+import importlib
 import os
 import sys
 from binascii import hexlify
-from functools import reduce
-from inspect import Parameter
+from functools import cache
+from functools import partial
+from pathlib import Path
+from types import ModuleType
 from typing import Any
 from typing import DefaultDict
-from typing import Hashable
-from typing import Mapping
-from typing import overload
-from typing import Sequence
 
 import fastcore.all as FC
-from fastcore.xml import FT
-from fastcore.xml import NotStr
-from fasthtml.basics import ft_html
-from fasthtml.core import FastHTML
-from IPython.display import display
-from IPython.display import DisplayHandle
 from olio.common import Config
 
 
 # %% ../nbs/01_helpers.ipynb
-_n = '\n'
+emptyd, emptyl, emptyt = {}, [], ()
 
 # %% ../nbs/01_helpers.ipynb
-@dataclasses.dataclass
+# @dataclasses.dataclass
 class BridgeCfg(Config):
     """
     Settings for core `Bridget` behavior.
@@ -60,18 +54,6 @@ class BridgeCfg(Config):
 
 bridge_cfg = BridgeCfg()
 
-
-# %% ../nbs/01_helpers.ipynb
-class Singleling:
-    def __new__(cls, *args, **kwargs):
-        if '__instance__' not in cls.__dict__: cls.__instance__ = super().__new__(cls, *args, **kwargs)
-        return cls.__instance__
-    
-    def setup(self, *args, **kwargs):
-        "One-time setup"
-        setattr(type(self), 'setup', FC.noop)
-
-
 # %% ../nbs/01_helpers.ipynb
 def _get_globals(mod: str):
     if hasattr(sys, '_getframe'):
@@ -80,103 +62,110 @@ def _get_globals(mod: str):
         glb = sys.modules[mod].__dict__
     return glb
 
+# %% ../nbs/01_helpers.ipynb
+def bundle_path(mod:str|ModuleType):
+    "Return the path to the module's directory or current directory."
+    if isinstance(mod, str): mod = importlib.import_module(mod)
+    return Path(fn).parent if (fn := getattr(mod, '__file__', None)) else Path()
 
 # %% ../nbs/01_helpers.ipynb
-def cleanupwidgets(*ws, mod: str|None=None, clear=True):
-    from IPython.display import clear_output
-    glb = _get_globals(mod or __name__)
-    if clear: clear_output(wait=True)
-    for w in ws:
-        _w = glb.get(w) if isinstance(w, str) else w
-        if _w:
-            try: _w.close()  # type: ignore
-            except: pass
-
-
-# %% ../nbs/01_helpers.ipynb
-@overload
-def pretty_repr(*o, html:bool=True, text:bool=False, **kwargs) -> str: ...
-@overload
-def pretty_repr(*o, html:bool=False, text:bool=True, **kwargs) -> str: ...
-def pretty_repr(*o, html:bool=True, text:bool=True, **kwargs) -> dict[str, str]|str:
-    from rich.pretty import Pretty
-    d = Pretty(*o, **kwargs)._repr_mimebundle_(
-        include=((),('text/plain',))[text] + ((),('text/html',))[html], 
-        exclude=((),('text/plain',))[not text] + ((),('text/html',))[not html]
+async def arun_command(command: str, cwd: Path|None=None, **kwargs):
+    import anyio
+    import subprocess
+    try:
+        process = await anyio.run_process(
+            command,
+            cwd=cwd or Path().absolute().parent,
+            **kwargs
         )
-    return d if len(d) > 1 else tuple(d.values())[0]
+        return process.stdout.decode('utf-8'), process.stderr.decode('utf-8')
+    except subprocess.CalledProcessError as e:
+        return e.stdout.decode('utf-8'), e.stderr.decode('utf-8')
 
+def run_command(command: str, cwd: Path|None=None, **kwargs):
+    import subprocess
+    result = subprocess.run(
+        command,
+        shell=True,
+        capture_output=True,
+        text=True,
+        cwd=cwd or Path().absolute().parent,
+        check=True,
+        **kwargs
+    )
+    if result.returncode != 0:
+        raise RuntimeError(result.stderr)
+    return result.stdout, result.stderr
 
 # %% ../nbs/01_helpers.ipynb
-def rich_display(*o, dhdl: DisplayHandle|None=None):
-    if not o: return
-    vv:tuple[str, ...] = tuple(FC.flatten([_.items() for _ in map(pretty_repr, o)]))  # type: ignore
-    dd = {'text/plain':'\n'.join(vv[1::4]), 'text/html':'\n'.join(vv[3::4])}
-    if dhdl: dhdl.update(dd, raw=True)
-    else: display(dd, raw=True)
-
-
-# %% ../nbs/01_helpers.ipynb
-def CLog(*o):
-    return f"<script>console.log({','.join(map(repr, o))})</script>"
-
+def _noop(*args, **kwargs): pass
+class Singleling:
+    def __new__(cls, *args, **kwargs):
+        if '__instance__' not in cls.__dict__: cls.__instance__ = super().__new__(cls, *args, **kwargs)
+        cls.__instance__.__init__(*args, **kwargs)
+        setattr(type(cls.__instance__), '__init__', _noop)
+        return cls.__instance__
 
 # %% ../nbs/01_helpers.ipynb
-class kounter:
+class Kounter:
     def __init__(self): self.d = DefaultDict(int)
     def __call__(self, k): d = self.d; d[k] += 1; return self.d[k]
 
+kounter = Kounter()
 
 # %% ../nbs/01_helpers.ipynb
 def simple_id():
     return 'b'+hexlify(os.urandom(16), '-', 4).decode('ascii')
 
 def id_gen():
-    kntr = kounter()
+    kntr = Kounter()
     def _(o:Any=None): 
         if o is None: return simple_id()
-        return f"{type(o).__name__}_{id(o) if isinstance(o, Hashable) else kntr(type(o).__name__)}"
+        # return f"{type(o).__name__}_{hash(o) if isinstance(o, Hashable) else kntr(type(o).__name__)}"
+        return f"{type(o).__name__}_{kntr(type(o).__name__)}"
     return _
 
 # %% ../nbs/01_helpers.ipynb
-_II = isinstance
-def _at(d: Mapping|Sequence, k: str) -> Any:
-    return d[k] if _II(d, Mapping) else d[int(k)] if _II(d, Sequence) and not _II(d, (str, bytes)) else None
-
-def find(key_path: str, j: Mapping|Sequence|str|bytes|bytearray, default:Any=Parameter.empty, sep:str='.') -> Any:
-    try: return reduce(_at, key_path.split(sep), json.loads(j) if _II(j, (str, bytes, bytearray)) else j)
-    except (KeyError, IndexError) as e:
-        if default is not Parameter.empty: return default
-        raise e
-
+def patch_cached(cls, f, name:str|None=None):
+    name = name or (f if not isinstance(f, partial) else f.func).__name__ 
+    setattr(cls, name, cache(f))
 
 # %% ../nbs/01_helpers.ipynb
-def read_vfile(cts:str)->str|None:
-    import anywidget
-    from anywidget._file_contents import _VIRTUAL_FILES
-    if isinstance(cts, str) and cts.startswith('vfile:'):
-        if fn := _VIRTUAL_FILES.get(cts, None):
-            return fn.contents
-
+def patch_cached_property(cls, f, name:str|None=None):
+    is_partial, prop = isinstance(f, partial), functools.cached_property(f)
+    if is_partial: prop.__doc__ = f.func.__doc__
+    prop.attrname = name or (f if not is_partial else f.func).__name__ 
+    setattr(cls, prop.attrname, prop)
 
 # %% ../nbs/01_helpers.ipynb
-@FC.delegates(ft_html, keep=True)  # type: ignore
-def ScriptV(code:str="", **kwargs)-> FT:
-    "A Script w/ code or `vfile:` contents that doesn't escape its code"
-    return ft_html('script', (_n, NotStr(FC.ifnone(read_vfile(code), code))), **kwargs)
-
-@FC.delegates(ft_html, keep=True)  # type: ignore
-def StyleV(*c, **kwargs)-> FT:
-    "A Style w/ code or `vfile:` contents that doesn't escape its code"
-    return ft_html('style', tuple(NotStr(FC.ifnone(read_vfile(_), _)) for _ in c), **kwargs)
-
+class cached_property(functools.cached_property):
+    def __init__(self, func):
+        super().__init__(func)
+        for o in functools.WRAPPER_ASSIGNMENTS: setattr(self, o, getattr(func, o))
+    # def __set_name__(self, owner, name):
+    #     super().__set_name__(owner, name)
+    #     if self.attrname is None:
+    #         self.__qualname__ = f"{owner.__name__}.{name}"
 
 # %% ../nbs/01_helpers.ipynb
-@FC.delegates(FastHTML)  # type: ignore
-def nb_app(**kwargs):
-    from starlette.middleware.cors import CORSMiddleware
-    kwargs.update(default_hdrs=False, sess_cls=None)
-    app = FastHTML(**kwargs)
-    app.user_middleware = list(filter(lambda x: x.cls is not CORSMiddleware, app.user_middleware))
-    return app
+def bridge_metadata(metadata:dict|None=None, **kwargs):
+    if not metadata: metadata = {'bridge': {**kwargs}}
+    elif not 'bridge' in metadata: metadata['bridge'] = {**kwargs}
+    else: metadata['bridge'].update(**kwargs)
+    return metadata
+
+def skip(metadata:dict|None=None, **kwargs): return bridge_metadata(metadata, skip=True, **kwargs)
+
+# %% ../nbs/01_helpers.ipynb
+def compose_first(*funcs, order=None):
+    "Create a function that composes all functions in `funcs`, passing along remaining `*args` and `**kwargs` to first function"
+    funcs = FC.listify(funcs)
+    if len(funcs)==0: return FC.noop
+    if len(funcs)==1: return funcs[0]
+    if order is not None: funcs = FC.sorted_ex(funcs, key=order)
+    def _inner(x, *args, **kwargs):
+        x = funcs[0](x, *args, **kwargs)  # type: ignore
+        for f in funcs[1:]: x = f(x)  # type: ignore
+        return x
+    return _inner
 

@@ -14,15 +14,16 @@ from typing import Any
 from typing import Literal
 from typing import Mapping
 
+from fasthtml.xtend import Style
+from olio.common import val_at
+
 
 # %% ../../nbs/30_details_json.ipynb
 from ..bridget import _n
 from ..bridget import bridge_cfg
 from ..bridget import Bridget
-from ..bridget import Style
-from ..helpers import find
-from ..route_provider import ar
-from ..route_provider import RoutesProvider
+from ..routing import ar
+from ..routing import RouteProvider
 
 
 # %% ../../nbs/30_details_json.ipynb
@@ -41,19 +42,19 @@ def Val(v):
     return Span(v if v is not None else 'None', cls=f"v {c}")
 def NameVal(k, v): return Span(Span(k, cls='n'), ': ', Val(v))
 
-class DetailsJSON(RoutesProvider):
+class DetailsJSON(RouteProvider):
 
     def __init__(self, o:Mapping[str, Any], summary:str='', open:bool|Literal['all']=True):
-        self.o, self.summary, self.open = o, summary or 'summary', open
+        self.o, self.summary, self.open, self._mounted = o, summary or 'summary', open, False
 
     def _ipython_display_(self):
         brt = Bridget()
-        if bridge_cfg.auto_mount and not hasattr(self, 'ar'): brt.mount(self, show=False)
+        if bridge_cfg.auto_mount and not self._mounted: brt.mount(self, show=False)
         brt(self)
 
     @ar('/{dp:path}', methods='get', name='get')
     def __call__(self, dp:str='', all:bool=False): 
-        try: d = find(dp, self.o, sep='/') if dp else self.o
+        try: d = val_at(self.o, dp, sep='/') if dp else self.o
         except Exception: return None
         return self.__ft__(dp, d, all)
     
@@ -63,7 +64,7 @@ class DetailsJSON(RoutesProvider):
             Li()(
                 NameVal(k, v) if not isinstance(v, Mapping) else 
                 self.__ft__(f"{dp}/{k}", v, openall) if openall else
-                Details(hx_get=f"{self.ar.to}/"+(f"{dp}/" if dp else '')+f"{k}")(_n,Summary(k),_n)
+                Details(hx_get=f"/{self.ar.to()}/"+(f"{dp}/" if dp else '')+f"{k}")(_n,Summary(k),_n)
             ) for k,v in (d or {}).items()))
         return (
             Details(open=True)(Summary(dp.split('/')[-1]), _n, its) if dp else 
