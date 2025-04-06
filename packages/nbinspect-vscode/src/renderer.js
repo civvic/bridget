@@ -384,11 +384,11 @@ export function activate(context) {
  */
 
 /** 
- * @typedef {import('./types.mjs').NBData} NBData
- * @typedef {import('./types.mjs').StateMessage} StateMessage
- * @typedef {import('./types.mjs').DiffsMessage} DiffsMessage
- * @typedef {import('./types.mjs').RendererStateMessage} RendererStateMessage
- * @typedef {import('./types.mjs').RendererDeregisterMessage} RendererDeregisterMessage
+ * @typedef {import('./types.js').NBData} NBData
+ * @typedef {import('./types.js').StateMessage} StateMessage
+ * @typedef {import('./types.js').DiffsMessage} DiffsMessage
+ * @typedef {import('./types.js').RendererStateMessage} RendererStateMessage
+ * @typedef {import('./types.js').RendererDeregisterMessage} RendererDeregisterMessage
  */
 
 /**

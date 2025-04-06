@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
-import { debug } from './debug.mjs';
-import { NBStateMonitor } from './stateMonitor.mjs';
+import { debug } from './debug.js';
+import { NBStateMonitor } from './stateMonitor.js';
 
 
 const log = debug('nbinspect:ext', 'darkgreen');

@@ -1,101 +1,81 @@
-import { debug } from './debug.mjs';
-const log = debug('nbinspect:coll', 'dimgray');
+import { debug } from './debug.js';
+const DEBUG_NAMESPACE = 'nbinspect:coll';
+const log = debug(DEBUG_NAMESPACE, 'dimgray');
+const logError = debug(`${DEBUG_NAMESPACE}:error`, 'red');
 
 /**
+ * @template TCellChange, TContentChange
  * @typedef {Object} ChangeSummary
- * @property {Boolean} document
- * @property {Boolean} metadata
- * @property {Boolean} outputs
- * @property {Boolean} executionSummary
- * @property {number} execution_count
- * @property {(vscode.NotebookDocumentCellChange|vscode.NotebookDocumentContentChange)[]} changes
+ * @property {Boolean|undefined} document
+ * @property {Boolean|undefined} metadata
+ * @property {Boolean|undefined} outputs
+ * @property {Boolean|undefined} executionSummary
+ * @property {number|undefined} execution_count
+ * @property {[TimeStamp, (TCellChange|TContentChange)][]} changes
  */
+
+/** @template TCellChange, TContentChange */
 export class ChangeSummary {
-    // document;
-    // metadata;
-    // outputs;
-    // executionSummary;
-    // execution_count;
-    // changes;
   constructor(document) {
     this.document = document;
-    // this.metadata = null;
-    // this.outputs = null;
-    // this.executionSummary = {};
-    // this.execution_count = null;
     this.changes = [];
   }
 }
 
 /** 
- * @typedef {number[]} CellIdxs - cell indexes changed
- * @typedef {[number, {[key: string]: any;}]} MetadataChange -  notebook metadata changes
- * @typedef {[number, NotebookDocumentContentChange]} ContentChange -  notebook content changes
- * @typedef {{start:number, cellIdxs:CellIdxs}} Added - cell indexes added at starting index
+ * @typedef {number} TimeStamp
+ * @typedef {number} CellIdx
+ * @typedef {CellIdx[]} CellIdxs - changed cells indexes
+ * @typedef {{start:CellIdx, cellIdxs:CellIdxs}} Added - cell indexes added at starting index
  * @typedef {NotebookRange} Removed
- * @typedef {Map<number, ChangeSummary>} Full
- * @typedef {Set<number>} HasDocumentChanges
- * @typedef {[number, NotebookDocumentChangeEvent][]} Events
+ * @typedef {Set<CellIdx>} HasDocumentChanges
  * @typedef {[CellIdxs, Added[], Removed[], number]} Diff
  */
-/** @typedef {Set<number>} HasDocumentChanges */
-/** @typedef {[number, NotebookDocumentChangeEvent][]} Events */
-/** @typedef {[CellIdxs, Added[], Removed[], number]} Diff */
+
 /** 
- * @typedef {Map<number, ChangeSummary>} ChangeCollator
-*/
+ * @template TChange, TCellChange, TContentChange 
+ * @extends {Map<CellIdx, ChangeSummary<TCellChange, TContentChange>>}
+ * @abstract
+ */
 export class ChangeCollator extends Map {
-  /** @type {MetadataChange[]} */
-  #metadataChanges = [];
-  /** @type {ContentChange[]} */
+  /** @type {[TimeStamp, {[key: string]: any;}][]} */
+  metadataChanges = [];
+  /** @type {[TimeStamp, TContentChange][]} */
   #contentChanges = [];
+  /** @type {Set<CellIdx>} */
+  #documentChanges = new Set();
   /** @type {Added[]} */
   #added = [];
   /** @type {Removed[]} */
   #removed = [];
-  /** @type {Map<number, ChangeSummary>} */
+  /** @type {Map<CellIdx, ChangeSummary<TCellChange, TContentChange>>} */
   #full = new Map();
-  /** @type {Set<number>} Pending execution summary */
+  /** @type {Set<CellIdx>} Indexes of cells with pending execution summary */
   #pending = new Set();
-  /** @type {number[]} */
-  #hasDocumentChanges = new Set();
-  /** @type {[number, NotebookDocumentChangeEvent][]} */
+  /** @type {[TimeStamp, TChange][]} */
   events;
   cellCount = 0;
+  /** @type {Diff[]} */
   #diffs = [];
 
-  constructor(notebook, evts=null) {
+  constructor(notebook) {
+    if (new.target === ChangeCollator) {
+      throw new TypeError('Cannot construct ChangeCollator instances directly');
+    }
     super();
+    if (debug.enabled) this.events = [];
     this.nb = notebook;
     this.cellCount = notebook.cellCount;
-    if (debug.enabled) this.events = [];
-    if (evts && evts.length > 0) this.addEvents(evts);
-  }
-  /** @param {NotebookDocumentChangeEvent} evt */
-  addEvent(evt) {
-    const t = Date.now();
-    if (debug.enabled) this.events.push([t, evt]);
-    if (this.cellCount !== this.nb.cellCount) {
-      this.cellCount = this.nb.cellCount;
-      this.#addDiff();
-    }
-    if (evt.metadata) this.#metadataChanges.push([t, evt.metadata]);
-    evt.contentChanges.map(ch => this.#contentChange(t, ch));
-    evt.cellChanges.map(ch => this.#collate(t, ch));
-    return this;
-  }
-  addEvents(evts) {
-    evts.map(evt => this.addEvent(evt));
   }
   get hasDocumentChanges() {
-    return this.#hasDocumentChanges.size > 0;
+    return this.#documentChanges.size > 0;
   }
   setDocumentChanges(...cellIdxs) {
     cellIdxs.forEach(idx => {
       const chs = this.get(idx);
       if (!chs) this.set(idx, new ChangeSummary(true));
       else chs.document = true;
-      this.#hasDocumentChanges.add(idx);
+      this.#documentChanges.add(idx);
     });
   }
   get hasDiffs() {
@@ -121,17 +101,17 @@ export class ChangeCollator extends Map {
   }
   /** @returns {Diff[]} */
   getDiffs() {
-    this.#addDiff();
+    this.addDiff();
     return this.#diffs.splice(0, this.#diffs.length);
   }
-  #addDiff() {
+  addDiff() {
     const all = this.#getDiffs();
     if (all) this.#diffs.push(all);
   }
   #getDiffs() {
     if (this.#hasChanges()) {
-      this.#hasDocumentChanges.forEach(idx => this.has(idx) && this.#setFull(idx, this.get(idx)));
-      this.#hasDocumentChanges.clear();
+      this.#documentChanges.forEach(idx => this.has(idx) && this.#setFull(idx, this.get(idx)));
+      this.#documentChanges.clear();
       let full = this.#getChanges();
       let { added, removed } = this.#getContentChanges();
       return [full, added, removed, this.cellCount];
@@ -142,7 +122,7 @@ export class ChangeCollator extends Map {
     this.delete(cellIndex);
     this.#pending.delete(cellIndex);
   }
-  #collate(ts, ch) {
+  collate(ts, ch) {
     const { cell, document, metadata:md, outputs, executionSummary:exec } = ch;
     let chs = this.get(cell.index);
     // ignore dup, dangling evts
@@ -195,8 +175,8 @@ export class ChangeCollator extends Map {
       }
     }
   }
-  /** @param {NotebookDocumentContentChange} ch */
-  #contentChange(ts, ch) {
+  /** @param {TContentChange} ch */
+  contentChange(ts, ch) {
     this.#contentChanges.push([ts, ch]);
     const { range, addedCells, removedCells } = ch;
     if (removedCells.length > 0) this.#removed.push(range);
@@ -221,7 +201,7 @@ export class ChangeCollator extends Map {
   }
   #hasChanges() {
     return Boolean(this.#pending.size === 0 && 
-      (this.#hasDocumentChanges.size || this.#full.size || this.#added.length || this.#removed.length));
+      (this.#documentChanges.size || this.#full.size || this.#added.length || this.#removed.length));
   }
   #getChanges() {
     const full = [...this.#full.keys()];
@@ -244,7 +224,7 @@ export class ChangeCollator extends Map {
     const ll = [];
     log(`**** changes ---- (${changes.length}) ---- ****`);
     if (diffs.length > 0) ll.push(`diffs: ${JSON.stringify(diffs)}`);
-    if (this.#hasDocumentChanges.length > 0) ll.push(`hasDocumentChanges: ${[...this.#hasDocumentChanges].toString()}`);
+    if (this.#documentChanges.length > 0) ll.push(`hasDocumentChanges: ${[...this.#documentChanges].toString()}`);
     if (pending.length > 0) ll.push(`pending: ${pending.toString()}`);
     if (added.length > 0) ll.push(`added: ${added.toString()}`);
     if (removed.length > 0) ll.push(`removed: ${JSON.stringify(removed.map(r => ({start: r.start, end: r.end})))}`);
@@ -342,6 +322,44 @@ export function eventSummary(evt) {
   return `${chs.join(' | ')}`;
 }
 
-/** @typedef {import('vscode').NotebookDocumentContentChange} NotebookDocumentContentChange */
+
+/**
+ * @extends {ChangeCollator<
+ *   NotebookDocumentChangeEvent,
+ *   NotebookDocumentCellChange,
+ *   NotebookDocumentContentChange
+ * >}
+ */
+export class ChangeCollatorVSCode extends ChangeCollator {
+  /** @type {[TimeStamp, NotebookDocumentChangeEvent][]} */
+  events;
+
+  constructor(notebook, evts=null) {
+    super(notebook, evts);
+    if (debug.enabled) this.events = [];
+    if (evts && evts.length > 0) this.addEvents(evts);
+  }
+
+  /** @param {NotebookDocumentChangeEvent} evt */
+  addEvent(evt) {
+    const t = Date.now();
+    if (debug.enabled) this.events.push([t, evt]);
+    if (this.cellCount !== this.nb.cellCount) {
+      this.cellCount = this.nb.cellCount;
+      this.addDiff();
+    }
+    if (evt.metadata) this.metadataChanges.push([t, evt.metadata]);
+    evt.contentChanges.map(ch => this.contentChange(t, ch));
+    evt.cellChanges.map(ch => this.collate(t, ch));
+    return this;
+  }
+  addEvents(evts) {
+    evts.map(evt => this.addEvent(evt));
+  }
+  
+}
+
 /** @typedef {import('vscode').NotebookDocumentChangeEvent} NotebookDocumentChangeEvent */
+/** @typedef {import('vscode').NotebookDocumentContentChange} NotebookDocumentContentChange */
+/** @typedef {import('vscode').NotebookDocumentCellChange} NotebookDocumentCellChange */
 /** @typedef {import('vscode').NotebookRange} NotebookRange */

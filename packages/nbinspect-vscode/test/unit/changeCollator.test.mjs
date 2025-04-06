@@ -2,8 +2,8 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 // Import the module to test
-import { debug as debugExt } from '../../src/utils.mjs';
-import { ChangeCollator, ChangeSummary, eventSummary } from '../../src/changeCollator.mjs';
+import { debug as debugExt } from '../../src/utils.js';
+import { ChangeCollatorVSCode, ChangeSummary, eventSummary } from '../../src/changeCollator.js';
 
 // Mock vscode module
 const vscode = {
@@ -142,7 +142,7 @@ function eventSumm(nb, summ) {
 describe('ChangeCollator', () => {
   let collator;
   beforeEach(() => {
-    collator = new ChangeCollator(mockNotebook());
+    collator = new ChangeCollatorVSCode(mockNotebook());
   });
   
   it('should summarize synthetic events', () => {

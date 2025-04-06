@@ -2,11 +2,11 @@ import * as vscode from 'vscode';
 
 // Adapted from VSCode ipynb serializers
 
-import { Bridged } from './bridged.mjs';
+import { Bridged } from './bridged.js';
 
 const textDecoder = new TextDecoder();
 
-/** @typedef {import('./types.mjs').StateCell} StateCell */
+/** @typedef {import('./types.js').StateCell} StateCell */
 
 /**
  * Determines if a MIME type is JSON-based

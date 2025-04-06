@@ -7,7 +7,7 @@ const watch = process.argv.includes('--watch');
 
 async function main() {
   const ctx = await esbuild.context({
-    entryPoints: ['src/extension.mjs'],
+    entryPoints: ['src/extension.js'],
     bundle: true,
     outdir: 'dist',
     format: 'cjs',

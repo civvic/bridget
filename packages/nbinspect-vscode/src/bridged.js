@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
-import { NBStateMonitor } from './stateMonitor.mjs';
-import { MIME } from './utils.mjs';
+import { NBStateMonitor } from './stateMonitor.js';
+import { MIME } from './utils.js';
 
 /** 
  * @typedef {Object} BridgedOutputMetadata

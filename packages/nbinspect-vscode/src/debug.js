@@ -23,7 +23,7 @@ function selectColor(namespace) {
 
 function consoleFmt(ts, ns, color, msg) {
   // console.log(`%c${curr}${ns} %s`, `color: #${debug.color.toString(16).padStart(6, '0')}`, msg);
-  return `%c${ts}${ns?` ${ns}`:''}`, `color: ${color}`, `\x1B[1;34m${msg}\x1B[m`;
+  return [`%c${ts}${ns?` ${ns}`:''} \x1B[1;94m${msg}\x1B[m`, `color: ${color}`];
 }
 
 function debugFactory(namespace, color, fmt, sink) {
@@ -32,31 +32,35 @@ function debugFactory(namespace, color, fmt, sink) {
     if (!debugFactory.enabled) return;
     const curr = Number(new Date());
     const ms = curr - (prevTime || curr);
-    self.diff = ms, self.prev = prevTime, self.curr = curr, prevTime = curr;
+    // @ts-ignore
+    debug.diff = ms, debug.prev = prevTime, debug.curr = curr, prevTime = curr;
     const msg = args.reduce((acc, arg) => {
       if (typeof arg === "string") return acc + (acc.length > 0 ? " " : "") + arg;
       return acc + (acc.length > 0 ? ' ' : '') + JSON.stringify(arg);
     }, '');
-    const ts = (self.prev && ms < 1000 ? `+${ms}` : `${curr}`).padStart(13, '\u00A0');
-    self.sink(self.fmt(ts, namespace, self.color, msg));
+    // @ts-ignore
+    const ts = (debug.prev && ms < 1000 ? `+${ms}` : `${curr}`).padStart(13, '\u00A0');
+    debug.sink(...debug.fmt(ts, namespace, debug.color, msg));
   }
-  const self = debug;
-  self.enabled = true;
-  self.namespace = namespace;
-  self.useColors = true;
-  self.color = color ?? selectColor(namespace);
-  self.sink = sink ?? console.info.bind(console);
-  self.fmt = fmt ?? consoleFmt;
-  self.reset = () => {
+  debug.enabled = true;
+  debug.namespace = namespace;
+  debug.useColors = true;
+  debug.color = color ?? selectColor(namespace);
+  debug.sink = sink ?? defaultSink;
+  debug.fmt = fmt ?? consoleFmt;
+  debug.reset = () => {
     prevTime = 0;
-    return self;
+    return debug;
   };
-  return self;
+  return debug;
 }
 
+debugFactory.nss = new Map([['brd', {}]]);
 debugFactory.enable = (namespace) => { debugFactory.enabled = true; }
 debugFactory.disable = () => { debugFactory.enabled = false; }
 debugFactory.enabled = true;
 const debug = debugFactory;
+
+const defaultSink = console.info.bind(console);
 
 export { debug };

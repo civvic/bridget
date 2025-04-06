@@ -1,9 +1,9 @@
-import { truncate } from './utils.mjs';
-import { debug } from './debug.mjs';
-import { ChangeCollator, ChangeSummary, eventSummary } from './changeCollator.mjs';
-import { processCell } from './nbformatHelpers.mjs';
-import { Bridged } from './bridged.mjs';
-import { hasNBMimeOutput, MIME } from './utils.mjs';
+import { truncate } from './utils.js';
+import { debug } from './debug.js';
+import { ChangeCollatorVSCode, ChangeSummary, eventSummary } from './changeCollator.js';
+import { processCell } from './nbformatHelpers.js';
+import { Bridged } from './bridged.js';
+import { hasNBMimeOutput, MIME } from './utils.js';
 
 const log = debug('nbinspect:monitor', 'darkblue');
 
@@ -15,18 +15,18 @@ const log = debug('nbinspect:monitor', 'darkblue');
  */
 
 /** 
- * @typedef {import('./changeCollator.mjs').Added} Added
- * @typedef {import('./changeCollator.mjs').Removed} Removed
- * @typedef {import('./changeCollator.mjs').CellIdxs} CellIdxs
- * @typedef {import('./changeCollator.mjs').Diff} Diff
+ * @typedef {import('./changeCollator.js').Added} Added
+ * @typedef {import('./changeCollator.js').Removed} Removed
+ * @typedef {import('./changeCollator.js').CellIdxs} CellIdxs
+ * @typedef {import('./changeCollator.js').Diff} Diff
  */
 
 /** 
- * @typedef {import('./types.mjs').NBData} NBData
- * @typedef {import('./types.mjs').StateMessage} StateMessage
- * @typedef {import('./types.mjs').DiffsMessage} DiffsMessage
- * @typedef {import('./types.mjs').RendererStateMessage} RendererStateMessage
- * @typedef {import('./types.mjs').RendererDeregisterMessage} RendererDeregisterMessage
+ * @typedef {import('./types.js').NBData} NBData
+ * @typedef {import('./types.js').StateMessage} StateMessage
+ * @typedef {import('./types.js').DiffsMessage} DiffsMessage
+ * @typedef {import('./types.js').RendererStateMessage} RendererStateMessage
+ * @typedef {import('./types.js').RendererDeregisterMessage} RendererDeregisterMessage
  */
 
 export class NBStateMonitor {
@@ -66,7 +66,7 @@ export class NBStateMonitor {
     this.nb = notebook;
     this.#opts = { ...NBStateMonitor.defaultOpts, ...opts };
     // this.#filterer = new BridgeNBEventsFilter(notebook);
-    this.#changeTracker = { collator: new ChangeCollator(notebook), timer: null, delay: this.debounceDelay };
+    this.#changeTracker = { collator: new ChangeCollatorVSCode(notebook), timer: null, delay: this.debounceDelay };
     // this.#throttleInterval = opts.throttleInterval ?? NBStateMonitor.defaultThrottleInterval;
   }
 
