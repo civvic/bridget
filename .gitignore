@@ -158,6 +158,7 @@ _docs
 _testbed/**
 packages/ipynb/**
 packages/nbdev-vscode/**
+packages/nbinspect-vscode/src/_old/**
 packages/nbinspect-lab/nbs/**
 .specstory
 _chats/**
