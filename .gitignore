@@ -160,6 +160,7 @@ packages/ipynb/**
 packages/nbdev-vscode/**
 packages/nbinspect-vscode/src/_old/**
 packages/nbinspect-lab/nbs/**
+packages/nbinspect-lab/src/common
 .specstory
 _chats/**
 nbs/bridget
