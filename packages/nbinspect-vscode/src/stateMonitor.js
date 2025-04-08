@@ -1,9 +1,9 @@
 import { truncate } from './utils.js';
-import { debug } from './debug.js';
-import { ChangeCollatorVSCode, ChangeSummary, eventSummary } from './changeCollator.js';
+import { debug } from '../../common/debug.js';
+import { ChangeCollatorVSCode, eventSummary } from './changeCollatorVSCode.js';
 import { processCell } from './nbformatHelpers.js';
 import { Bridged } from './bridged.js';
-import { hasNBMimeOutput, MIME } from './utils.js';
+// import { hasNBMimeOutput, MIME } from './utils.js';
 
 const log = debug('nbinspect:monitor', 'darkblue');
 
@@ -60,6 +60,7 @@ export class NBStateMonitor {
   /** @type {RendererStateMessage|null} - pending renderer messages */
   #pendingRendererMessage = null;
   #pendingDocChanges = new Set();
+  // #pendingDocChangesTimer = null;
   #prevSel = null;
 
   constructor(notebook, opts = {}) {
@@ -261,23 +262,46 @@ export class NBStateMonitor {
   /**
    * @param {NotebookEditorSelectionChangeEvent} event
    */
+  // static onChangeSelection(event) {
+  //   const monitor = NBStateMonitor.get(event.notebookEditor.notebook);
+  //   // log(`onChangeSelection: ...${monitor.nb.uri.toString().slice(-20)} - selected: ${selected}`);
+  //   if (monitor.#pendingDocChangesTimer) {
+  //     monitor.#pendingDocChangesTimer = clearTimeout(monitor.#pendingDocChangesTimer);
+  //   }
+  //   if (monitor.#pendingDocChanges.size > 0) {
+  //     // collate changes
+  //     let docChanges = Array.from(monitor.#pendingDocChanges);
+  //     log(`onChangeSelection: pendingDocChanges: [${docChanges}]`);
+  //     const collator = monitor.#changeTracker.collator;
+  //     collator.setDocumentChanges(docChanges);
+  //     // wait a little while to see if there are more changes (onChange... will clear the timer)
+  //     monitor.#pendingDocChangesTimer = setTimeout(() => {
+  //       monitor.#pendingDocChangesTimer = null;
+  //       docChanges = Array.from(monitor.#pendingDocChanges);
+  //       monitor.#pendingDocChanges.clear();
+  //       monitor.sentNBState([[docChanges, [], [], monitor.nb.cellCount]]);
+  //     }, 1000);
+  //   }
+  //   const selected = event.selections.map(s => s.start);
+  //   monitor.#prevSel = selected;
+  // }
   static onChangeSelection(event) {
     const monitor = NBStateMonitor.get(event.notebookEditor.notebook);
-    const selected = event.selections.map(s => s.start);
     // log(`onChangeSelection: ...${monitor.nb.uri.toString().slice(-20)} - selected: ${selected}`);
     if (monitor.#pendingDocChanges.size > 0) {
       log(`onChangeSelection: pendingDocChanges: [${[...monitor.#pendingDocChanges]}]`);
       const collator = monitor.#changeTracker.collator;
-      if (collator.isEmpty) {  // sent directly, don't queue
-        monitor.sentNBState([[[...monitor.#pendingDocChanges], [], [], monitor.nb.cellCount]]);
-      } else {
-        collator.setDocumentChanges(...monitor.#pendingDocChanges);
-      }
+      const docChanges = Array.from(monitor.#pendingDocChanges);
       monitor.#pendingDocChanges.clear();
+      if (collator.isEmpty) {  // sent directly, don't queue
+        monitor.sentNBState([[docChanges, [], [], monitor.nb.cellCount]]);
+      } else {
+        collator.setDocumentChanges(docChanges);
+      }
     }
-    monitor.#prevSel = selected;
+    monitor.#prevSel = event.selections.map(s => s.start);
   }
-  
+
   /**
    * @param {NotebookDocumentChangeEvent} event
    */
@@ -293,9 +317,10 @@ export class NBStateMonitor {
         return;
       }
       if (debug.enabled) {
-        console.log(".......... e");
-        // log('.......... e:', eventSummary(event));
+        // console.log(".......... e");
+        log('.......... e:', eventSummary(event));
       }
+      // monitor.#pendingDocChangesTimer = clearTimeout(monitor.#pendingDocChangesTimer);
       const collator = tracker.collator;
       collator.addEvent(event);
       // const iniDelay = tracker.delay;
@@ -310,7 +335,7 @@ export class NBStateMonitor {
         monitor.restoreDebounceDelay();
         tracker.delay = NBStateMonitor.shortDebounceDelay;
         if (collator.hasDiffs) {
-          // if (debug.enabled) collator.showSummary();
+          if (debug.enabled) collator.showSummary();
           const diffs = collator.getDiffs();
           monitor.sentNBState(diffs);
           // log('____ to sentNBState');

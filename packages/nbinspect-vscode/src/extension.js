@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { debug } from './debug.js';
+import { debug } from '../../common/debug.js';
 import { NBStateMonitor } from './stateMonitor.js';
 
 
