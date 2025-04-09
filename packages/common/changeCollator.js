@@ -1,7 +1,7 @@
 import { debug } from './debug.js';
-const DEBUG_NAMESPACE = 'nbinspect:coll';
+const DEBUG_NAMESPACE = 'collator';
 const log = debug(DEBUG_NAMESPACE, 'dimgray');
-const logError = debug(`${DEBUG_NAMESPACE}:error`, 'red');
+// const logError = debug(`${DEBUG_NAMESPACE}:error`, 'red');
 
 export class ChangeSummary {
   /** @type {boolean | undefined} Indicates if the document/source changed */
@@ -12,27 +12,24 @@ export class ChangeSummary {
   outputsChanged;
   /** @type {boolean | undefined} Indicates if execution state changed */
   executionChanged;
-  // Helpers to assess change state
-  /** @type {number | undefined} Last known execution count from metadata */
+  // Helpers to assess execution state change (VSCode mostly)
+  /** @type {number | null | undefined} Last known execution count from metadata */
   metadataExecutionCount;
-  /** @type {number | undefined} Last known execution order from execution events */
-  executionOrder;
-  /** @type {boolean | undefined} Last known execution success status */
-  executionSuccess;
+  /** @type {'running' | 'finished' | undefined} Last known execution status */
+  executionStatus;
 
   constructor(initialChangeType) {
     if (initialChangeType) this[`${initialChangeType}Changed`] = true;
   }
 
-  updateExecution(execUpdate) {
+  updateExecution(executionStatus) {
     this.executionChanged = true;
-    if (execUpdate.executionOrder !== undefined) this.executionOrder = execUpdate.executionOrder;
-    if (execUpdate.success !== undefined) this.executionSuccess = execUpdate.success;
+    this.executionStatus = executionStatus;
   }
 
   updateMetadata(execution_count) {
     this.metadataChanged = true;
-    if (execution_count !== undefined) this.metadataExecutionCount = execution_count;
+    this.metadataExecutionCount = execution_count;
   }
 }
 
@@ -43,7 +40,7 @@ export class ChangeSummary {
  */
 export class ChangeCollator extends Map {
   /** @type {MetadataChange[]} Notebook-level metadata changes */
-  metadataChanges = [];
+  metadataChanges = null;
   /** @type {Set<CellIdx>} */
   documentChanges = new Set();
   /** @type {CellAddition[]} */
@@ -67,41 +64,45 @@ export class ChangeCollator extends Map {
     this.cellCount = initialCellCount;
   }
 
+  getSummary(cellIndex, summaryType) {
+    let summary = this.get(cellIndex);
+    if (!summary) {
+      summary = new ChangeSummary(summaryType);
+      this.set(cellIndex, summary);
+    }
+    return summary;
+  }
+
   /**
    * Records a notebook-level metadata change.
    * @protected
    * @param {MetadataChange} change
    */
   _recordNotebookMetadataChange(change) {
-    this.metadataChanges.push(change.metadata);
+    // Not sure what to do with this yet.
+    this.metadataChanges = change.metadata;
     this.addDiff();
+  }
+
+  _executionCompleted(cellIndex, summary) {
+    // Check complete execution cycle
+    // need this because count updates comes sometimes before, others after ending execution
+    if (summary.metadataExecutionCount !== undefined && summary.executionStatus === 'finished') {
+      this.#setFull(cellIndex, summary);
+      log(`Execution completed cell ${cellIndex}`);
+    }
   }
 
   /**
    * Records a cell metadata change.
    * @protected
-   * @param {CellMetadataChangeMetadataChange} change
+   * @param {CellMetadataChange} change
    */
   _recordCellMetadataChange(cellIndex, change) {
     const { execution_count } = change;
-    let summary = this.get(cellIndex);
-    if (!summary) {
-      // If metadata change is the first thing we see (e.g., execution count update)
-      // if (md && md.execution_count !== undefined) return;  // dangling md - should't happen w/out prev exec
-      if (execution_count !== undefined) return; // Non-execution metadata change without prior summary? Ignore for now.
-      summary = new ChangeSummary('metadata');
-      this.set(cellIndex, summary);
-    }
+    const summary = this.getSummary(cellIndex, 'metadata');
     summary.updateMetadata(execution_count);
-    // Check if this completes an execution cycles
-    if (summary.executionOrder !== undefined && summary.executionOrder === execution_count) {
-      // log(`Execution completed by metadata for cell ${cellIndex} (count: ${execution_count})`);
-      this.#setFull(cellIndex, summary);
-    } else {
-        // Still pending or metadata changed independently
-        // log(`Metadata change for cell ${cellIndex}, execution count ${execution_count}, 
-        //   pending order ${summary.executionOrder}`);
-    }
+    this._executionCompleted(cellIndex, summary);
   }
 
   /**
@@ -109,40 +110,10 @@ export class ChangeCollator extends Map {
    * @protected
    * @param {ExecutionUpdate} change
    */
-  _recordExecutionUpdate(cellIndex, change) {
-    const { executionOrder, success } = change;
-    let summary = this.get(cellIndex);
-    if (!summary) {
-       // Dangling execution update (e.g., success signal without executionOrder)? Ignore for now.
-      //     if (exec && exec.success !== undefined) return;  // dangling exec - should't happen w/out prev exec
-      if (executionOrder === undefined) return;
-      if (success !== undefined) return;  // dangling exec - should't happen w/out prev exec
-      summary = new ChangeSummary('execution');
-      this.set(cellIndex, summary);
-    }
-    // Avoid processing duplicate execution order events
-    if (executionOrder !== undefined && summary.executionOrder === executionOrder && summary.executionSuccess === success) {
-        // log(`Duplicate execution event ignored for cell ${cellIndex}`);
-        return;
-    }
-    summary.updateExecution({ executionOrder, success });
-    if (executionOrder !== undefined) {
-      this.pending.add(cellIndex); // Mark as pending execution completion
-      // log(`Execution pending for cell ${cellIndex} (order: ${executionOrder})`);
-    }
-    // Check if this completes an execution cycle (matches existing metadata count)
-    const exeCount = summary.metadataExecutionCount;
-    if (success !== undefined && exeCount !== undefined && exeCount === executionOrder) {
-        // log(`Execution completed by success status for cell ${cellIndex} (order: ${executionOrder})`);
-        this.#setFull(cellIndex, summary);
-    } else if (success !== undefined) {
-        // Execution finished, but metadata hasn't caught up or doesn't match
-        // log(`Execution finished for cell ${cellIndex} (order: ${executionOrder}), 
-        //   success: ${success}, metadata count: ${exeCount}`);
-        // We might still need to mark as full if it's definitely done,
-        // even if counts mismatch (depends on desired behavior for errors/interrupts)
-        // For now, we only mark full when counts match.
-    }
+  _recordExecutionUpdate(cellIndex, status) {
+    const summary = this.getSummary(cellIndex, 'execution');
+    summary.updateExecution(status);
+    this._executionCompleted(cellIndex, summary);
   }
 
   /**
@@ -151,41 +122,32 @@ export class ChangeCollator extends Map {
    * @param {CellIdx} cellIndex
    */
   _recordDocumentEdit(cellIndex) {
-    let summary = this.get(cellIndex);
-    if (!summary) {
-      summary = new ChangeSummary('document');
-      this.set(cellIndex, summary);
-    }
+    const summary = this.getSummary(cellIndex, 'document');
     // Avoid duplicate document change flags if already set in this cycle
     if (summary.documentChanged) return;
     summary.documentChanged = true;
     this.documentChanges.add(cellIndex);
-    log(`Document edit recorded for cell ${cellIndex}`);
+    log(`Document edit cell ${cellIndex}`);
   }
 
   /**
-   * Records an outputs update for a cell.
+   * Records outputs update for a cell.
    * @protected
    * @param {OutputsUpdate} change
    */
   _recordOutputsUpdate(cellIndex, change) {
     const { isEmpty } = change;
-    let summary = this.get(cellIndex);
-    if (!summary) {
-      summary = new ChangeSummary('outputs');
-      this.set(cellIndex, summary);
-    }
+    const summary = this.getSummary(cellIndex, 'outputs');
     summary.outputsChanged = true;
     // log(`Outputs updated for cell ${cellIndex}, count: ${outputCount}, isEmpty: ${isEmpty}`);
-
     // Outputs updates often signify the end of a change cycle, especially clearing outputs.
     if (isEmpty) {
-        // log(`Empty outputs marking cell ${cellIndex} as full.`);
-        this.#setFull(cellIndex, summary);
+      log(`.... Empty outputs: cell ${cellIndex} -> full.`);
+      this.#setFull(cellIndex, summary);
     }
-    // Also handle the case where outputs appear without prior execution info (e.g., display handle updates)
-    else if (summary.executionOrder === undefined && summary.metadataExecutionCount === undefined) {
-      // log(`Dangling outputs marking cell ${cellIndex} as full.`);
+    else if (summary.executionChanged === undefined) {
+      // handle the case where outputs appear without prior execution info (e.g., display handle updates)
+      log(`.... Dangling outputs: cell ${cellIndex} -> full.`);
       this.#setFull(cellIndex, summary);
     }
   }
@@ -195,9 +157,9 @@ export class ChangeCollator extends Map {
    * @protected
    * @param {CellAddition} change
    */
-  _recordCellAddition(change, cellCount) {
+  _recordCellAddition(change) {
     this.added.push(change);
-    this.cellCount = cellCount;
+    this.cellCount += change.addedCellIndexes.length;
     log(`Cells added starting at index ${change.startIndex}, new count: ${this.cellCount}`);
     this.addDiff();
   }
@@ -207,9 +169,9 @@ export class ChangeCollator extends Map {
    * @protected
    * @param {CellRemoval} change
    */
-  _recordCellRemoval(change, cellCount) {
+  _recordCellRemoval(change) {
     this.removed.push(change);
-    this.cellCount = cellCount;
+    this.cellCount -= change.removedCount;
     log(`Cells removed from index ${change.startIndex} to ${change.endIndex}, new count: ${this.cellCount}`);
     this.addDiff();
   }
@@ -321,49 +283,6 @@ export class ChangeCollator extends Map {
 
 }
 
-/** @param {NotebookDocumentChangeEvent} evt */
-export function eventSummary(evt) {
-  let chs = [];
-  if (evt.cellChanges.length > 0) {
-    const cellChs = [];
-    evt.cellChanges.forEach(ch => {
-      const cc = [];
-      cc.push(`${ch.cell.index}`);
-      if (ch.executionSummary) {
-        cc.push('x');
-        if (ch.executionSummary.executionOrder !== undefined) cc.push(`${ch.executionSummary.executionOrder}`);
-        if (ch.executionSummary.success !== undefined) cc.push(`${ch.executionSummary.success}`);
-      }
-      if (ch.metadata) {
-        cc.push('m');
-        if (ch.metadata.execution_count !== undefined) cc.push(`${ch.metadata.execution_count}`);
-      }
-      if (ch.document) cc.push('d');
-      if (ch.outputs) {
-        cc.push('o');
-        if (ch.outputs.length > 0) cc.push(`${ch.outputs.length}`);
-      }
-      cellChs.push(`ch_${cc.join('_')}`);
-    });
-    chs.push(cellChs.join(' '));
-  }
-  if (evt.contentChanges.length > 0) {
-    const cntChs = [];
-    evt.contentChanges.forEach(ch => {
-      const cc = [];
-      if (ch.addedCells.length > 0) cc.push('a', ch.addedCells.map(c => c.index).join(','));
-      if (ch.removedCells.length > 0) cc.push('r', `${ch.range.start},${ch.range.end}`);
-      cntChs.push(`cn_${cc.join('_')}`);
-    });
-    chs.push(cntChs.join(' '));
-  }
-  if (evt.metadata) {
-    chs.push('md');
-    if (evt.metadata.execution_count !== undefined) chs.push(`${evt.metadata.execution_count}`);
-  }
-  return `${chs.join(' | ')}`;
-}
-
 /** 
  * @typedef {number} TimeStamp
  * @typedef {number} CellIdx
@@ -382,7 +301,7 @@ export function eventSummary(evt) {
 
 /**
  * Represents a change to a cell's metadata.
- * @typedef {Object} CellMetadataChangeMetadataChange
+ * @typedef {Object} CellMetadataChange
  * @property {{[key: string]: any}} metadata - The changed metadata key-value pairs.
  * @property {number} [execution_count] - Optional execution count if relevant.
  */
@@ -405,8 +324,7 @@ export function eventSummary(evt) {
 /**
  * Represents an update to a cell's execution state.
  * @typedef {Object} ExecutionUpdate
- * @property {number} [executionOrder] - The execution order number, if applicable.
- * @property {boolean} [success] - The success status, if applicable (end of execution).
+ * @property {'running'|'finished'} status
  */
 
 /**
@@ -415,8 +333,3 @@ export function eventSummary(evt) {
  * @property {number} outputCount - The new number of outputs.
  * @property {boolean} isEmpty - True if the outputs array is now empty.
  */
-
-/** @typedef {import('vscode').NotebookDocumentChangeEvent} NotebookDocumentChangeEvent */
-/** @typedef {import('vscode').NotebookDocumentContentChange} NotebookDocumentContentChange */
-/** @typedef {import('vscode').NotebookDocumentCellChange} NotebookDocumentCellChange */
-/** @typedef {import('vscode').NotebookRange} NotebookRange */

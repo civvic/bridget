@@ -1,4 +1,4 @@
-import { ChangeCollator, eventSummary } from '../../common/changeCollator.js';
+import { ChangeCollator } from '../../common/changeCollator.js';
 
 import { debug } from '../../common/debug.js';
 const DEBUG_NAMESPACE = 'nbinspect:coll';
@@ -39,57 +39,63 @@ export class ChangeCollatorVSCode extends ChangeCollator {
       // if (this.events.length > 1000) this.events.shift();
       this.events.push([t, evt]);
     }
-    const currentCellCount = this.notebook.cellCount;
-    if (this.cellCount !== currentCellCount) {
-      log(`Cell count mismatch detected by VSCode subclass (${this.cellCount} vs ${currentCellCount}). Forcing diff.`);
-      this.addDiff(); // Trigger diff check due to potential structural change
-    }
     try {
+      const { metadata, contentChanges, cellChanges } = evt;
       // 1. Handle Notebook-level metadata change
-      if (evt.metadata) this._recordNotebookMetadataChange({ metadata: evt.metadata });
+      if (metadata) this._recordNotebookMetadataChange({ metadata });
       // 2. Handle Content Changes (Cell Add/Remove)
-      if (evt?.contentChanges?.length > 0) {
-        const cellCount = this.notebook.cellCount;
-        evt.contentChanges.forEach(ch => {
+      if (contentChanges?.length > 0) {
+        contentChanges.forEach(ch => {
           if (ch?.addedCells?.length > 0) {
             this._recordCellAddition({
               startIndex: ch.range.start, addedCellIndexes: ch.addedCells.map(c => c.index),
-            }, cellCount);
+            });
           } else if (ch?.removedCells?.length > 0) {
             this._recordCellRemoval({
               startIndex: ch.range.start, endIndex: ch.range.end, removedCount: ch.removedCells.length,
-            }, cellCount);
+            });
+          }
+        });
+        // assert registered cell count matches notebook cell count
+        const cellCount = this.notebook.cellCount;
+        if (this.cellCount !== cellCount) {
+          throw new Error(`Cell count mismatch detected (${this.cellCount} vs ${cellCount}).`);
+        }
+      }
+      // 3. Handle Cell-level Changes
+      if (cellChanges?.length > 0) {
+        cellChanges.forEach(ch => {
+          const cellIndex = ch.cell.index;
+          if (this.full.has(cellIndex)) return; // Already processed
+          
+          const { document, metadata, outputs, executionSummary } = ch;
+          if (document) this._recordDocumentEdit(cellIndex);
+          if (metadata) {
+              // If metadata change is the first thing we see (e.g., execution count update)
+              // if (md && md.execution_count !== undefined) return;  // dangling md - should't happen w/out prev exec
+              if (!this.has(cellIndex) && metadata.execution_count !== undefined) return;
+            this._recordCellMetadataChange(cellIndex, { execution_count: metadata.execution_count });
+          }
+          if (outputs) {
+            this._recordOutputsUpdate(cellIndex, { outputCount: outputs.length, isEmpty: outputs.length === 0 });
+          }
+          if (executionSummary) {
+            if (!this.has(cellIndex)) {
+              //  NOTE: VSCode sends many of these before finally sending one with exe order
+              if (executionSummary.executionOrder === undefined) return;
+              // Dangling execution update (e.g., success signal without executionOrder)? Ignore for now.
+              if (executionSummary.success !== undefined) return;  // dangling exec - should't happen w/out prev exec
+            }
+            this._recordExecutionUpdate(cellIndex, 
+              executionSummary.success !== undefined ? 'finished' : 'running');
           }
         });
       }
-      // 3. Handle Cell-level Changes
-      if (evt?.cellChanges?.length > 0) {
-        evt.cellChanges.forEach(ch => {
-          const cellIndex = ch.cell.index;
-          if (this.full.has(cellIndex)) return; // Already processed
-
-          // Document Edit
-          if (ch.document) this._recordDocumentEdit(cellIndex);
-          // Metadata
-          if (ch.metadata) {
-            this._recordCellMetadataChange(cellIndex, {
-              metadata: ch.metadata, // Pass the whole metadata diff
-              execution_count: ch.metadata.execution_count, // Extract specific field if needed by base
-            });
-          }
-          // Outputs
-          if (ch.outputs) {
-            this._recordOutputsUpdate(cellIndex, {
-              outputCount: ch.outputs.length, isEmpty: ch.outputs.length === 0,
-            });
-          }
-          // Execution Summary
-          if (ch.executionSummary) {
-            this._recordExecutionUpdate(cellIndex, {
-              executionOrder: ch.executionSummary.executionOrder, success: ch.executionSummary.success,
-            });
-          }
-        });
+      // 4. Catch cell count mismatch (shouldn't happen)
+      const currentCellCount = this.notebook.cellCount;
+      if (this.cellCount !== currentCellCount) {
+        log(`Cell count mismatch (${this.cellCount} vs ${currentCellCount}). Forcing diff.`);
+        this.addDiff(); // Trigger diff check due to potential structural change
       }
     } catch (error) {
         logError('Error processing VSCode event in ChangeCollatorVSCode:', error, evt);
@@ -167,16 +173,16 @@ export class ChangeCollatorVSCode extends ChangeCollator {
       if (baseSummary.changedCells.length > 0) ll.push(`Tracked Cells (Pending Full): ${baseSummary.changedCells.toString()}`);
 
       this.forEach((summary, cellIndex) => {
-          ll.push(`Tracked ${cellIndex}: { doc:${summary.documentChanged?'✓':'-'}, 
-            meta:${summary.metadataChanged?'✓':'-'}, out:${summary.outputsChanged?'✓':'-'}, 
-            exec:${summary.executionChanged?'✓':'-'} | mExecCnt:${summary.metadataExecutionCount}, 
-            execOrd:${summary.executionOrder}, execOk:${summary.executionSuccess} }`);
+          ll.push([`Tracked ${cellIndex}: { doc:${summary.documentChanged?'✓':'-'}`, 
+            `meta:${summary.metadataChanged?'✓':'-'}, out:${summary.outputsChanged?'✓':'-'}`, 
+            `exec:${summary.executionChanged?'✓':'-'} | exeSt:${summary.executionStatus}`, 
+            `exeCnt:${summary.metadataExecutionCount} }`].join(', '));
       });
       this.full.forEach((summary, cellIndex) => {
-          ll.push(`Full ${cellIndex}   : { doc:${summary.documentChanged?'✓':'-'}, 
-            meta:${summary.metadataChanged?'✓':'-'}, out:${summary.outputsChanged?'✓':'-'}, 
-            exec:${summary.executionChanged?'✓':'-'} | mExecCnt:${summary.metadataExecutionCount}, 
-            execOrd:${summary.executionOrder}, execOk:${summary.executionSuccess} }`);
+          ll.push([`Full ${cellIndex}   : { doc:${summary.documentChanged?'✓':'-'}`, 
+            `meta:${summary.metadataChanged?'✓':'-'}, out:${summary.outputsChanged?'✓':'-'}`, 
+            `exec:${summary.executionChanged?'✓':'-'} | exeSt:${summary.executionStatus}`, 
+            `exeCnt:${summary.metadataExecutionCount} }`].join(', '));
       });
 
       // log raw events
@@ -194,4 +200,51 @@ export class ChangeCollatorVSCode extends ChangeCollator {
 
 }
 
-export { eventSummary };
+/** @param {NotebookDocumentChangeEvent} evt */
+export function eventSummary(evt) {
+  let chs = [];
+  if (evt.cellChanges.length > 0) {
+    const cellChs = [];
+    evt.cellChanges.forEach(ch => {
+      const cc = [];
+      cc.push(`${ch.cell.index}`);
+      if (ch.executionSummary) {
+        cc.push('x');
+        if (ch.executionSummary.executionOrder !== undefined) cc.push(`${ch.executionSummary.executionOrder}`);
+        if (ch.executionSummary.success !== undefined) cc.push(`${ch.executionSummary.success}`);
+      }
+      if (ch.metadata) {
+        cc.push('m');
+        if (ch.metadata.execution_count !== undefined) cc.push(`${ch.metadata.execution_count}`);
+      }
+      if (ch.document) cc.push('d');
+      if (ch.outputs) {
+        cc.push('o');
+        if (ch.outputs.length > 0) cc.push(`${ch.outputs.length}`);
+      }
+      cellChs.push(`ch_${cc.join('_')}`);
+    });
+    chs.push(cellChs.join(' '));
+  }
+  if (evt.contentChanges.length > 0) {
+    const cntChs = [];
+    evt.contentChanges.forEach(ch => {
+      const cc = [];
+      if (ch.addedCells.length > 0) cc.push('a', ch.addedCells.map(c => c.index).join(','));
+      if (ch.removedCells.length > 0) cc.push('r', `${ch.range.start},${ch.range.end}`);
+      cntChs.push(`cn_${cc.join('_')}`);
+    });
+    chs.push(cntChs.join(' '));
+  }
+  if (evt.metadata) {
+    chs.push('md');
+    if (evt.metadata.execution_count !== undefined) chs.push(`${evt.metadata.execution_count}`);
+  }
+  return `${chs.join(' | ')}`;
+}
+
+
+/** @typedef {import('vscode').NotebookDocumentChangeEvent} NotebookDocumentChangeEvent */
+/** @typedef {import('vscode').NotebookDocumentContentChange} NotebookDocumentContentChange */
+/** @typedef {import('vscode').NotebookDocumentCellChange} NotebookDocumentCellChange */
+/** @typedef {import('vscode').NotebookRange} NotebookRange */

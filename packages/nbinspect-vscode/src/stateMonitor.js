@@ -1,3 +1,4 @@
+// debugger;
 import { truncate } from './utils.js';
 import { debug } from '../../common/debug.js';
 import { ChangeCollatorVSCode, eventSummary } from './changeCollatorVSCode.js';
@@ -5,7 +6,7 @@ import { processCell } from './nbformatHelpers.js';
 import { Bridged } from './bridged.js';
 // import { hasNBMimeOutput, MIME } from './utils.js';
 
-const log = debug('nbinspect:monitor', 'darkblue');
+const log = debug('monitor', 'darkblue');
 
 /** 
  * @typedef {import('vscode').NotebookEditor} NotebookEditor 
