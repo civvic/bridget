@@ -136,17 +136,10 @@ export class ChangeCollator extends Map {
    * @param {OutputsUpdate} change
    */
   _recordOutputsUpdate(cellIndex, change) {
-    const { isEmpty } = change;
     const summary = this.getSummary(cellIndex, 'outputs');
     summary.outputsChanged = true;
-    // log(`Outputs updated for cell ${cellIndex}, count: ${outputCount}, isEmpty: ${isEmpty}`);
-    // Outputs updates often signify the end of a change cycle, especially clearing outputs.
-    if (isEmpty) {
-      log(`.... Empty outputs: cell ${cellIndex} -> full.`);
-      this.#setFull(cellIndex, summary);
-    }
-    else if (summary.executionChanged === undefined) {
-      // handle the case where outputs appear without prior execution info (e.g., display handle updates)
+    if (summary.executionChanged === undefined) {
+      // outputs appear outside of execution cycle (e.g., display handle updates or clear outputs)
       log(`.... Dangling outputs: cell ${cellIndex} -> full.`);
       this.#setFull(cellIndex, summary);
     }
@@ -208,24 +201,21 @@ export class ChangeCollator extends Map {
     if (all) this.diffs.push(all);
   }
 
-  #getDiffs() { // Keep as is for now (relies on #hasChanges, #setFull, #getChanges, #getContentChanges)
+  /**
+   * @returns {[CellIdx[], Added[], Removed[], number]}
+   */
+  #getDiffs() {
     if (this.#hasChanges()) {
       this.documentChanges.forEach(idx => this.has(idx) && this.#setFull(idx, this.get(idx)));
       this.documentChanges.clear();
       let full = this.#getChanges();
       let { added, removed } = this.#getContentChanges();
-      // Ensure 'added' and 'removed' structures match the Diff typedef expectation
-      // The Diff typedef uses:
-      // Added = {start:CellIdx, cellIdxs:CellIdxs}
-      // Removed = NotebookRange = {start: number, end: number}
-      // Our internal types are:
-      // CellAddition = {timestamp, startIndex, addedCellIndexes}
-      // CellRemoval = {timestamp, startIndex, endIndex, removedCount}
-      // We need to map internal -> external format in #getContentChanges
-      const formattedAdded = added.map(a => ({ start: a.startIndex, cellIdxs: a.addedCellIndexes }));
-      // Assuming NotebookRange is {start: number, end: number}
-      const formattedRemoved = removed.map(r => ({ start: r.startIndex, end: r.endIndex }));
-      return [full, formattedAdded, formattedRemoved, this.cellCount];
+      // map internal format -> "diff" format
+      /** @type {Added[]} */
+      const diffAdded = added.map(a => ({ start: a.startIndex, cellIdxs: a.addedCellIndexes }));
+      /** @type {Removed[]} */
+      const diffRemoved = removed.map(r => ({ start: r.startIndex, end: r.endIndex }));
+      return [full, diffAdded, diffRemoved, this.cellCount];
     }
   }
 
@@ -246,25 +236,23 @@ export class ChangeCollator extends Map {
     this.pending.delete(cellIndex);  // Remove from execution pending set
   }
 
+  #clearCell(cellIndex) {
+    this.delete(cellIndex);
+    this.full.delete(cellIndex);
+    this.pending.delete(cellIndex);
+    this.documentChanges.delete(cellIndex);
+  }
+
   #getContentChanges() {
     const added = this.added.splice(0, this.added.length);
     // When cells are added, we might have temporary summaries for them in the main map
     // that need clearing if they weren't otherwise marked 'full'.
-    added.forEach(({ addedCellIndexes }) => addedCellIndexes.forEach(idx => this.delete(idx)));
+    added.forEach(({ addedCellIndexes }) => addedCellIndexes.forEach(idx => this.#clearCell(idx)));
 
     const removed = this.removed.splice(0, this.removed.length);
     // When cells are removed, clear any pending state for them
     removed.forEach(({ startIndex, endIndex }) => {
-        for (let i = startIndex; i < endIndex; i++) {
-            this.delete(i);
-            this.full.delete(i);
-            this.pending.delete(i);
-            this.documentChanges.delete(i);
-        }
-        // TODO: Adjust indexes of subsequent cells in internal state maps/sets?
-        // This is tricky. If diffs are processed immediately, the consumer handles re-indexing.
-        // If state persists across diffs, the collator needs to re-index its own keys.
-        // Given the transient nature, let's assume consumers handle re-indexing based on diffs.
+        for (let i = startIndex; i < endIndex; i++) this.#clearCell(i);
     });
     return { added, removed };
   }
@@ -275,22 +263,76 @@ export class ChangeCollator extends Map {
       (this.documentChanges.size || this.full.size || this.added.length || this.removed.length));
   }
 
+  /** @returns {CellIdx[]} */
   #getChanges() {
     const full = [...this.full.keys()];
     this.full.clear(); // Clear the processed 'full' state
     return full;
   }
 
+  /** Raw events for debugging. */
+  rawEvents() {
+    return [];
+  }
+
+  summary() {
+    return {
+      added: this.added, // These are still CellAddition[]
+      removed: this.removed, // These are still CellRemoval[]
+      changedCells: Array.from(this.keys()), // Indexes with ChangeSummary
+      fullCells: Array.from(this.full.keys()), // Indexes of fully processed cells
+      pending: Array.from(this.pending), // Indexes of pending execution cells
+      diffs: this.diffs // Array of generated Diff[]
+    }
+  }
+  
+  /** Provides a string summary for debugging. */
+  showSummary() {
+    if (!debug.enabled) return;
+
+    const baseSummary = this.summary();
+
+    const ll = [];
+    const formatChanges = (arr, type) => arr.map(c => `${type} ${JSON.stringify(c)}`).join('\n  ');
+
+    log(`**** VSCode Collator Summary ****`);
+    if (baseSummary.diffs.length > 0) ll.push(`Diffs Queued: ${baseSummary.diffs.length}`);
+    if (this.documentChanges.size > 0) ll.push(`Pending Doc Changes: ${[...this.documentChanges].toString()}`);
+    if (baseSummary.pending.length > 0) ll.push(`Pending Execution: ${baseSummary.pending.toString()}`);
+    if (baseSummary.added.length > 0) ll.push(`Pending Added:\n  ${formatChanges(baseSummary.added, 'Add')}`);
+    if (baseSummary.removed.length > 0) ll.push(`Pending Removed:\n  ${formatChanges(baseSummary.removed, 'Rem')}`);
+    if (baseSummary.fullCells.length > 0) ll.push(`Processed (Full): ${baseSummary.fullCells.toString()}`);
+    if (baseSummary.changedCells.length > 0) ll.push(`Tracked Cells (Pending Full): ${baseSummary.changedCells.toString()}`);
+
+    this.forEach((summary, cellIndex) => {
+      ll.push([`Tracked ${cellIndex}: { doc:${summary.documentChanged?'✓':'-'}`, 
+        `meta:${summary.metadataChanged?'✓':'-'}, out:${summary.outputsChanged?'✓':'-'}`, 
+        `exec:${summary.executionChanged?'✓':'-'} | exeSt:${summary.executionStatus}`, 
+        `exeCnt:${summary.metadataExecutionCount} }`].join(', '));
+    });
+    this.full.forEach((summary, cellIndex) => {
+        ll.push([`Full ${cellIndex}   : { doc:${summary.documentChanged?'✓':'-'}`, 
+          `meta:${summary.metadataChanged?'✓':'-'}, out:${summary.outputsChanged?'✓':'-'}`, 
+          `exec:${summary.executionChanged?'✓':'-'} | exeSt:${summary.executionStatus}`, 
+          `exeCnt:${summary.metadataExecutionCount} }`].join(', '));
+    });
+  
+    ll.push(...this.rawEvents());
+    console.log(`\x1B[1;35m${ll.join('\n')}\x1B[m`); // Keep color for visibility
+    log("**** ------------------------- ****");
+  }
+  
 }
 
 /** 
  * @typedef {number} TimeStamp
  * @typedef {number} CellIdx
+ * @typedef {number} CellCount
  * @typedef {CellIdx[]} CellIdxs - changed cells indexes
  * @typedef {{start:CellIdx, cellIdxs:CellIdxs}} Added - cell indexes added at starting index
  * @typedef {NotebookRange} Removed
  * @typedef {Set<CellIdx>} HasDocumentChanges
- * @typedef {[CellIdxs, Added[], Removed[], number]} Diff
+ * @typedef {[CellIdxs, Added[], Removed[], CellCount]} Diff
  */
 
 /**

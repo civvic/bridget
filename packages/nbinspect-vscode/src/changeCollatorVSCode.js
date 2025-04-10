@@ -1,4 +1,4 @@
-import { ChangeCollator } from '../../common/changeCollator.js';
+import { ChangeCollator, ChangeSummary } from '../../common/changeCollator.js';
 
 import { debug } from '../../common/debug.js';
 const DEBUG_NAMESPACE = 'nbinspect:coll';
@@ -112,91 +112,54 @@ export class ChangeCollatorVSCode extends ChangeCollator {
     evts.forEach(evt => this.addEvent(evt));
   }
 
+  getDiffs() {
+    const diffs = super.getDiffs();
+    if (debug.enabled) {
+      if (diffs.length) {
+        const lastDiff = diffs.at(-1);
+        console.assert(lastDiff[3] === this.cellCount && this.cellCount === this.notebook.cellCount, 
+          `cellCount ${this.notebook.cellCount} mismatch: diffs ${lastDiff[3]} collator ${this.cellCount}`);
+      }
+    }
+    return diffs;
+  }
+
   cleanup() {
-    // This logic requires accessing cell details (outputs, metadata, document)
-    // specific to the VSCode notebook object.
-    log('Running VSCode-specific cleanup');
-    const indexes = [...this.keys()]; // Get indexes from the base map (holding ChangeSummary)
+    const indexes = [...this.keys()];
     indexes.forEach(idx => {
+      /** @type {ChangeSummary}} */
       const summary = this.get(idx);
       // Check if the summary represents a potentially dangling state:
-      // - Only execution changed reported (summary.executionChanged is true)
-      // - Execution order is present but success status is missing (summary.executionSuccess === undefined)
-      // - OR check original logic: changes.length === 1 && executionSummary && !executionSummary.executionOrder
-      // Let's adapt the condition using ChangeSummary state:
-      if (summary && summary.executionChanged && summary.executionOrder !== undefined 
-        && summary.executionSuccess === undefined) {
-         // Now check the actual cell state using the VSCode notebook object
+      if (summary.executionChanged && summary.executionStatus === 'running') {
         try {
-          const cell = this.notebook.cellAt(idx); // Use the stored notebook object
+          const cell = this.notebook.cellAt(idx);
           if (cell && cell.outputs.length === 0 && !cell.metadata.execution_count && 
             cell.document.getText().trim().length === 0) {
             log(`Cleaning up dangling summary for empty cell ${idx}`);
-            this.delete(idx);  // Remove from the base map
-            this.pending.delete(idx); // Also ensure removed from pending (might be redundant if delete handles it)
+            this.delete(idx);
+            this.pending.delete(idx);
           }
         } catch (e) {
           logError(`Error accessing cell ${idx} during cleanup:`, e);
-          // Cell might have been removed between change recording and cleanup
-          this.delete(idx); // Clean up the summary anyway if cell access fails
+          this.delete(idx);
           this.pending.delete(idx);
         }
       }
     });
   }
 
-  /** Provides a string summary for debugging. 
-   * This is not common because we may want to log raw events or some platform-specific stuff.
-   */
-  showSummary() {
-      if (!debug.enabled) return;
-
-      const baseSummary = {
-          added: this.added, // These are still CellAddition[]
-          removed: this.removed, // These are still CellRemoval[]
-          changedCells: Array.from(this.keys()), // Indexes with ChangeSummary
-          fullCells: Array.from(this.full.keys()), // Indexes of fully processed cells
-          pending: Array.from(this.pending), // Indexes of pending execution cells
-          diffs: this.diffs // Array of generated Diff[]
-      };
-
-      const ll = [];
-      const formatChanges = (arr, type) => arr.map(c => `${type} ${JSON.stringify(c)}`).join('\n  ');
-
-      log(`**** VSCode Collator Summary ****`);
-      if (baseSummary.diffs.length > 0) ll.push(`Diffs Queued: ${baseSummary.diffs.length}`);
-      if (this.documentChanges.size > 0) ll.push(`Pending Doc Changes: ${[...this.documentChanges].toString()}`);
-      if (baseSummary.pending.length > 0) ll.push(`Pending Execution: ${baseSummary.pending.toString()}`);
-      if (baseSummary.added.length > 0) ll.push(`Pending Added:\n  ${formatChanges(baseSummary.added, 'Add')}`);
-      if (baseSummary.removed.length > 0) ll.push(`Pending Removed:\n  ${formatChanges(baseSummary.removed, 'Rem')}`);
-      if (baseSummary.fullCells.length > 0) ll.push(`Processed (Full): ${baseSummary.fullCells.toString()}`);
-      if (baseSummary.changedCells.length > 0) ll.push(`Tracked Cells (Pending Full): ${baseSummary.changedCells.toString()}`);
-
-      this.forEach((summary, cellIndex) => {
-          ll.push([`Tracked ${cellIndex}: { doc:${summary.documentChanged?'✓':'-'}`, 
-            `meta:${summary.metadataChanged?'✓':'-'}, out:${summary.outputsChanged?'✓':'-'}`, 
-            `exec:${summary.executionChanged?'✓':'-'} | exeSt:${summary.executionStatus}`, 
-            `exeCnt:${summary.metadataExecutionCount} }`].join(', '));
-      });
-      this.full.forEach((summary, cellIndex) => {
-          ll.push([`Full ${cellIndex}   : { doc:${summary.documentChanged?'✓':'-'}`, 
-            `meta:${summary.metadataChanged?'✓':'-'}, out:${summary.outputsChanged?'✓':'-'}`, 
-            `exec:${summary.executionChanged?'✓':'-'} | exeSt:${summary.executionStatus}`, 
-            `exeCnt:${summary.metadataExecutionCount} }`].join(', '));
-      });
-
-      // log raw events
-      // if (this.events && this.events.length > 0) {
-      //     ll.push(`Raw Events (${this.events.length}):`);
-      //     this.events.forEach(([ts, evt], idx) => {
-      //         const delta = (idx > 0 ? `+${ts - this.events[idx-1][0]}` : `${ts}`).padStart(14);
-      //         ll.push(`${delta} ${eventSummary(evt)}`); // Use existing utility
-      //     });
-      // }
-
-      console.log(`\x1B[1;35m${ll.join('\n')}\x1B[m`); // Keep color for visibility
-      log("**** ------------------------- ****");
-  }
+  /** Log raw events for debugging. */
+  // rawEvents() {
+  //   const ll = [];
+  //   if (this.events && this.events.length > 0) {
+  //       ll.push(`Raw Events (${this.events.length}):`);
+  //       this.events.forEach(([ts, evt], idx) => {
+  //           const delta = (idx > 0 ? `+${ts - this.events[idx-1][0]}` : `${ts}`).padStart(14);
+  //           ll.push(`${delta} ${eventSummary(evt)}`); // Use existing utility
+  //       });
+  //   }
+  //   return ll;
+  // }
 
 }
 

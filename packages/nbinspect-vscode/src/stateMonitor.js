@@ -337,6 +337,7 @@ export class NBStateMonitor {
         tracker.delay = NBStateMonitor.shortDebounceDelay;
         if (collator.hasDiffs) {
           if (debug.enabled) collator.showSummary();
+          /** @type {Diff[]} */
           const diffs = collator.getDiffs();
           monitor.sentNBState(diffs);
           // log('____ to sentNBState');
