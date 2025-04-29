@@ -6,8 +6,8 @@
 from __future__ import annotations
 
 # %% auto 0
-__all__ = ['emptyd', 'emptyl', 'emptyt', 'bridge_cfg', 'kounter', 'BridgeCfg', 'bundle_path', 'arun_command', 'run_command',
-           'Singleling', 'Kounter', 'simple_id', 'id_gen', 'patch_cached', 'patch_cached_property', 'cached_property',
+__all__ = ['emptyd', 'emptyl', 'emptyt', 'bridge_cfg', 'kounter', 'BridgeCfg', 'arun_command', 'run_command', 'Singleling',
+           'Kounter', 'simple_id', 'id_gen', 'patch_cached', 'patch_cached_property', 'cached_property',
            'bridge_metadata', 'skip', 'compose_first']
 
 # %% ../nbs/01_helpers.ipynb
@@ -53,20 +53,6 @@ class BridgeCfg(Config):
     debug_req: bool = False
 
 bridge_cfg = BridgeCfg()
-
-# %% ../nbs/01_helpers.ipynb
-def _get_globals(mod: str):
-    if hasattr(sys, '_getframe'):
-        glb = sys._getframe(2).f_globals
-    else:
-        glb = sys.modules[mod].__dict__
-    return glb
-
-# %% ../nbs/01_helpers.ipynb
-def bundle_path(mod:str|ModuleType):
-    "Return the path to the module's directory or current directory."
-    if isinstance(mod, str): mod = importlib.import_module(mod)
-    return Path(fn).parent if (fn := getattr(mod, '__file__', None)) else Path()
 
 # %% ../nbs/01_helpers.ipynb
 async def arun_command(command: str, cwd: Path|None=None, **kwargs):

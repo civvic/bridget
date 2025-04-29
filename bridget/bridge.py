@@ -31,9 +31,11 @@ from IPython.display import display
 from IPython.display import DisplayHandle
 from IPython.display import HTML
 from IPython.utils.capture import CapturedIO
+from olio.basic import bundle_path
 from olio.common import shortens
 from olio.common import update_
 from traitlets.config import SingletonConfigurable
+
 
 # %% ../nbs/15_bridge.ipynb
 from .bridge_helpers import BLogger
@@ -45,7 +47,6 @@ from .bridge_helpers import marker_scr
 from .bridge_helpers import observer_scr
 from .bridge_helpers import ScriptsDetails
 from .helpers import bridge_cfg
-from .helpers import bundle_path
 from .helpers import id_gen
 from .helpers import skip
 from .widget_helpers import anysource

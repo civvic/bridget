@@ -6,8 +6,7 @@
 from __future__ import annotations
 
 # %% auto 0
-__all__ = ['cleanupwidgets', 'read_vfile', 'ScriptV', 'StyleV', 'SourceProvider', 'anysource', 'Bundle', 'bundled', 'exp_backoff',
-           'BlockingMixin']
+__all__ = ['read_vfile', 'ScriptV', 'StyleV', 'SourceProvider', 'anysource', 'Bundle', 'bundled', 'exp_backoff', 'BlockingMixin']
 
 # %% ../nbs/02_widget_helpers.ipynb
 import asyncio
@@ -27,26 +26,17 @@ from fastcore.xml import FT
 from fastcore.xml import NotStr
 from fasthtml.basics import ft_html
 from jupyter_ui_poll import ui_events
+from olio.basic import _get_globals
 from olio.basic import Empty
 from olio.basic import empty
 
+
 # %% ../nbs/02_widget_helpers.ipynb
-from .helpers import _get_globals
 from .helpers import run_command
+
 
 # %% ../nbs/02_widget_helpers.ipynb
 _n = '\n'
-
-# %% ../nbs/02_widget_helpers.ipynb
-def cleanupwidgets(*ws, mod: str|None=None, clear=True):
-    from IPython.display import clear_output
-    glb = _get_globals(mod or __name__)
-    for w in ws:
-        _w = glb.get(w) if isinstance(w, str) else w
-        if _w:
-            try: _w.close()  # type: ignore
-            except: pass
-    if clear: clear_output(wait=False)
 
 # %% ../nbs/02_widget_helpers.ipynb
 def read_vfile(cts:str)->str|None:

@@ -28,8 +28,10 @@ from fasthtml.jupyter import JupyUvi
 from fasthtml.xtend import Script
 from IPython.display import display
 from IPython.display import HTML
+from olio.basic import bundle_path
 from olio.common import update_
 from traitlets.config import SingletonConfigurable
+
 
 # %% ../nbs/14_bridge_helpers.ipynb
 from fasthtml.components import Div,B, Details, Summary, Pre
@@ -40,7 +42,6 @@ from .display_helpers import LogCanvas_css
 from .display_helpers import NBLogger
 from .display_helpers import NoopLogger
 from .helpers import bridge_cfg
-from .helpers import bundle_path
 from .helpers import id_gen
 from .widget_helpers import anysource
 from .widget_helpers import BlockingMixin
