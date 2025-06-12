@@ -5,56 +5,62 @@ const DEBUG_NAMESPACE = 'collator:lab';
 const log = debug(DEBUG_NAMESPACE, 'purple');
 const logError = debug(`${DEBUG_NAMESPACE}:error`, 'red');
 
-/**
- * @typedef {import('@jupyterlab/notebook').INotebookModel} INotebookModel
- * @typedef {import('@jupyterlab/cells').ICellModel} ICellModel
- * @typedef {import('@jupyter/ydoc').CellChange} CellChange
- * @typedef {import('@jupyterlab/observables').IObservableList} IObservableList
- */
+import type { INotebookModel } from '@jupyterlab/notebook';
+import type { ICellModel } from '@jupyterlab/cells';
+import type { IObservableList } from '@jupyterlab/observables';
 
 /**
  * Lab-specific unified event structure (similar to VSCode's NotebookDocumentChangeEvent)
- * @typedef {Object} LabNotebookEvent
- * @property {LabCellChange[]} [cellChanges] - Array of individual cell changes
- * @property {LabContentChange[]} [contentChanges] - Array of structural changes (add/remove/move)
- * @property {Object} [metadata] - Notebook-level metadata changes
- * @property {number} [timestamp] - Optional timestamp for the event
  */
+export interface LabNotebookEvent {
+  /** Array of individual cell changes */
+  cellChanges?: LabCellChange[];
+  /** Array of structural changes (add/remove/move) */
+  contentChanges?: LabContentChange[];
+  /** Notebook-level metadata changes */
+  metadata?: any;
+  /** Optional timestamp for the event */
+  timestamp?: number;
+}
 
 /**
  * Lab-specific cell change (similar to VSCode's NotebookDocumentCellChange)
- * @typedef {Object} LabCellChange
- * @property {ICellModel} cell - The cell model that changed
- * @property {CellChange} change - The Yjs change details
  */
+export interface LabCellChange {
+  /** The cell model that changed */
+  cell: ICellModel;
+  /** The Yjs change details */
+  change: any; // CellChange from @jupyter/ydoc
+}
 
 /**
  * Lab-specific content change (similar to VSCode's NotebookDocumentContentChange)
- * @typedef {Object} LabContentChange
- * @property {IObservableList.IChangedArgs<ICellModel>} change - The observable list change
  */
+export interface LabContentChange {
+  /** The observable list change */
+  change: any; // IObservableList.IChangedArgs<ICellModel>
+}
 
 /**
  * Concrete implementation of ChangeCollator for JupyterLab Notebooks.
  * Translates JupyterLab/Yjs cell and model changes into calls
  * to the abstract ChangeCollator base class methods.
- * @extends {ChangeCollator}
  */
 export class ChangeCollatorLab extends ChangeCollator {
-  /** @type {INotebookModel} The JupyterLab notebook model */
-  #model;
+  /** The JupyterLab notebook model */
+  private _model: INotebookModel;
 
   /**
    * Creates an instance of ChangeCollatorLab.
-   * @param {INotebookModel} model The notebook model to monitor.
+   * @param model The notebook model to monitor.
    */
-  constructor(model) {
+  constructor(model: INotebookModel) {
     if (!model) {
       throw new Error('ChangeCollatorLab requires a valid INotebookModel.');
     }
     const initialCellCount = model.cells.length;
     super(initialCellCount); // Pass initial cell count to base
-    this.#model = model;
+    this._model = model;
     log('Initialized ChangeCollatorLab with cell count:', initialCellCount);
   }
 
@@ -70,10 +76,10 @@ export class ChangeCollatorLab extends ChangeCollator {
    * - Completed: 'idle' (from active) → mapped to 'finished'
    * - Interrupted: 'dead', 'terminating', restart-from-active → mapped to 'finished'
    * 
-   * @param {ICellModel} cellModel The cell model whose shared model changed.
-   * @param {CellChange} change The details of the change from Yjs.
+   * @param cellModel The cell model whose shared model changed.
+   * @param change The details of the change from Yjs.
    */
-  addCellChange(cellModel, change) {
+  addCellChange(cellModel: ICellModel, change: any): void {
     const cellId = cellModel.id;
     const cellIndex = this.getCellIndexById(cellId);
     if (cellIndex === -1) {
@@ -96,8 +102,8 @@ export class ChangeCollatorLab extends ChangeCollator {
     }
     
     if (executionCountChange) {
-      const count = executionCountChange?.newValue ?? cellModel.execution_count;
-      this._recordCellMetadataChange(cellIndex, { execution_count: count });
+      const count = executionCountChange?.newValue ?? (cellModel as any).execution_count;
+      this._recordCellMetadataChange(cellIndex, { metadata: { execution_count: count } });
     }
     if (outputsChange) this._recordOutputsUpdate(cellIndex, outputsChange);
     if (executionStateChange) {
@@ -132,16 +138,16 @@ export class ChangeCollatorLab extends ChangeCollator {
 
   /**
    * Processes changes to the list of cells in the notebook model (add/remove/move).
-   * @param {IObservableList.IChangedArgs<ICellModel>} change Change details.
+   * @param change Change details.
    */
-  addCellsListChange(change) {
+  addCellsListChange(change: any): void {
     const { type, oldIndex, newIndex, oldValues, newValues } = change;
-    const currentCellCount = this.#model.cells.length;
+    const currentCellCount = this._model.cells.length;
 
     switch (type) {
       case 'add': {
-        const addedIndexes = newValues.map(cell => this.getCellIndexById(cell.id));
-        const validAddedIndexes = addedIndexes.filter(idx => idx !== -1);
+        const addedIndexes = newValues.map((cell: ICellModel) => this.getCellIndexById(cell.id));
+        const validAddedIndexes = addedIndexes.filter((idx: number) => idx !== -1);
         if (validAddedIndexes.length !== newValues.length) {
             logError('Could not find indexes for all added cells.');
         }
@@ -168,12 +174,12 @@ export class ChangeCollatorLab extends ChangeCollator {
 
   /**
    * Helper to get the current index of a cell by its ID.
-   * @param {string} cellId The ID of the cell to find.
-   * @returns {number} The current index, or -1 if not found.
+   * @param cellId The ID of the cell to find.
+   * @returns The current index, or -1 if not found.
    */
-  getCellIndexById(cellId) {
-    if (this.#model) {
-      const cells = this.#model.cells;
+  getCellIndexById(cellId: string): number {
+    if (this._model) {
+      const cells = this._model.cells;
       for (let i = 0; i < cells.length; i++) {
         if (cells.get(i).id === cellId) {
           return i;
@@ -185,35 +191,32 @@ export class ChangeCollatorLab extends ChangeCollator {
 
   /**
    * Determines if a kernel state indicates active execution.
-   * @private
-   * @param {string} state - The kernel execution state
-   * @returns {boolean} True if the state indicates active execution
+   * @param state - The kernel execution state
+   * @returns True if the state indicates active execution
    */
-  _isExecutionActiveState(state) {
+  private _isExecutionActiveState(state: string): boolean {
     // States that indicate cell execution is actively running
     return state === 'running' || state === 'busy' || state === 'starting';
   }
 
   /**
    * Determines if a kernel state transition indicates completed execution.
-   * @private
-   * @param {string} newState - The new kernel execution state
-   * @param {string} oldState - The previous kernel execution state
-   * @returns {boolean} True if the transition indicates completed execution
+   * @param newState - The new kernel execution state
+   * @param oldState - The previous kernel execution state
+   * @returns True if the transition indicates completed execution
    */
-  _isExecutionFinishedState(newState, oldState) {
+  private _isExecutionFinishedState(newState: string, oldState: string): boolean {
     // Transition to 'idle' from an active execution state indicates completion
     return newState === 'idle' && this._isExecutionActiveState(oldState);
   }
 
   /**
    * Determines if a kernel state indicates interrupted/failed execution.
-   * @private
-   * @param {string} newState - The new kernel execution state
-   * @param {string} oldState - The previous kernel execution state
-   * @returns {boolean} True if the state indicates interrupted/failed execution
+   * @param newState - The new kernel execution state
+   * @param oldState - The previous kernel execution state
+   * @returns True if the state indicates interrupted/failed execution
    */
-  _isExecutionInterruptedState(newState, oldState) {
+  private _isExecutionInterruptedState(newState: string, oldState: string): boolean {
     // States that indicate execution was interrupted, terminated, or failed
     // We treat these as "finished" since the execution cycle has ended
     if (newState === 'dead' || newState === 'terminating') {
@@ -234,28 +237,27 @@ export class ChangeCollatorLab extends ChangeCollator {
    * Removes "dangling" change summaries - cells that appear to be executing
    * but are actually in an inconsistent state (empty, no outputs, no execution count).
    */
-  cleanup() {
+  cleanup(): void {
     const indexes = [...this.keys()];
     let cleanedCount = 0;
     
     indexes.forEach(idx => {
-      /** @type {import('./common/changeCollator.js').ChangeSummary} */
       const summary = this.get(idx);
       
       // Check if the summary represents a potentially dangling execution state:
-      if (summary.executionChanged && summary.executionStatus === 'running') {
+      if (summary && summary.executionChanged && summary.executionStatus === 'running') {
         try {
           // Get the actual cell from the JupyterLab model
-          const cellModel = this.#model.cells.get(idx);
+          const cellModel = this._model.cells.get(idx);
           
           if (cellModel) {
             // Check if cell is in a "dangling" state:
             // - No outputs
             // - No execution count
             // - Empty or whitespace-only source
-            const hasOutputs = cellModel.outputs && cellModel.outputs.length > 0;
-            const hasExecutionCount = cellModel.execution_count !== null && cellModel.execution_count !== undefined;
-            const hasContent = cellModel.source && cellModel.source.trim().length > 0;
+            const hasOutputs = (cellModel as any).outputs && (cellModel as any).outputs.length > 0;
+            const hasExecutionCount = (cellModel as any).execution_count !== null && (cellModel as any).execution_count !== undefined;
+            const hasContent = (cellModel as any).source && (cellModel as any).source.trim().length > 0;
             
             if (!hasOutputs && !hasExecutionCount && !hasContent) {
               log(`Cleaning up dangling summary for empty cell ${idx}`);
@@ -291,7 +293,7 @@ export class ChangeCollatorLab extends ChangeCollator {
    * Lab-specific summary method for debugging.
    * Calls the base class showSummary method.
    */
-  showSummary() {
+  showSummary(): void {
     if (!debug.enabled) return;
     log('**** ChangeCollatorLab Summary ****');
     // Call the base class showSummary method
@@ -301,10 +303,10 @@ export class ChangeCollatorLab extends ChangeCollator {
   /**
    * Unified event processing method (VSCode-style pattern for Lab).
    * Processes a unified Lab notebook event containing cell changes, content changes, and metadata.
-   * @param {LabNotebookEvent} evt - The unified Lab event object
-   * @param {number} [timestamp] - Optional timestamp (defaults to Date.now())
+   * @param evt - The unified Lab event object
+   * @param timestamp - Optional timestamp (defaults to Date.now())
    */
-  addEvent(evt, timestamp) {
+  addEvent(evt: LabNotebookEvent, timestamp?: number): this {
     if (!evt) {
       logError('ChangeCollatorLab received a null event.');
       return this;
@@ -329,13 +331,13 @@ export class ChangeCollatorLab extends ChangeCollator {
       }
       
       // 2. Handle Content Changes (Cell Add/Remove/Move)
-      if (contentChanges?.length > 0) {
+      if (contentChanges?.length && contentChanges.length > 0) {
         contentChanges.forEach(contentChange => {
           this.addCellsListChange(contentChange.change);
         });
         
         // Verify cell count consistency
-        const currentCellCount = this.#model.cells.length;
+        const currentCellCount = this._model.cells.length;
         if (this.cellCount !== currentCellCount) {
           log(`Cell count mismatch (${this.cellCount} vs ${currentCellCount}). Forcing diff.`);
           this.addDiff(); // Trigger diff check due to potential structural change
@@ -343,7 +345,7 @@ export class ChangeCollatorLab extends ChangeCollator {
       }
       
       // 3. Handle Cell-level Changes
-      if (cellChanges?.length > 0) {
+      if (cellChanges?.length && cellChanges.length > 0) {
         cellChanges.forEach(cellChange => {
           const { cell, change } = cellChange;
           this.addCellChange(cell, change);
@@ -351,7 +353,7 @@ export class ChangeCollatorLab extends ChangeCollator {
       }
       
       // 4. Final cell count verification
-      const finalCellCount = this.#model.cells.length;
+      const finalCellCount = this._model.cells.length;
       if (this.cellCount !== finalCellCount) {
         log(`Final cell count mismatch (${this.cellCount} vs ${finalCellCount}). Forcing diff.`);
         this.addDiff();
@@ -367,9 +369,9 @@ export class ChangeCollatorLab extends ChangeCollator {
 
   /**
    * Adds multiple unified events.
-   * @param {LabNotebookEvent[]} evts - Array of unified Lab event objects
+   * @param evts - Array of unified Lab event objects
    */
-  addEvents(evts) {
+  addEvents(evts: LabNotebookEvent[]): this {
     evts.forEach(evt => this.addEvent(evt));
     return this;
   }

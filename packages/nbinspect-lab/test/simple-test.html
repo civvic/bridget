@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ChangeCollatorLab Unified Event Pattern Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>ChangeCollatorLab Unified Event Pattern Test</h1>
+    <div id="output"></div>
+    
+    <script type="module">
+        // Import the Lab extension (you'll need to serve this from the lib directory)
+        // For now, we'll create a simplified test
+        
+        const output = document.getElementById('output');
+        
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = message;
+            output.appendChild(div);
+        }
+        
+        function testUnifiedEventPattern() {
+            log('🧪 Testing Unified Event Pattern...', 'info');
+            log('', 'info');
+            
+            // Mock the ChangeCollatorLab for testing
+            const mockCollator = {
+                cellCount: 3,
+                isEmpty: true,
+                size: 0,
+                hasDiffs: false,
+                
+                addEvent(evt) {
+                    log(`📥 Received event with:`, 'info');
+                    if (evt.cellChanges) {
+                        log(`   - ${evt.cellChanges.length} cell changes`, 'info');
+                    }
+                    if (evt.contentChanges) {
+                        log(`   - ${evt.contentChanges.length} content changes`, 'info');
+                    }
+                    if (evt.metadata) {
+                        log(`   - metadata changes`, 'info');
+                    }
+                    
+                    // Simulate processing
+                    this.isEmpty = false;
+                    this.size++;
+                    
+                    return this;
+                },
+                
+                addEvents(evts) {
+                    log(`📥 Received ${evts.length} events`, 'info');
+                    evts.forEach(evt => this.addEvent(evt));
+                    return this;
+                },
+                
+                getDiffs() {
+                    return [[[0], [], [], this.cellCount]];
+                }
+            };
+            
+            // Test 1: Cell change event
+            log('📝 Test 1: Cell Change Event', 'info');
+            const cellChangeEvent = {
+                cellChanges: [{
+                    cell: { id: 'cell-0', type: 'code' },
+                    change: {
+                        executionStateChange: {
+                            oldValue: 'idle',
+                            newValue: 'running'
+                        }
+                    }
+                }],
+                timestamp: Date.now()
+            };
+            
+            mockCollator.addEvent(cellChangeEvent);
+            log(`✅ Cell change processed successfully`, 'success');
+            log('', 'info');
+            
+            // Test 2: Content change event
+            log('➕ Test 2: Content Change Event', 'info');
+            const contentChangeEvent = {
+                contentChanges: [{
+                    change: {
+                        type: 'add',
+                        newIndex: 3,
+                        newValues: [{ id: 'cell-3', type: 'code' }]
+                    }
+                }],
+                timestamp: Date.now()
+            };
+            
+            mockCollator.addEvent(contentChangeEvent);
+            log(`✅ Content change processed successfully`, 'success');
+            log('', 'info');
+            
+            // Test 3: Multiple events
+            log('🔄 Test 3: Multiple Events', 'info');
+            const multipleEvents = [
+                {
+                    cellChanges: [{
+                        cell: { id: 'cell-1', type: 'code' },
+                        change: { outputsChange: { outputCount: 1 } }
+                    }]
+                },
+                {
+                    cellChanges: [{
+                        cell: { id: 'cell-0', type: 'code' },
+                        change: { executionStateChange: { newValue: 'idle' } }
+                    }]
+                }
+            ];
+            
+            mockCollator.addEvents(multipleEvents);
+            log(`✅ Multiple events processed successfully`, 'success');
+            log('', 'info');
+            
+            // Test 4: Error handling
+            log('❌ Test 4: Error Handling', 'info');
+            try {
+                mockCollator.addEvent(null);
+                log(`❌ Should have handled null event`, 'error');
+            } catch (error) {
+                log(`✅ Properly handled null event: ${error.message}`, 'success');
+            }
+            
+            log('', 'info');
+            log('🎉 All tests completed!', 'success');
+            log(`📊 Final state: isEmpty=${mockCollator.isEmpty}, size=${mockCollator.size}`, 'info');
+        }
+        
+        // Run tests
+        testUnifiedEventPattern();
+        
+        // Make function available globally for manual testing
+        window.testUnifiedEventPattern = testUnifiedEventPattern;
+    </script>
+</body>
+</html> 

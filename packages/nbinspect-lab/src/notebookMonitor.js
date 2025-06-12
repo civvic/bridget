@@ -1,50 +1,67 @@
-debugger;
+// debugger;
 
 import { debug } from './common/debug.js';
-// import { ChangeCollator } from './changeCollator.js';
 const log = debug('monitor', 'darkgreen');
+const logError = debug('monitor:error', 'red');
+import { ChangeCollatorLab } from './changeCollatorLab.js'; // <-- Import the Lab-specific collator
 
 /**
  * @typedef {import('@jupyterlab/notebook').INotebookModel} INotebookModel
  * @typedef {import('@jupyterlab/notebook').NotebookPanel} NotebookPanel
  * @typedef {import('@jupyterlab/cells').ICellModel} ICellModel
- * @typedef {import('@jupyter/ydoc').SourceChange} SourceChange
- * @typedef {import('@jupyter/ydoc').CellChange} CellChange
+ * @typedef {import('@jupyterlab/observables').IObservableList} IObservableList
+ * @typedef {import('./common/changeCollator.js').Diff} Diff // Import Diff type
  */
 
-/** @typedef {{doc?: any, attach?: any, outs?: any, exeCount?: any, exeState?: any, md?: any}} CellChanges */
-
 /**
- * Monitors a notebook for cell changes, processing them when selection changes.
+ * Monitors a notebook for cell changes using a ChangeCollatorLab.
  */
 export class NotebookMonitor {
   /** @type {NotebookPanel} */
   #panel = null;
   /** @type {INotebookModel} */
   #model = null;
-  /** @type {NotebookPanel} */
+  /** @type {NotebookPanel['content']} The notebook widget */
   #notebook = null;
-  // /** @type {ChangeCollator | null} Reference to the change collator */
-  // #changeCollator = null;
-  /** @type {Map<string, CellChanges>} - IDs of cells with pending changes */
-  #pendingChanges = new Map();
-  /** @type {Map<string, CellChanges>} - IDs of changed cells */
-  #changedCells = new Map();
-  /** @type {Map<string, Function>} - Cell signal handlers by cell ID */
+  /** @type {ChangeCollatorLab | null} Reference to the change collator */
+  #changeCollator = null;
+
+  /**
+   * Map storing signal objects and handlers for connected cells.
+   * @type {Map<string, {
+   *   sharedModelSignal: import('@lumino/signaling').ISignal<any, any>,
+   *   sharedModelHandler: Function,
+   *   outputsSignal?: import('@lumino/signaling').ISignal<any, any> | null,
+   *   outputsHandler?: Function | null
+   * }>}
+   */
   #cellSignalHandlers = new Map();
 
-  // #changeTracker;
+  /** @type {Set<number>} Cell indexes with pending document changes (typing) */
+  #pendingDocumentChanges = new Set();
+
+  /** @type {number | null} Timeout ID for debouncing processing */
+  #processChangesTimer = null;
+  /** @type {number} Debounce delay in milliseconds */
+  #debounceDelay = 500; // Default delay, adjust as needed
 
   /** Creates an instance of NotebookMonitor.
    * @param {NotebookPanel} panel - The notebook panel to monitor
    */
   constructor(panel) {
     this.#panel = panel;
-    this.#model = panel.model;
-    this.#notebook = panel.content;
-    // this.#changeTracker = { collator: this.#changeCollator, timer: null, delay: 500 };
-
+    this.#model = panel?.model;
+    this.#notebook = panel?.content;
+    if (!this.#model || !this.#notebook) {
+      logError('Notebook model or notebook content not available at monitor creation!');
+      return;
+    }
+    this.#changeCollator = new ChangeCollatorLab(this.#model);
     this.#connectSignals();
+    
+    // Send initial full state after connecting to signals
+    this.#sendInitialState();
+    
     log('NotebookMonitor: Attached to notebook panel');
   }
 
@@ -52,12 +69,9 @@ export class NotebookMonitor {
    */
   #connectSignals() {
     if (!this.#notebook || !this.#model) return;
-    const notebook = this.#notebook;
-    // Listen for active cell changes
-    // notebook.activeCellChanged.connect(this.#onActiveCellChanged, this);
-    // Listen for edit mode changes
-    notebook.stateChanged.connect(this.#onNotebookStateChanged, this);
-    notebook.modelContentChanged.connect(this.#onModelContentChanged, this);
+    
+    // Listen for notebook state changes (selection, mode changes)
+    this.#notebook.stateChanged.connect(this.#onNotebookStateChanged, this);
     
     // Listen for cells list changes (structural changes)
     this.#model.cells.changed.connect(this.#onCellsChanged, this);
@@ -66,32 +80,53 @@ export class NotebookMonitor {
   }
 
   #onModelContentChanged(notebook) {
-    log(`onModelContentChanged active cell: ${this.#panel.content.activeCellIndex}`);
+    // const cellIndex = this.#panel.content.activeCellIndex;
+    // log(`onModelContentChanged active cell: ${cellIndex}`);
+    // this.#pendingDocumentChanges.add(cellIndex);
   }
 
+  /**
+   * Handles notebook state changes to process deferred document changes.
+   * @param {NotebookPanel['content']} notebook - The notebook widget
+   * @param {any} changed - The change details
+   */
   #onNotebookStateChanged(notebook, changed) {
-    log(`onStateChanged active cell: ${this.#panel.content.activeCellIndex}`, changed);
-    switch (changed.name) {
-      case 'mode':
-        if (changed.newValue === 'command') {
-          this.#processChangedCells();
-        }
-        break;
-      case 'activeCellIndex':
-        this.#processChangedCells();
-        break;
+    log(`onNotebookStateChanged: ${changed.name} = ${changed.newValue}`);
+    
+    // Process pending document changes when user changes selection or exits edit mode
+    if (changed.name === 'activeCellIndex' || 
+        (changed.name === 'mode' && changed.newValue === 'command')) {
+      this.#processDocumentChanges();
     }
   }
 
-  /** Handler for active cell changes - processes pending changes.
- * @param {Object} sender - The notebook content
- * @param {Object} newCell - The new active cell
- */
-  // #onActiveCellChanged(notebook, ...args) {
-  //   this.#processChangedCells();
-  // }
-  
-  
+  /**
+   * Processes accumulated document changes (deferred typing changes).
+   * Called when user changes selection or exits edit mode.
+   * @private
+   */
+  #processDocumentChanges() {
+    if (this.#pendingDocumentChanges.size === 0) return;
+    
+    const docChanges = Array.from(this.#pendingDocumentChanges);
+    this.#pendingDocumentChanges.clear();
+    
+    log(`Processing deferred document changes for cells: [${docChanges}]`);
+    
+    if (!this.#changeCollator) return;
+    
+    if (this.#changeCollator.isEmpty) {
+      // Send directly as a simple diff - no other changes pending
+      const diffs = [[docChanges, [], [], this.#model.cells.length]];
+      log('>>>> Diffs Received (document-only):', JSON.stringify(diffs));
+      // TODO: Send these diffs somewhere (e.g., to a display mechanism)
+    } else {
+      // Add to collator to be combined with other pending changes
+      this.#changeCollator.setDocumentChanges(docChanges);
+      this.#triggerDebouncedProcessing();
+    }
+  }
+
   /** Connect to signals from all cells in the notebook
    */
   #connectToCells() {
@@ -101,220 +136,204 @@ export class NotebookMonitor {
     }
   }
 
+  /**
+   * Sends initial full state when the notebook is first loaded.
+   * Creates a full state message with all current cells.
+   * @private
+   */
+  #sendInitialState() {
+    if (!this.#model) return;
+    
+    const cellCount = this.#model.cells.length;
+    log(`Sending initial full state with ${cellCount} cells`);
+    
+    if (cellCount === 0) {
+      // Empty notebook - send empty state
+      const diffs = [[[/* no cells changed */], [/* no cells added */], [/* no cells removed */], 0]];
+      log('>>>> Initial State (empty notebook):', JSON.stringify(diffs));
+      // TODO: Send these diffs somewhere (e.g., to a display mechanism)
+      return;
+    }
+    
+    // Create a diff that represents all current cells as "changed" (full state)
+    const allCellIndexes = Array.from({ length: cellCount }, (_, i) => i);
+    const diffs = [[allCellIndexes, [/* no cells added */], [/* no cells removed */], cellCount]];
+    
+    log('>>>> Initial State (full notebook):', JSON.stringify(diffs));
+    // TODO: Send these diffs somewhere (e.g., to a display mechanism)
+  }
+
   /** Connect to a single cell's signals
    * @param {ICellModel} cellModel - The cell model
    */
   #connectToCell(cellModel) {
     const cellId = cellModel.id;
     if (this.#cellSignalHandlers.has(cellId)) return;
-    cellModel.sharedModel.changed.connect(this.#onCellChanged, this);
-    
-    const cellIndex = this.#getCellIndexById(cellId);
-    // const cellIndex = this.#notebook._findCellById(cellId);
 
-    const handlers = {
-      // state: (sender, ...args) => {
-      //   // if (!this.#pendingChanges.has(cellId)) this.#pendingChanges.set(cellId, {});
-      //   // this.#pendingChanges.get(cellId).state = args;
-      //   log(`Cell #${cellIndex}/${cellId} state changed`, args);
-      // },
-      metadata: (sender, changes) => {
-        // if (!this.#pendingChanges.has(cellId)) this.#pendingChanges.set(cellId, {});
-        // this.#pendingChanges.get(cellId).metadata = changes;
-        log(`Cell #${cellIndex}/${cellId} metadata changed`, changes);
-      },
-      outputs: null // Will set for code cells below
+    // --- Get signal and define handler for sharedModel ---
+    const sharedModelSignal = cellModel.sharedModel.changed;
+    const sharedModelHandler = (changedCellModel, change) => {
+      if (change.sourceChange) {
+        // Defer document changes - don't process immediately (VSCode-style deferral)
+        const cellIndex = this.#changeCollator?.getCellIndexById(changedCellModel.id);
+        if (cellIndex !== -1 && cellIndex !== undefined) {
+          this.#pendingDocumentChanges.add(cellIndex);
+          log(`Cell #${cellIndex}: Document change deferred (typing)`);
+        }
+        return; // Don't trigger debounced processing for source changes
+      }
+      
+      // Process other changes immediately using unified event pattern
+      if (this.#changeCollator) {
+        const unifiedEvent = this.#createCellChangeEvent(changedCellModel, change);
+        this.#changeCollator.addEvent(unifiedEvent);
+        this.#triggerDebouncedProcessing();
+      }
     };
-    // Connect to state & metadata changes for all cell types
-    cellModel.metadataChanged.connect(handlers.metadata);
-    // cellModel.stateChanged.connect(handlers.state);
-    
-    // Connect to outputs changes for code cells only
+    sharedModelSignal.connect(sharedModelHandler, this);
+
+    // --- Get signal and define handler for outputs (if code cell) ---
+    let outputsSignal = null;
+    let outputsHandler = null;
     if (cellModel.type === 'code') {
-      handlers.outputs = (sender, ...changes) => {
-        for (const chg of changes) {
-          const { type, oldIndex, oldValues, newIndex, newValues } = chg;
-          let changed = false;
-          if (type === 'remove') {
-            if (oldIndex === newIndex && oldValues.length === newValues.length) { // No change
-              return;
-            } else { // Output removed
-              changed = true;
-            }
-          } else if (type === 'add') { // Output added
-            changed = true;
-          } else { 
-            changed = true;
+      outputsSignal = cellModel.outputs.changed;
+      outputsHandler = (cellOutputs, change) => {
+        // Need to create a CellChange-like object for outputs-only changes
+        const outputsOnlyChange = {
+          outputsChange: {
+            // Get the latest count/state directly from the model outputs
+            outputCount: cellModel.outputs.length,
+            isEmpty: cellModel.outputs.length === 0
           }
-          if (changed) {
-            const cellIndex = this.#getCellIndexById(cellId);
-            let changes = this.#changedCells.get(cellId) ?? this.#pendingChanges.get(cellId);
-            if (!changes) { changes = {}; this.#pendingChanges.set(cellId, changes); }
-            changes.outs = true;
-            log(`**Cell #${cellIndex}/${cellId} changed:`, 'outputs');
-            if (!this.#changedCells.has(cellId)) {
-              this.#pendingChanges.delete(cellId);
-              this.#changedCells.set(cellId, changes);
-              log(`.... Cell #${cellIndex}/${cellId} queued for processing`);
-            }
-          }
+          // No other change types in this synthetic event
+        };
+        // Pass the original cellModel and the synthetic change object using unified event pattern
+        if (this.#changeCollator) {
+          const unifiedEvent = this.#createCellChangeEvent(cellModel, outputsOnlyChange);
+          this.#changeCollator.addEvent(unifiedEvent);
+          this.#triggerDebouncedProcessing();
         }
       };
-      cellModel.outputs.changed.connect(handlers.outputs, this);
+      outputsSignal.connect(outputsHandler, this);
     }
-    
-    // Store handlers for later disconnection
-    this.#cellSignalHandlers.set(cellId, handlers);
+
+    // --- Store signals and handlers in the map ---
+    this.#cellSignalHandlers.set(cellId, {
+      sharedModelSignal,
+      sharedModelHandler,
+      outputsSignal,
+      outputsHandler
+    });
   }
 
-  /** Handler for cell changes - tracks which cells changed.
-   * @param {ICellModel} cellModel - The cell model
-   * @param {CellChange} cellChange - The cell change
-   */
-  #onCellChanged(cellModel, cellChange) {
-    const cellId = cellModel.id;
-    // TODO: Feed changes into the collator instance
-    // if (this.#changeCollator) {
-    //   this.#changeCollator.collate(Date.now(), cellChange); // Need a Lab-specific 'collate' or 'addEvent'
-    // }
-    // if (this.#changedCells.has(cellId)) return;
-    let changes = this.#changedCells.get(cellId) ?? this.#pendingChanges.get(cellId);
-
-    const cellIndex = this.#getCellIndexById(cellId);
-    const { sourceChange, attachmentsChange, outputsChange, executionCountChange, 
-      executionStateChange, metadataChange } = cellChange;
-    if (sourceChange && changes?.doc) return;
-    log(`Cell #${cellIndex}/${cellId} changed:`, 
-      (sourceChange ? ' source' : '') +
-      (attachmentsChange ? ' attachments' : '') +
-      (outputsChange ? ' outputs' : '') +
-      (executionCountChange ? ` executionCount: ${executionCountChange.newValue}` : '') +
-      (executionStateChange ? ` executionState: ${executionStateChange.newValue}` : '') +
-      (metadataChange ? ` metadata: ${metadataChange}` : '')
-    );
-    // if (!this.#pendingChanges.has(cellId)) this.#pendingChanges.set(cellId, {});
-    if (!changes) { changes = {}; this.#pendingChanges.set(cellId, changes); }
-    if (sourceChange) changes.doc = true;
-    if (attachmentsChange) changes.attach = true;
-    if (executionCountChange) changes.exeCount = executionCountChange.newValue;
-    if (metadataChange) changes.md = true;
-    if (outputsChange) {
-        changes.outs = true;
-        if (!this.#changedCells.has(cellId)) {
-          this.#pendingChanges.delete(cellId);
-          this.#changedCells.set(cellId, changes);
-          log(`.... Cell #${cellIndex}/${cellId} queued for processing`);
-        }
-        // return;
-    }
-    if (executionStateChange) {
-      changes.exeState = executionStateChange.newValue;
-      const { oldValue, newValue } = executionStateChange;
-      if (oldValue === 'running' && newValue === 'idle') {
-        if (!this.#changedCells.has(cellId)) {
-          this.#pendingChanges.delete(cellId);
-          this.#changedCells.set(cellId, changes);
-          log(`.... Cell #${cellIndex}/${cellId} queued for processing`);
-        }
-        // return;
-      } 
-    }
-  }
-
-  /** Handler for content changes - tracks which cells changed.
-   */
-  // #onContentChanged(sender) {
-  //   // Since JupyterLab doesn't provide explicit cell change info in the contentChanged signal,
-  //   // we track the currently active cell ID since that's likely what changed
-  //   const activeCell = this.#panel.content.activeCell;
-  //   if (activeCell) {
-  //     const cellId = activeCell.model.id;
-  //     if (!this.#pendingChanges.has(cellId)) this.#pendingChanges.set(cellId, {});
-  //     if (this.#pendingChanges.get(cellId).doc) return;
-  //     this.#pendingChanges.get(cellId).doc = true;
-  //     log(`Cell #${this.#getCellIndexById(cellId)}/${cellId} content changed`);
-  //   }
-  // }
-
-  /** Process all pending changes.
-   */
-  #processChangedCells() {
-    for (const [cellId, changes] of [...this.#pendingChanges.entries()]) {
-      if (changes.doc) {
-        this.#pendingChanges.delete(cellId);
-        this.#changedCells.set(cellId, changes);
-      }
-    }
-
-    const hasChanges = this.#changedCells.size > 0;
-    if (!hasChanges) return;
-
-    log('Processing changed cells:');
-
-    /** @type {{index: number, id: string, type: string, changes: string[]}[]} */
-    const changed = [];
-    
-    for (const [cellId, changes] of this.#changedCells.entries()) {
-      // Find the cell with this ID
-      const cellIndex = this.#getCellIndexById(cellId);
-      if (cellIndex !== -1) {
-        const cellModel = this.#model.cells.get(cellIndex);
-        if (cellModel) {
-          const changeTypes = [];
-          if (changes.doc) changeTypes.push('document');
-          if (changes.attach) changeTypes.push('attachments');
-          if (changes.outs) changeTypes.push('outputs');
-          if (changes.exeCount) changeTypes.push('executionCount');
-          if (changes.exeState) changeTypes.push('executionState');
-          if (changes.md) changeTypes.push('metadata');
-          
-          changed.push({
-            index: cellIndex,
-            id: cellId,
-            type: cellModel.type,
-            changes: changeTypes
-          });
-        }
-      }
-    }
-
-    // Log the changes
-    log('---- Changed cells processed:', changed.map(c => [c.index, c.changes].join(':')));
-    // Clear all pending changes
-    this.#changedCells.clear();
-    // log the pending changes
-    log('---- Pending changes:', Array.from(this.#pendingChanges.entries()).map(([id]) => id).join(', '));
-  }
-
-  /** Handler for changes in the cells list - tracks cell additions, removals, and moves
+  /** Handler for changes in the cells list - feeds changes to the collator
    * @param {IObservableList<ICellModel>} sender - The cells list
-   * @param {IObservableList.IChangedArgs<ICellModel>} args - Change arguments
+   * @param {IObservableList.IChangedArgs<ICellModel>} change - Change arguments
    */
   #onCellsChanged(sender, change) {
-    const { newIndex, newValues, oldIndex, oldValues, type } = change;
-    switch (type) {
+    switch (change.type) {
       case 'add':
-        log(`Cells added: ${newValues.length} starting at ${newIndex}`);
-        newValues.forEach(cellModel => {
-          this.#connectToCell(cellModel);
-          // this.#changedCells.set(cellModel.id, {});
-          log(`Cell added with ID ${cellModel.id} @ ${this.#getCellIndexById(cellModel.id)}`);
+        change.newValues.forEach(cellModel => this.#connectToCell(cellModel));
+        break;
+
+      case 'remove': {
+        // Identify which cell IDs are no longer in the model
+        const currentCellIds = new Set([...this.#model.cells].map(c => c.id));
+        const handlersToRemove = [];
+
+        for (const cellId of this.#cellSignalHandlers.keys()) {
+          if (!currentCellIds.has(cellId)) {
+            handlersToRemove.push(cellId);
+          }
+        }
+
+        // Disconnect signals for removed cells
+        handlersToRemove.forEach(cellId => {
+          const signalsAndHandlers = this.#cellSignalHandlers.get(cellId);
+          if (signalsAndHandlers) {
+            // Disconnect using the stored signal, handler, and context (this)
+            if (signalsAndHandlers.sharedModelSignal && signalsAndHandlers.sharedModelHandler) {
+              signalsAndHandlers.sharedModelSignal.disconnect(signalsAndHandlers.sharedModelHandler, this);
+            }
+            if (signalsAndHandlers.outputsSignal && signalsAndHandlers.outputsHandler) {
+              signalsAndHandlers.outputsSignal.disconnect(signalsAndHandlers.outputsHandler, this);
+            }
+            this.#cellSignalHandlers.delete(cellId); // Remove from map
+            log(`Disconnected signals for removed cell ${cellId}`);
+          }
         });
         break;
-        
-      case 'remove':
-        log(`Cells removed: ${oldValues.length} starting at ${oldIndex}`);
-        // for (let idx = oldIndex; idx < oldIndex + oldValues.length; idx++) {}
-        break;
-        
+      }
+
       case 'move':
-        // With cell IDs, we don't need to do anything special for moves
-        log(`Cell moved from ${oldIndex} to ${newIndex}`);
+        // Moves are handled by the remove/add cases in terms of signals,
+        // and by the collator interpreting the diff. No extra action needed here.
         break;
     }
-    
-    // After structural changes, process any pending changes
-    this.#processChangedCells();
+
+    // Feed the structural change to the collator AFTER handling signals
+    if (this.#changeCollator) {
+      const unifiedEvent = this.#createContentChangeEvent(change);
+      this.#changeCollator.addEvent(unifiedEvent);
+      this.#triggerDebouncedProcessing();
+    }
+  }
+
+  /**
+   * Clears the existing debounce timer and starts a new one.
+   * @private
+   */
+  #triggerDebouncedProcessing() {
+    if (this.#processChangesTimer !== null) {
+      clearTimeout(this.#processChangesTimer);
+    }
+    this.#processChangesTimer = window.setTimeout(() => {
+      this.#processChanges();
+    }, this.#debounceDelay);
+  }
+
+  /**
+   * Processes the accumulated changes from the collator.
+   * Called after the debounce delay.
+   * @private
+   */
+  #processChanges() {
+    this.#processChangesTimer = null; // Clear timer ID
+    if (!this.#changeCollator || this.#changeCollator.isEmpty) {
+      return;
+    }
+
+    if (this.#changeCollator.hasDiffs) {
+      // Check if there are any pending executions - don't send diffs if executions are ongoing
+      if (this.#changeCollator.pending && this.#changeCollator.pending.size > 0) {
+        log(`Skipping diff emission - ${this.#changeCollator.pending.size} executions still pending`);
+        // Reset the debounce timer to check again later
+        this.#triggerDebouncedProcessing();
+        return;
+      }
+
+      /** @type {Diff[]} */
+      const diffs = this.#changeCollator.getDiffs();
+      log('>>>> Diffs Received:', JSON.stringify(diffs)); // Log the diffs for verification
+
+      // TODO: Send these diffs somewhere (e.g., to a display mechanism)
+
+      // Run cleanup if needed to remove dangling summaries
+      if (!this.#changeCollator.isEmpty) {
+        this.#changeCollator.cleanup();
+      }
+    }
+    if (debug.enabled) {
+      if (this.#changeCollator.isEmpty) {
+        console.log('     ____ empty collator ____\n');
+      } else {
+        // This might happen if changes occurred but the conditions for a diff weren't met
+        // (e.g., execution started but hasn't finished).
+        console.log('     ____ pending changes ____');
+        this.#changeCollator.showSummary();
+        console.log();
+      }
+    }
   }
 
   /** Dispose of the monitor, disconnecting all signals.
@@ -322,49 +341,66 @@ export class NotebookMonitor {
   dispose() {
     if (!this.#panel || !this.#model) return;
 
-    // Process any remaining changes
-    this.#processChangedCells();
+    // Process any remaining document changes before disposing
+    this.#processDocumentChanges();
 
-    // Disconnect from notebook signals
-    // this.#model.contentChanged.disconnect(this.#onContentChanged, this);
-    // this.#panel.content.activeCellChanged.disconnect(this.#onActiveCellChanged, this);
+    // Clear debounce timer
+    if (this.#processChangesTimer !== null) {
+      clearTimeout(this.#processChangesTimer);
+      this.#processChangesTimer = null;
+    }
+
+    // Disconnect from notebook-level signals
+    this.#notebook?.stateChanged?.disconnect(this.#onNotebookStateChanged, this);
     this.#model.cells.changed.disconnect(this.#onCellsChanged, this);
 
-    // // Disconnect from all cell signals
-    this.#cellSignalHandlers.forEach((handlers, cellId) => {
-      const cellIndex = this.#getCellIndexById(cellId);
-      if (cellIndex !== -1) {
-        const cellModel = this.#model.cells.get(cellIndex);
-        if (cellModel) {
-          // cellModel.stateChanged.disconnect(handlers.state);
-          cellModel.metadataChanged.disconnect(handlers.metadata);
-          if (cellModel.type === 'code' && handlers.outputs) {
-            cellModel.outputs.changed.disconnect(handlers.outputs);
-          }
-        }
+    // Disconnect from all remaining cell signals
+    this.#cellSignalHandlers.forEach((signalsAndHandlers, cellId) => {
+      if (signalsAndHandlers.sharedModelSignal && signalsAndHandlers.sharedModelHandler) {
+        signalsAndHandlers.sharedModelSignal.disconnect(signalsAndHandlers.sharedModelHandler, this);
+      }
+      if (signalsAndHandlers.outputsSignal && signalsAndHandlers.outputsHandler) {
+        signalsAndHandlers.outputsSignal.disconnect(signalsAndHandlers.outputsHandler, this);
       }
     });
     this.#cellSignalHandlers.clear();
 
-    this.#pendingChanges.clear();
-    this.#changedCells.clear();
+    // Clear pending document changes
+    this.#pendingDocumentChanges.clear();
+
+    // Nullify references
     this.#panel = null;
     this.#model = null;
     this.#notebook = null;
+    this.#changeCollator = null;
     log('NotebookMonitor: Disposed');
   }
 
-  /** Helper to get cell index by ID
-   * @param {string} cellId - The cell ID to find
-   * @returns {number} - The cell index or -1 if not found
+  /**
+   * Creates a unified Lab notebook event for cell changes.
+   * @param {ICellModel} cellModel - The cell model that changed
+   * @param {import('@jupyter/ydoc').CellChange} change - The cell change details
+   * @returns {import('./changeCollatorLab.js').LabNotebookEvent}
+   * @private
    */
-  #getCellIndexById(cellId) {
-    const cells = this.#model.cells;
-    for (let i = 0; i < cells.length; i++) {
-      if (cells.get(i).id === cellId) {
-        return i;
-      }
-    }
-    return -1;
+  #createCellChangeEvent(cellModel, change) {
+    return {
+      cellChanges: [{ cell: cellModel, change }],
+      timestamp: Date.now()
+    };
   }
+
+  /**
+   * Creates a unified Lab notebook event for structural changes.
+   * @param {import('@jupyterlab/observables').IObservableList.IChangedArgs<ICellModel>} change - The list change details
+   * @returns {import('./changeCollatorLab.js').LabNotebookEvent}
+   * @private
+   */
+  #createContentChangeEvent(change) {
+    return {
+      contentChanges: [{ change }],
+      timestamp: Date.now()
+    };
+  }
+
 }

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Execution State Mapping Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .state-transition { margin: 5px 0; padding: 5px; }
+        .active { background-color: #e3f2fd; }
+        .finished { background-color: #e8f5e8; }
+        .interrupted { background-color: #fff3e0; }
+        .unhandled { background-color: #ffebee; }
+        .log { font-family: monospace; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <h1>JupyterLab Execution State Mapping Test</h1>
+    
+    <div class="test-section">
+        <h2>Execution State Mapping Logic</h2>
+        <p>Testing the refined execution state mapping that handles the complete range of JupyterLab kernel states:</p>
+        <ul>
+            <li><strong>Active States:</strong> 'running', 'busy', 'starting' → mapped to 'running'</li>
+            <li><strong>Completed States:</strong> 'idle' (from active) → mapped to 'finished'</li>
+            <li><strong>Interrupted States:</strong> 'dead', 'terminating', restart-from-active → mapped to 'finished'</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>State Transition Tests</h2>
+        <div id="test-results"></div>
+    </div>
+
+    <script>
+        // Mock implementation of the state mapping logic for testing
+        class ExecutionStateMapper {
+            _isExecutionActiveState(state) {
+                return state === 'running' || state === 'busy' || state === 'starting';
+            }
+
+            _isExecutionFinishedState(newState, oldState) {
+                return newState === 'idle' && this._isExecutionActiveState(oldState);
+            }
+
+            _isExecutionInterruptedState(newState, oldState) {
+                if (newState === 'dead' || newState === 'terminating') {
+                    return true;
+                }
+                
+                if ((newState === 'restarting' || newState === 'autorestarting') && 
+                    this._isExecutionActiveState(oldState)) {
+                    return true;
+                }
+                
+                return false;
+            }
+
+            mapStateTransition(oldState, newState) {
+                if (this._isExecutionActiveState(newState)) {
+                    return { mapped: 'running', category: 'active' };
+                } else if (this._isExecutionFinishedState(newState, oldState)) {
+                    return { mapped: 'finished', category: 'finished' };
+                } else if (this._isExecutionInterruptedState(newState, oldState)) {
+                    return { mapped: 'finished', category: 'interrupted' };
+                } else {
+                    return { mapped: null, category: 'unhandled' };
+                }
+            }
+        }
+
+        // Test cases
+        const testCases = [
+            // Active state transitions
+            { old: 'idle', new: 'running', expected: 'running' },
+            { old: 'idle', new: 'busy', expected: 'running' },
+            { old: 'idle', new: 'starting', expected: 'running' },
+            
+            // Finished state transitions
+            { old: 'running', new: 'idle', expected: 'finished' },
+            { old: 'busy', new: 'idle', expected: 'finished' },
+            { old: 'starting', new: 'idle', expected: 'finished' },
+            
+            // Interrupted state transitions
+            { old: 'running', new: 'dead', expected: 'finished' },
+            { old: 'busy', new: 'terminating', expected: 'finished' },
+            { old: 'running', new: 'restarting', expected: 'finished' },
+            { old: 'busy', new: 'autorestarting', expected: 'finished' },
+            
+            // Edge cases / unhandled
+            { old: 'idle', new: 'idle', expected: null },
+            { old: 'unknown', new: 'idle', expected: null },
+            { old: 'idle', new: 'unknown', expected: null },
+            { old: 'idle', new: 'restarting', expected: null }, // restart without active execution
+        ];
+
+        // Run tests
+        const mapper = new ExecutionStateMapper();
+        const resultsDiv = document.getElementById('test-results');
+        
+        testCases.forEach((testCase, index) => {
+            const result = mapper.mapStateTransition(testCase.old, testCase.new);
+            const passed = result.mapped === testCase.expected;
+            
+            const div = document.createElement('div');
+            div.className = `state-transition ${result.category}`;
+            
+            const status = passed ? '✅' : '❌';
+            const transition = `${testCase.old} → ${testCase.new}`;
+            const mapping = result.mapped ? `→ "${result.mapped}"` : '→ unhandled';
+            
+            div.innerHTML = `
+                ${status} <strong>Test ${index + 1}:</strong> ${transition} ${mapping}
+                <div class="log">Category: ${result.category} | Expected: ${testCase.expected || 'null'}</div>
+            `;
+            
+            resultsDiv.appendChild(div);
+        });
+
+        // Summary
+        const passed = testCases.filter((testCase, index) => {
+            const result = mapper.mapStateTransition(testCase.old, testCase.new);
+            return result.mapped === testCase.expected;
+        }).length;
+
+        const summaryDiv = document.createElement('div');
+        summaryDiv.innerHTML = `<h3>Test Summary: ${passed}/${testCases.length} tests passed</h3>`;
+        resultsDiv.insertBefore(summaryDiv, resultsDiv.firstChild);
+    </script>
+</body>
+</html> 
