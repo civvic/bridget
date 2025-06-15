@@ -10,7 +10,7 @@
           "cell_type": "code",
           "source": "# cell 24\nfrom itertools import count\nfrom bridget.display_helpers import displaydh\nfrom IPython.display import HTML, Javascript, clear_output\ncounter = count()\ndh0 = displaydh(HTML('cell 24.0'), metadata={'bridge': {'cell': 24.0}})\ndh1 = displaydh(\n    {'application/x-notebook-state': {'feedback': True, 'watch': True, 'debug': True, 'id': next(counter)}}, \n    raw=True, metadata={'bridge': {'cell': 24.1, 'skip': True}})  # skip not needed, renderer always skipped",
           "metadata": {
-            "brd": "cdc800b9-44fd-4035-a3be-1abcb6cde8b2",
+            "brd": { "id": "cdc800b9-44fd-4035-a3be-1abcb6cde8b2", "renderer": false },
             "cell_id": "X33sZmlsZQ=="
           },
           "outputs": [
@@ -52,7 +52,7 @@
           "cell_type": "code",
           "source": "# cell 25\ndh1.update({'application/x-notebook-state': {'id': next(counter), 'update': True}}, raw=True, \n        metadata={'bridge': {'cell': 25, 'skip': True}})",
           "metadata": {
-            "brd": "671445ae-8f4c-4e8e-b322-169d442444da",
+            "brd": { "id": "671445ae-8f4c-4e8e-b322-169d442444da", "renderer": false },
             "cell_id": "X34sZmlsZQ=="
           },
           "outputs": [],

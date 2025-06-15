@@ -1,3 +1,6 @@
+// Import the common feedback renderer
+import { renderNBStateFeedback } from './common/feedbackRenderer.js';
+
 let DEBUG = true;
 function log(...args) { if (DEBUG) console.log(...args); }
 function logGroup(...args) { if (DEBUG) console.group(...args); }
@@ -10,22 +13,7 @@ function logAll(...args) {
   } 
 }
 
-const NBSTATE_FEEDBACK_CLS = 'notebook-state-feedback';
 const NBSTATE_SCRIPT_ID = 'notebook-state-json';
-const SUMMSTL = `
-<style>
-  .update-flash { animation: flash 0.5s ease-out; }
-  @keyframes flash {
-    0% { background-color: pink; }
-    100% { background-color: transparent; }
-  }
-  .cell-info { margin-bottom: 1em; }
-  .output-info { margin-left: 2em; }
-</style>
-`;
-const TSFMT = { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 };
-const timeFormatter = new Intl.DateTimeFormat(undefined, TSFMT);
-
 const MSG_TYPE = {full: 'getState', diff: 'updateState', opts: 'updateOpts'};
 
 // ---- utils ----
@@ -33,10 +21,6 @@ const MSG_TYPE = {full: 'getState', diff: 'updateState', opts: 'updateOpts'};
 let count = 0;
 function kounter() {
   return count++;
-}
-
-function _truncate(str, maxLength = 100) {
-  return str.length > maxLength ? str.substring(0, maxLength) + "..." : str;
 }
 
 /** Pick defined properties from an object
@@ -47,84 +31,6 @@ function _truncate(str, maxLength = 100) {
 const pickDefined = (obj, ...keys) => Object.fromEntries(
   keys.map(k => [k, obj?.[k]]).filter(([_, v]) => v !== undefined) // eslint-disable-line no-unused-vars
 );
-
-// ---- rendering ----
-
-function changeHTML({cells, added, removed, cellCount}) {
-  // if (!cells) {
-  //   cells = changed;
-  //   cells.push(...added);
-  // }
-  const cc = `Cell count: ${cellCount}\n`;
-  const r = removed && removed.length > 0 ? `Removed: ${removed}\n` : '';
-  const a = added && added.length > 0 ? `Added: ${added.map(c => c.idx).join(', ')}\n` : '';
-  // const c = changed && changed.length > 0 ? `Changed: ${changed.map(c => c.idx).join(', ')}\n` : '';
-  return cc + r + a/*  + c */ + cells.map((cell, idx) => {
-    let src = cell.source;
-    // source possibly has HTML content, sanitize it
-    src = src.replace(/<[^>]*>?/gm, '');
-    src = _truncate(JSON.stringify(src));
-    idx = cell.idx;
-    return `
-    <div class="cell-info">
-      <strong>Cell ${idx}</strong> (${cell.cell_type})
-      <div class="cell-text">Source: ${src}</div>
-      ${cell.metadata ? `
-        <div class="cell-metadata">Metadata: ${Object.keys(cell.metadata).join(', ')}</div>
-      ` : ''}
-      ${(cell.outputs?.length) ? `
-        <div class="output-info">Outputs (${cell.outputs.length}):
-          ${cell.outputs.map(out => `
-            <div>Type: ${out.output_type}${out.data ? `
-              <div>MIME types: ${Object.keys(out.data).join(', ')}</div>\n` : ''}
-            </div>
-          `).join('')}
-        </div>
-      ` : ''}
-    </div>
-  `}).join('');
-}
-
-/** summary for debugging
- * @param {StateMessage|DiffsMessage} message
- * @returns {string} HTML string
- */
-function messageSummary(message) {
-  const changes = message.type === 'diffs' 
-      ? message.changes 
-      : [{ cells:message.cells, cellCount: message.nbData.cellCount }];
-  return changes.map(change => changeHTML(change)).join('\n');
-}
-
-/** feedback for debugging
- * @param {StateMessage|DiffsMessage} message
- * @param {Options} opts
- * @returns {string} HTML string
- */
-function renderNBStateFeedback(message, opts) {
-  // message.timestamp is a number, convert to Date
-  const t = new Date(message.timestamp);
-  const ts = timeFormatter.format(t);
-  // opts is an object {feedback: true, watch: true, debug: false}; convert to HTML
-  const optsShow = Object.entries(opts).map(
-    ([k, v]) => `<b>${k}</b>: <span style="color:${v?'green':'red'}">${v}</span>`).join(' ');
-  if (!opts.feedback) return `
-    <div class="${NBSTATE_FEEDBACK_CLS}">
-      <div class="timestamp">Last updated: ${ts} - ${optsShow}</div>
-    </div>
-  `;
-  const updateClass = "update-flash";
-  return `
-    <div class="${NBSTATE_FEEDBACK_CLS}">
-      <div class="timestamp">Last updated: ${ts} - ${optsShow}</div>
-      ${SUMMSTL}
-      <details class="${updateClass}">
-        <summary><strong>Cells:</strong></summary>
-        ${messageSummary(message)}
-      </details>
-    </div>
-  `;
-}
 
 /** Get or create the notebook state script element
  * @returns {HTMLScriptElement|null}

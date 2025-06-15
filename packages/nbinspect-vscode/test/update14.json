@@ -11,7 +11,7 @@
           "cell_type": "code",
           "source": "# cell 2\nimport time\n# time.sleep(2)\nprint(1)",
           "metadata": {
-            "brd": "7052fadb-eba5-4a37-9b05-44a9c947fc86",
+            "brd": { "id": "7052fadb-eba5-4a37-9b05-44a9c947fc86", "renderer": false },
             "cell_id": "X55sZmlsZQ=="
           },
           "outputs": [],
@@ -22,7 +22,7 @@
           "cell_type": "code",
           "source": "# cell 3\ndisplaydh('cell 3', metadata={'bridge': {'cell': 3}});",
           "metadata": {
-            "brd": "c476ce5a-f7ac-47c0-85f2-5a316654a830",
+            "brd": { "id": "c476ce5a-f7ac-47c0-85f2-5a316654a830", "renderer": false },
             "cell_id": "X56sZmlsZQ=="
           },
           "outputs": [
@@ -41,7 +41,7 @@
           "cell_type": "code",
           "source": "# cell 5\ndisplaydh(Javascript('console.log(\"cell 5\")'), metadata={'bridge': {'cell': 5}});",
           "metadata": {
-            "brd": "7825d128-08ea-41cc-8369-237fa626ee17",
+            "brd": { "id": "7825d128-08ea-41cc-8369-237fa626ee17", "renderer": false },
             "cell_id": "X60sZmlsZQ=="
           },
           "outputs": [

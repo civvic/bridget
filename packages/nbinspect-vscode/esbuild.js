@@ -1,12 +1,11 @@
 const esbuild = require('esbuild');
-const fs = require('fs');
-const path = require('path');
 
 const production = process.argv.includes('--production');
 const watch = process.argv.includes('--watch');
 
 async function main() {
-  const ctx = await esbuild.context({
+  // Bundle extension (Node.js context)
+  const extensionCtx = await esbuild.context({
     entryPoints: ['src/extension.js'],
     bundle: true,
     outdir: 'dist',
@@ -17,32 +16,37 @@ async function main() {
     platform: 'node',
     external: ['vscode', 'crypto'],
     logLevel: 'warning',
-    // target: 'es2020',
-    plugins: [
-      /* add to the end of plugins array */
-      esbuildProblemMatcherPlugin,
-      copyPlugin
-    ]
+    plugins: [esbuildProblemMatcherPlugin]
   });
-  if (watch) {
-    await ctx.watch();
-  } else {
-    await ctx.rebuild();
-    await ctx.dispose();
-  }
-}
 
-// Simple copy plugin
-const copyPlugin = {
-  name: 'copy',
-  setup(build) {
-    build.onEnd(() => {
-      fs.copyFileSync(
-        path.join('src', 'renderer.js'),
-        path.join('dist', 'renderer.js')
-      )
-      console.log('Copied renderer.js to dist/')
-    })
+  // Bundle renderer (browser context)
+  const rendererCtx = await esbuild.context({
+    entryPoints: ['src/renderer.js'],
+    bundle: true,
+    outfile: 'dist/renderer.js',
+    format: 'esm',
+    minify: production,
+    sourcemap: watch,
+    sourcesContent: false,
+    platform: 'browser',
+    logLevel: 'warning',
+    plugins: [esbuildProblemMatcherPlugin]
+  });
+
+  if (watch) {
+    await Promise.all([
+      extensionCtx.watch(),
+      rendererCtx.watch()
+    ]);
+  } else {
+    await Promise.all([
+      extensionCtx.rebuild(),
+      rendererCtx.rebuild()
+    ]);
+    await Promise.all([
+      extensionCtx.dispose(),
+      rendererCtx.dispose()
+    ]);
   }
 }
 

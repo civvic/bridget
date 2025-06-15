@@ -10,7 +10,7 @@
           "cell_type": "code",
           "source": "# cell 7\ndisplaydh(HTML('cell 7.1'), metadata={'bridge': {'cell': 7.1}})\ndisplaydh(HTML('cell 7.2'), metadata={'bridge': {'cell': 7.2}});",
           "metadata": {
-            "brd": "c9a70884-e800-4a43-adbf-309278d05df5",
+            "brd": { "id": "c9a70884-e800-4a43-adbf-309278d05df5", "renderer": false },
             "cell_id": "X10sZmlsZQ=="
           },
           "outputs": [

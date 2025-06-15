@@ -10,7 +10,7 @@
           "cell_type": "code",
           "source": "# cell 1\nfrom itertools import count\n\nimport ipywidgets as W\nimport matplotlib.pyplot as plt\nfrom bridget.display_helpers import displaydh\nfrom IPython.display import HTML, Image, Javascript, JSON, DisplayHandle, clear_output\ncounter = count()",
           "metadata": {
-            "brd": "ca92cce1-b16c-487b-9869-899330cec0ac",
+            "brd": { "id": "ca92cce1-b16c-487b-9869-899330cec0ac", "renderer": false },
             "cell_id": "W1sZmlsZQ=="
           },
           "outputs": [],

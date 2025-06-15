@@ -10,7 +10,7 @@
           "cell_type": "code",
           "source": "# cell 1\nfrom itertools import count\n\nimport ipywidgets as W\nimport matplotlib.pyplot as plt\nfrom bridget.display_helpers import displaydh\nfrom IPython.display import HTML, Image, Javascript, JSON, DisplayHandle, clear_output\ncounter = count()",
           "metadata": {
-            "brd": "ca92cce1-b16c-487b-9869-899330cec0ac",
+            "brd": { "id": "ca92cce1-b16c-487b-9869-899330cec0ac", "renderer": false },
             "cell_id": "W1sZmlsZQ=="
           },
           "outputs": [],
@@ -21,7 +21,7 @@
           "cell_type": "code",
           "source": "# cell 2\nimport time\n# time.sleep(2)\nprint(1)",
           "metadata": {
-            "brd": "d6eeecf8-fe3f-46ea-bb44-1d2c24f8d601",
+            "brd": { "id": "d6eeecf8-fe3f-46ea-bb44-1d2c24f8d601", "renderer": false },
             "cell_id": "W2sZmlsZQ=="
           },
           "outputs": [
@@ -38,7 +38,7 @@
           "cell_type": "code",
           "source": "# cell 3\ndisplaydh('cell 3', metadata={'bridge': {'cell': 3}});",
           "metadata": {
-            "brd": "asdf-qwer",
+            "brd": { "id": "asdf-qwer", "renderer": false },
             "cell_id": "W3sZmlsZQ=="
           },
           "outputs": [
@@ -64,7 +64,7 @@
           "cell_type": "code",
           "source": "# cell 4\ndisplaydh(HTML('cell 4'), metadata={'bridge': {'cell': 4}});",
           "metadata": {
-            "brd": "40846a3a-1851-48b8-b3eb-53a66addc66f",
+            "brd": { "id": "40846a3a-1851-48b8-b3eb-53a66addc66f", "renderer": false },
             "cell_id": "W4sZmlsZQ=="
           },
           "outputs": [
@@ -91,7 +91,7 @@
           "cell_type": "code",
           "source": "# cell 5\ndisplaydh(Javascript('console.log(\"cell 5\")'), metadata={'bridge': {'cell': 5}});",
           "metadata": {
-            "brd": "29ec7a36-9ec4-441d-8f34-f98ff9578ef5",
+            "brd": { "id": "29ec7a36-9ec4-441d-8f34-f98ff9578ef5", "renderer": false },
             "cell_id": "W5sZmlsZQ=="
           },
           "outputs": [
@@ -118,7 +118,7 @@
           "cell_type": "code",
           "source": "# cell 6\nprint(6.1)\nprint(6.2)",
           "metadata": {
-            "brd": "045e164b-a793-4084-a51a-6003c749659e",
+            "brd": { "id": "045e164b-a793-4084-a51a-6003c749659e", "renderer": false },
             "cell_id": "W6sZmlsZQ=="
           },
           "outputs": [
@@ -135,7 +135,7 @@
           "cell_type": "code",
           "source": "# cell 7\ndisplaydh(HTML('cell 7.1'), metadata={'bridge': {'cell': 7.1}})\ndisplaydh(HTML('cell 7.2'), metadata={'bridge': {'cell': 7.2}});",
           "metadata": {
-            "brd": "7bdaa174-01eb-4cba-b2d8-24a2fdc6ccea",
+            "brd": { "id": "7bdaa174-01eb-4cba-b2d8-24a2fdc6ccea", "renderer": false }, 
             "cell_id": "X10sZmlsZQ=="
           },
           "outputs": [

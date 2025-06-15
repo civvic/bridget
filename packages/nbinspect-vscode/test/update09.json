@@ -10,7 +10,7 @@
           "cell_type": "code",
           "source": "# cell 34\nw.send({'update': True, 'id': next(counter)})",
           "metadata": {
-            "brd": "0c7eea40-531b-449b-944d-040d46b4b712",
+            "brd": { "id": "0c7eea40-531b-449b-944d-040d46b4b712", "renderer": false },
             "cell_id": "X46sZmlsZQ=="
           },
           "outputs": [],

@@ -113,6 +113,12 @@ export class ChangeCollator extends Map {
   _recordExecutionUpdate(cellIndex, status) {
     const summary = this.getSummary(cellIndex, 'execution');
     summary.updateExecution(status);
+    // Track pending executions
+    if (status === 'running') {
+      this.pending.add(cellIndex);
+    } else if (status === 'finished') {
+      this.pending.delete(cellIndex);
+    }
     this._executionCompleted(cellIndex, summary);
   }
 
@@ -122,10 +128,9 @@ export class ChangeCollator extends Map {
    * @param {CellIdx} cellIndex
    */
   _recordDocumentEdit(cellIndex) {
-    const summary = this.getSummary(cellIndex, 'document');
     // Avoid duplicate document change flags if already set in this cycle
-    if (summary.documentChanged) return;
-    summary.documentChanged = true;
+    if (this.get(cellIndex)?.documentChanged) return;
+    this.getSummary(cellIndex, 'document');
     this.documentChanges.add(cellIndex);
     log(`Document edit cell ${cellIndex}`);
   }
@@ -135,9 +140,9 @@ export class ChangeCollator extends Map {
    * @protected
    * @param {OutputsUpdate} change
    */
+  // eslint-disable-next-line no-unused-vars
   _recordOutputsUpdate(cellIndex, change) {
     const summary = this.getSummary(cellIndex, 'outputs');
-    summary.outputsChanged = true;
     if (summary.executionChanged === undefined) {
       // outputs appear outside of execution cycle (e.g., display handle updates or clear outputs)
       log(`.... Dangling outputs: cell ${cellIndex} -> full.`);

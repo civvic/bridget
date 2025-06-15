@@ -1,4 +1,5 @@
-import { ChangeCollator, ChangeSummary } from '../../common/changeCollator.js';
+// @ts-check
+import { ChangeCollator } from '../../common/changeCollator.js';
 
 import { debug } from '../../common/debug.js';
 const DEBUG_NAMESPACE = 'nbinspect:coll';
@@ -12,7 +13,7 @@ const logError = debug(`${DEBUG_NAMESPACE}:error`, 'red');
 export class ChangeCollatorVSCode extends ChangeCollator {
   /** @type {import('vscode').NotebookDocument} The VSCode notebook document */
   notebook;
-  /** @type {[TimeStamp, NotebookDocumentChangeEvent][]} Debug log of raw events */
+  /** @type {[import('./common/changeCollator.js').TimeStamp, NotebookDocumentChangeEvent][]} Debug log of raw events */
   events;
 
   /**
@@ -74,9 +75,20 @@ export class ChangeCollatorVSCode extends ChangeCollator {
               // If metadata change is the first thing we see (e.g., execution count update)
               // if (md && md.execution_count !== undefined) return;  // dangling md - should't happen w/out prev exec
               if (!this.has(cellIndex) && metadata.execution_count !== undefined) return;
-            this._recordCellMetadataChange(cellIndex, { execution_count: metadata.execution_count });
+            this._recordCellMetadataChange(cellIndex, {
+              execution_count: metadata.execution_count,
+              metadata: {}
+            });
           }
           if (outputs) {
+            // for (const output of outputs) {
+            //   for (const item of output.items) {
+            //     if (item.mime === MIME) {
+            //       // const widgetState = JSON.parse(item.data);
+            //       console.log('widgetState', 'a');
+            //     }
+            //   }
+            // }
             this._recordOutputsUpdate(cellIndex, { outputCount: outputs.length, isEmpty: outputs.length === 0 });
           }
           if (executionSummary) {
@@ -127,7 +139,7 @@ export class ChangeCollatorVSCode extends ChangeCollator {
   cleanup() {
     const indexes = [...this.keys()];
     indexes.forEach(idx => {
-      /** @type {ChangeSummary}} */
+      /** @type {import('../../common/changeCollator.js').ChangeSummary} */
       const summary = this.get(idx);
       // Check if the summary represents a potentially dangling state:
       if (summary.executionChanged && summary.executionStatus === 'running') {
@@ -211,3 +223,4 @@ export function eventSummary(evt) {
 /** @typedef {import('vscode').NotebookDocumentContentChange} NotebookDocumentContentChange */
 /** @typedef {import('vscode').NotebookDocumentCellChange} NotebookDocumentCellChange */
 /** @typedef {import('vscode').NotebookRange} NotebookRange */
+/** @typedef {import('../../common/changeCollator.js').TimeStamp} TimeStamp */

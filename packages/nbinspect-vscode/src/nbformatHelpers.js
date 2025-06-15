@@ -1,8 +1,10 @@
 import * as vscode from 'vscode';
+import { randomUUID } from 'crypto';
+import { MIME } from './utils.js';
 
 // Adapted from VSCode ipynb serializers
 
-import { Bridged } from './bridged.js';
+// import { Bridged } from './bridged.js';
 
 const textDecoder = new TextDecoder();
 
@@ -90,8 +92,9 @@ function getMimeBundle(items) {
  */
 function getOutputMetadata(output) {
   if (!output.metadata) return undefined;
-  const { outputType, metadata, ...rest } = output.metadata;
-  const md = { ...rest, ...metadata };
+  // eslint-disable-next-line no-unused-vars
+  const { outputType, metadata, ...rest } = output.metadata;  // strip outputType
+  const md = { ...rest, ...metadata }; 
   return Object.keys(md).length > 0 ? md : undefined;
 }
 
@@ -163,15 +166,13 @@ function processOutput(output) {
     }
     case 'execute_result': {
       result = { output_type: 'execute_result', data: data, 
-        execution_count: metadata?.executionCount ?? null, metadata: {} };
+        execution_count: metadata?.executionCount ?? null, metadata: metadata || {} };
       if (metadata?.executionCount !== undefined) delete metadata.executionCount;
-      if (metadata && Object.keys(metadata).length > 0) result.metadata = { ...result.metadata, ...metadata };
       break;
     }
     case 'display_data':
     default: {
-      result = { output_type: 'display_data', data: data, metadata: {} };
-      if (metadata && Object.keys(metadata).length > 0) result.metadata = { ...result.metadata, ...metadata };
+      result = { output_type: 'display_data', data: data, metadata: metadata || {} };
       break;
     }
   }
@@ -195,9 +196,14 @@ function getCellType(cell) {
  */
 function getCellMetadata(cell) {
   const cellMd = cell.metadata || {};
-  const brdId = Bridged.brdId(cell);
-  if (!brdId) throw new Error("Bridged id not found");
-  const metadata = { brd: brdId, cell_id: cell.document.uri.fragment };
+  // const brdId = Bridged.brdId(cell);
+  const brd = cellMd.metadata?.brd;
+  if (!brd) throw new Error("Bridged id not found");
+  if (!brd.renderer && cell.kind === vscode.NotebookCellKind.Code) {
+    const renderer = cell.outputs?.some(o => o.items.some(it => it.mime == MIME));
+    if (renderer) brd.renderer = true;
+  }
+  const metadata = { brd, cell_id: cell.document.uri.fragment };
   if (cellMd.tags?.length > 0) metadata.tags = cellMd.tags;
   if (cellMd.jupyter) metadata.jupyter = cellMd.jupyter;
   return Object.keys(metadata).length > 0 ? metadata : undefined;
@@ -209,7 +215,8 @@ function getCellMetadata(cell) {
  * @returns {StateCell} nbformat cell
  */
 export function processCell(cell) {
-  Bridged.bridgedOf(cell);
+  // const brd = Bridged.bridgedOf(cell);
+  setupCellBrd(cell);
   const cellType = getCellType(cell);
   const source = cell.document.getText();//splitMultilineString(cell.document.getText());
   const metadata = getCellMetadata(cell);
@@ -222,7 +229,20 @@ export function processCell(cell) {
   return cellData;
 }
 
+/**
+ * Initializes a cell (add `brd` metadata)
+ * @param {vscode.NotebookCell} cell
+ */
+export function setupCellBrd(cell) {
+  const id = cell.metadata.metadata?.brd?.id;
+  if (!id) cell.metadata.metadata.brd = { 
+    id: randomUUID(),
+    renderer: cell.outputs?.some(o => o.items.some(it => it.mime == MIME)) || false
+  };
+}
+
 export default {
+  setupCellBrd,
   processCell,
   processOutput,
   getMimeBundle,

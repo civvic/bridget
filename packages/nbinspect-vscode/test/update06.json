@@ -10,7 +10,7 @@
           "cell_type": "code",
           "source": "# cell 17\ndh = displaydh(HTML('cell 17'), metadata={'bridge': {'cell': 17}})",
           "metadata": {
-            "brd": "c68780ed-8ade-48df-96a5-23e55e033250",
+            "brd": { "id": "c68780ed-8ade-48df-96a5-23e55e033250", "renderer": false },
             "cell_id": "X23sZmlsZQ=="
           },
           "outputs": [
@@ -37,7 +37,7 @@
           "cell_type": "code",
           "source": "# cell 18\ndh.update(HTML('cell 18'), metadata={'bridge': {'cell': 18}})",
           "metadata": {
-            "brd": "c3c5a882-c35c-49f6-8599-0e3de82a90f2",
+            "brd": { "id": "c3c5a882-c35c-49f6-8599-0e3de82a90f2", "renderer": false },
             "cell_id": "X24sZmlsZQ=="
           },
           "outputs": [],

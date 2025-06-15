@@ -10,7 +10,7 @@
           "cell_type": "code",
           "source": "# cell 20\ndisplay(W.IntSlider(20, description='cell'), metadata={'bridge': {'cell': 20, 'skip': True}})",
           "metadata": {
-            "brd": "e7a4ba74-db1a-4e52-93a5-61046d2cdf1f",
+            "brd": { "id": "e7a4ba74-db1a-4e52-93a5-61046d2cdf1f", "renderer": false },
             "cell_id": "X26sZmlsZQ=="
           },
           "outputs": [

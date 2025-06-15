@@ -10,7 +10,7 @@
           "cell_type": "code",
           "source": "# cell 2\nimport time\n# time.sleep(2)\nprint(1)",
           "metadata": {
-            "brd": "37b7835d-761f-4016-94c5-8000d2acd0a3",
+            "brd": { "id": "37b7835d-761f-4016-94c5-8000d2acd0a3", "renderer": false },
             "cell_id": "W2sZmlsZQ=="
           },
           "outputs": [

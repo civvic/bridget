@@ -10,7 +10,7 @@
           "cell_type": "code",
           "source": "# cell 14\nfig = plt.figure(figsize=(4, 2.67))\nplt.plot([1,2,3,4]);",
           "metadata": {
-            "brd": "711666f3-bb67-43fb-a97d-202af2154bd4",
+            "brd": { "id": "711666f3-bb67-43fb-a97d-202af2154bd4", "renderer": false },
             "cell_id": "X20sZmlsZQ=="
           },
           "outputs": [

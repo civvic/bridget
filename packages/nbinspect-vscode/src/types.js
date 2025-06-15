@@ -1,15 +1,15 @@
 /**
  * @typedef {Object} NBData
  * @property {number} cellCount
- * @property {Object|undefined} metadata
- * @property {string|undefined} notebookType
- * @property {string|undefined} notebookUri
+ * @property {Object|undefined} [metadata]
+ * @property {string|undefined} [notebookType]
+ * @property {string|undefined} [notebookUri]
  */
 
 /** 
  * @typedef {Object} StateChange
  * @property {StateCell[]} cells - state cells
- * @property {number[]|undefined} added - added cells
+ * @property {StateCell[]|undefined} added - added cells
  * @property {number[]|undefined} removed - cell indices of removed cells
  * @property {number} cellCount - number of cells after change
  */
@@ -22,7 +22,7 @@
  * @property {StateCell[]} cells - list of state cells
  * @property {NBData|undefined} NBData - Notebook metadata
  * @property {string|undefined} reqId - ID of the request
- * @property {string|undefined} message - Error message
+ * @property {string|undefined} [message] - Error message
  */
 
 /**
@@ -33,7 +33,7 @@
  * @property {StateChange[]} changes - list of state changes
  * @property {NBData|undefined} NBData - Notebook metadata
  * @property {string|undefined} reqId - ID of the request
- * @property {string|undefined} message - Error message
+ * @property {string|undefined} [message] - Error message
  */
 
 /**
@@ -52,6 +52,7 @@
 /** 
  * @typedef {Object} StateCell
  * @property {'raw'|'markdown'|'code'} cell_type
+ * @property {number} idx - cell index
  * @property {string} source
  * @property {Object} metadata
  * @property {Object[]|undefined} outputs

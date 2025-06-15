@@ -10,7 +10,7 @@
           "cell_type": "code",
           "source": "# cell 36\nthis_id = next(counter)\n_ = displaydh(metadata={'bridge': {'cell': 36, 'this': this_id}})\n# nb.source.send({'cmd': 'get_state'}, timeout=5)\n# clear_output(wait=True)",
           "metadata": {
-            "brd": "d3bf0496-720b-4281-b4fb-75c7ceb3d584",
+            "brd": { "id": "d3bf0496-720b-4281-b4fb-75c7ceb3d584", "renderer": false },
             "cell_id": "X51sZmlsZQ=="
           },
           "outputs": [

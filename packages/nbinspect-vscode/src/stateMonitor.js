@@ -1,10 +1,10 @@
+// @ts-check
 // debugger;
 import { truncate } from './utils.js';
 import { debug } from '../../common/debug.js';
 import { ChangeCollatorVSCode, eventSummary } from './changeCollatorVSCode.js';
-import { processCell } from './nbformatHelpers.js';
-import { Bridged } from './bridged.js';
-// import { hasNBMimeOutput, MIME } from './utils.js';
+import { processCell, setupCellBrd } from './nbformatHelpers.js';
+// import { Bridged } from './bridged.js';
 
 const log = debug('monitor', 'darkblue');
 
@@ -16,10 +16,10 @@ const log = debug('monitor', 'darkblue');
  */
 
 /** 
- * @typedef {import('./changeCollator.js').Added} Added
- * @typedef {import('./changeCollator.js').Removed} Removed
- * @typedef {import('./changeCollator.js').CellIdxs} CellIdxs
- * @typedef {import('./changeCollator.js').Diff} Diff
+ * @typedef {import('../../common/changeCollator.js').Added} Added
+ * @typedef {import('../../common/changeCollator.js').Removed} Removed
+ * @typedef {import('../../common/changeCollator.js').CellIdxs} CellIdxs
+ * @typedef {import('../../common/changeCollator.js').Diff} Diff
  */
 
 /** 
@@ -28,6 +28,7 @@ const log = debug('monitor', 'darkblue');
  * @typedef {import('./types.js').DiffsMessage} DiffsMessage
  * @typedef {import('./types.js').RendererStateMessage} RendererStateMessage
  * @typedef {import('./types.js').RendererDeregisterMessage} RendererDeregisterMessage
+ * @typedef {import('./types.js').StateChange} StateChange
  */
 
 export class NBStateMonitor {
@@ -50,13 +51,13 @@ export class NBStateMonitor {
   nb;
   #renderer = null;  // renderer associated with this notebook: origin (document.origin, webview)
   #opts;  // options
-  /** @type {BridgeNBEventsFilter} */
-  #filterer;  // filter events
-  /** @type {Map<string, Bridged>} - bridged.id -> Bridged */
-  bridged = new Map();
+  // /** @type {BridgeNBEventsFilter} */
+  // #filterer;  // filter events
+  // /** @type {Map<string, Bridged>} - bridged.id -> Bridged */
+  // bridged = new Map();
   debounce = true;
   #debounceDelay = NBStateMonitor.defaultDebounceDelay;
-  /** @type {StateChange[]} - pending state changes */
+  /** @type {import('./types.js').StateChange[]} - pending state changes */
   #pending = [];
   /** @type {RendererStateMessage|null} - pending renderer messages */
   #pendingRendererMessage = null;
@@ -77,7 +78,8 @@ export class NBStateMonitor {
   static create(notebook, opts={}) {
     const monitor = new NBStateMonitor(notebook, opts);
     NBStateMonitor.monitors.set(notebook, monitor);
-    monitor.nb.getCells().forEach(cell => Bridged.bridgedOf(cell));
+    // monitor.nb.getCells().forEach(cell => Bridged.bridgedOf(cell));
+    monitor.nb.getCells().forEach(cell => setupCellBrd(cell));
     return monitor;
   }
   static from(editor) {
@@ -127,7 +129,7 @@ export class NBStateMonitor {
   }
   
   /** Send a message with the current state.
-   * @param {RendererMessage | null} reqMsg
+   * @param {RendererStateMessage | null} reqMsg
    */
   async #sentNBState(reqMsg) {
     log.reset()(">>>> #sentNBState");
@@ -135,13 +137,12 @@ export class NBStateMonitor {
     this.#pending.length = 0;
     this.#lastTs = ts;
     const nb = this.nb;
-    // const changes = [{cells: nb.getCells().map(processCell), cellCount: nb.cellCount}]
     const cells = nb.getCells().map(processCell)
-    const nbData = { cellCount: nb.cellCount, metadata: nb.metadata, 
+    const NBData = { cellCount: nb.cellCount, metadata: nb.metadata, 
       notebookType: nb.notebookType, notebookUri: this.nb.uri.toString() };
     /** @type {StateMessage} */
     const message = { type: "state", timestamp: ts, origin: reqMsg?.origin || this.renderer, 
-      cells, nbData, reqId: reqMsg?.reqId }
+      cells, NBData, reqId: reqMsg?.reqId }
     NBStateMonitor.messaging.postMessage(message);
     log(">>>> ", this.renderer ? '' : '(no renderer)');
   }
@@ -153,19 +154,19 @@ export class NBStateMonitor {
   #getNBStateChanges(diffs) {
     const nb = this.nb;
     return diffs.map(([changed, added, removed, cellCount]) => {
-      changed = changed.map(idx => processCell(nb.cellAt(idx)));
-      added = added.flatMap(({cellIdxs}) => cellIdxs.map(idx => {
+      const _changed = changed.map(idx => processCell(nb.cellAt(idx)));
+      const _added = added.flatMap(({cellIdxs}) => cellIdxs.map(idx => {
         const cell = nb.cellAt(idx);
         return processCell(cell)})
       );
       removed = removed.flatMap((r) => Array.from({length: r.end - r.start}, (_, i) => i + r.start));
       log(`diff`, 
-        changed.length > 0 ? `changed: [${[...changed.map(c => c.idx)]}]` : '', 
-        added.length > 0 ? `added: [${[...added.map(c => c.idx)]}]` : '', 
+        _changed.length > 0 ? `changed: [${[..._changed.map(c => c.idx)]}]` : '', 
+        _added.length > 0 ? `added: [${[..._added.map(c => c.idx)]}]` : '', 
         removed.length > 0 ? `removed: [${removed}]` : '', 
         `cellCount: ${cellCount}`
       );
-      return { cells: changed, added: added, removed: removed, cellCount: cellCount };
+      return { cells: _changed, added: _added, removed: removed, cellCount: cellCount };
     });
   }
 
@@ -186,15 +187,15 @@ export class NBStateMonitor {
             /** @type {DiffsMessage} */
             const msg = { type: "diffs", timestamp: ts, origin: this.renderer, 
               changes: this.#pending.concat(changes), 
-              nbData: { cellCount: this.nb.cellCount }, reqId: reqMsg?.reqId }
+              NBData: { cellCount: this.nb.cellCount }, reqId: reqMsg?.reqId }
             this.#pending.length = 0;
             NBStateMonitor.messaging.postMessage(msg);
             log.reset()(">>>> sent >>>>", this.renderer ? '' : '(no renderer)');
             return;
           /* } */
-          this.#pending.push(...changes);
+          /* this.#pending.push(...changes);
           log(">>>> pending", this.#pending.length);
-          return;
+          return; */
         } else {
           log(">>>> no changes");
         }
@@ -204,9 +205,12 @@ export class NBStateMonitor {
     this.#sentNBState(reqMsg);
   }
 
+  // /** 
+  //  * @param {NotebookEditor} editor
+  //  * @param {{message: RendererStateMessage | RendererDeregisterMessage}} message
+  //  */
   /** 
-   * @param {NotebookEditor} editor
-   * @param {{message: RendererStateMessage | RendererDeregisterMessage}} message
+   * @param { {editor: NotebookEditor, message: RendererStateMessage} } args
    */
   static onRendererMessage({ editor, message }) {
     const nOpts = message.opts;
@@ -219,6 +223,7 @@ export class NBStateMonitor {
     const { type, reqId, origin } = message;
     log(`---- ${JSON.stringify({ type, reqId })}`);
 
+    // @ts-ignore
     if (message.type === "deregister") {
       // monitor.active = false;
       // log("---- deregister");
@@ -236,7 +241,7 @@ export class NBStateMonitor {
       monitor.renderer = origin;
       first = true;
     }
-    monitor.active = true;
+    // monitor.active = true;
     if (monitor.#changeTracker.collator.isEmpty) {  // direct message
       if (message.type === "getState") {  // will send full state
         monitor.#sentNBState(message);
@@ -341,13 +346,19 @@ export class NBStateMonitor {
           const diffs = collator.getDiffs();
           monitor.sentNBState(diffs);
           // log('____ to sentNBState');
-          if (!collator.isEmpty) collator.cleanup();
+          if (!collator.isEmpty) {
+            collator.cleanup()
+          }
           if (debug.enabled) {
             if (collator.isEmpty) {
               console.log("     ____ empty collator ____\n");
             } else {
               console.log("     ____ pending changes ____");
-              collator.summary();
+              try {
+                collator.summary();
+              } catch (error) {
+                console.log("     ____ error:", error);
+              }
               console.log();
             }
           }

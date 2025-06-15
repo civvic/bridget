@@ -11,7 +11,7 @@
           "cell_type": "code",
           "source": "",
           "metadata": {
-            "brd": "df2c9bb5-590c-4a6b-8ede-fa546d62478e",
+            "brd": { "id": "df2c9bb5-590c-4a6b-8ede-fa546d62478e", "renderer": false },
             "cell_id": "X53sZmlsZQ=="
           },
           "outputs": [],
