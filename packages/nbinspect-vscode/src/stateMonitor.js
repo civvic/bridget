@@ -46,7 +46,8 @@ export class NBStateMonitor {
   static defaultDebounceDelay = 600;
   static shortDebounceDelay = 200;
   static restoreDebounceDelay = 1000;
-  
+
+
   /** @type {NotebookDocument} */
   nb;
   #renderer = null;  // renderer associated with this notebook: origin (document.origin, webview)
@@ -138,11 +139,11 @@ export class NBStateMonitor {
     this.#lastTs = ts;
     const nb = this.nb;
     const cells = nb.getCells().map(processCell)
-    const NBData = { cellCount: nb.cellCount, metadata: nb.metadata, 
+    const nbData = { cellCount: nb.cellCount, metadata: nb.metadata, 
       notebookType: nb.notebookType, notebookUri: this.nb.uri.toString() };
     /** @type {StateMessage} */
     const message = { type: "state", timestamp: ts, origin: reqMsg?.origin || this.renderer, 
-      cells, NBData, reqId: reqMsg?.reqId }
+      cells, nbData, reqId: reqMsg?.reqId }
     NBStateMonitor.messaging.postMessage(message);
     log(">>>> ", this.renderer ? '' : '(no renderer)');
   }
@@ -187,7 +188,7 @@ export class NBStateMonitor {
             /** @type {DiffsMessage} */
             const msg = { type: "diffs", timestamp: ts, origin: this.renderer, 
               changes: this.#pending.concat(changes), 
-              NBData: { cellCount: this.nb.cellCount }, reqId: reqMsg?.reqId }
+              nbData: { cellCount: this.nb.cellCount }, reqId: reqMsg?.reqId }
             this.#pending.length = 0;
             NBStateMonitor.messaging.postMessage(msg);
             log.reset()(">>>> sent >>>>", this.renderer ? '' : '(no renderer)');
@@ -293,7 +294,6 @@ export class NBStateMonitor {
   // }
   static onChangeSelection(event) {
     const monitor = NBStateMonitor.get(event.notebookEditor.notebook);
-    // log(`onChangeSelection: ...${monitor.nb.uri.toString().slice(-20)} - selected: ${selected}`);
     if (monitor.#pendingDocChanges.size > 0) {
       log(`onChangeSelection: pendingDocChanges: [${[...monitor.#pendingDocChanges]}]`);
       const collator = monitor.#changeTracker.collator;

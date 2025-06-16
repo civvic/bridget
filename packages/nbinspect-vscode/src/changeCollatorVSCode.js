@@ -72,8 +72,8 @@ export class ChangeCollatorVSCode extends ChangeCollator {
           const { document, metadata, outputs, executionSummary } = ch;
           if (document) this._recordDocumentEdit(cellIndex);
           if (metadata) {
-              // If metadata change is the first thing we see (e.g., execution count update)
-              // if (md && md.execution_count !== undefined) return;  // dangling md - should't happen w/out prev exec
+            // If metadata change is the first thing we see (e.g., execution count update)
+            // if (md && md.execution_count !== undefined) return;  // dangling md - should't happen w/out prev exec
               if (!this.has(cellIndex) && metadata.execution_count !== undefined) return;
             this._recordCellMetadataChange(cellIndex, {
               execution_count: metadata.execution_count,

@@ -87,9 +87,9 @@ export class ChangeCollator extends Map {
   _executionCompleted(cellIndex, summary) {
     // Check complete execution cycle
     // need this because count updates comes sometimes before, others after ending execution
-    if (summary.metadataExecutionCount !== undefined && summary.executionStatus === 'finished') {
+    if (this.pending.has(cellIndex) && summary.metadataExecutionCount !== undefined && summary.executionStatus === 'finished') {
       this.#setFull(cellIndex, summary);
-      log(`Execution completed cell ${cellIndex}`);
+      // log(`Execution completed cell ${cellIndex}`);
     }
   }
 
@@ -117,7 +117,8 @@ export class ChangeCollator extends Map {
     if (status === 'running') {
       this.pending.add(cellIndex);
     } else if (status === 'finished') {
-      this.pending.delete(cellIndex);
+      this.#setFull(cellIndex, summary);
+      log(`Execution completed cell ${cellIndex}`);
     }
     this._executionCompleted(cellIndex, summary);
   }
