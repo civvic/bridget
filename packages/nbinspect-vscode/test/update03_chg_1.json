@@ -1,0 +1,30 @@
+{
+  "type": "diffs",
+  "timestamp": 1754132748691,
+  "origin": "vscode-webview://1ql27b0grt14rkuj26idbt9ktekivp44iu2s8pgfndvblm2j3iep/index.html?id=031db9ae-a211-46dc-80c2-7931cd10145e&origin=1e95bb6a-280d-4f6e-8090-7f55f54cbfbd&swVersion=4&extensionId=&platform=electron&vscode-resource-base-authority=vscode-resource.vscode-cdn.net&parentOrigin=vscode-file%3A%2F%2Fvscode-app&purpose=notebookRenderer",
+  "changes": [
+    {
+      "cells": [
+        {
+          "idx": 1,
+          "cell_type": "code",
+          "source": "# cell 1\nimport time\nfrom itertools import count\n\nimport ipywidgets as W\nimport matplotlib.pyplot as plt\nfrom bridget.helpers import displaydh\nfrom IPython.display import HTML, Image, Javascript, JSON, DisplayHandle, clear_output\ncounter = count()",
+          "id": "W1sZmlsZQ==",
+          "metadata": {
+            "brd": {
+              "id": "717322f8-95fa-425c-839d-8b9e7d4ef921"
+            }
+          },
+          "outputs": [],
+          "execution_count": 5
+        }
+      ],
+      "added": [],
+      "removed": [],
+      "cellCount": 42
+    }
+  ],
+  "nbData": {
+    "cellCount": 42
+  }
+}

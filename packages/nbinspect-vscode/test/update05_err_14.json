@@ -1,0 +1,46 @@
+{
+  "type": "diffs",
+  "timestamp": 1754133008267,
+  "origin": "vscode-webview://1ql27b0grt14rkuj26idbt9ktekivp44iu2s8pgfndvblm2j3iep/index.html?id=49d38061-0400-4d42-afc0-fa2404ce68a8&origin=1e95bb6a-280d-4f6e-8090-7f55f54cbfbd&swVersion=4&extensionId=&platform=electron&vscode-resource-base-authority=vscode-resource.vscode-cdn.net&parentOrigin=vscode-file%3A%2F%2Fvscode-app&purpose=notebookRenderer",
+  "changes": [
+    {
+      "cells": [
+        {
+          "idx": 14,
+          "cell_type": "code",
+          "source": "# cell 14\nfig = plt.figure(figsize=(4, 2.67))\nplt.plot([1,2,3,4]);",
+          "id": "X20sZmlsZQ==",
+          "metadata": {
+            "brd": {
+              "id": "3b388911-cc9e-40af-8746-3821be96cbbd"
+            }
+          },
+          "outputs": [
+            {
+              "output_type": "error",
+              "ename": "NameError",
+              "evalue": "name 'plt' is not defined",
+              "traceback": [
+                "\u001b[31m---------------------------------------------------------------------------\u001b[39m",
+                "\u001b[31mNameError\u001b[39m                                 Traceback (most recent call last)",
+                "\u001b[36mCell\u001b[39m\u001b[36m \u001b[39m\u001b[32mIn[3]\u001b[39m\u001b[32m, line 2\u001b[39m",
+                "\u001b[32m      1\u001b[39m \u001b[38;5;66;03m# cell 14\u001b[39;00m",
+                "\u001b[32m----> \u001b[39m\u001b[32m2\u001b[39m fig = \u001b[43mplt\u001b[49m.figure(figsize=(\u001b[32m4\u001b[39m, \u001b[32m2.67\u001b[39m))",
+                "\u001b[32m      3\u001b[39m plt.plot([\u001b[32m1\u001b[39m,\u001b[32m2\u001b[39m,\u001b[32m3\u001b[39m,\u001b[32m4\u001b[39m]);",
+                "",
+                "\u001b[31mNameError\u001b[39m: name 'plt' is not defined"
+              ]
+            }
+          ],
+          "execution_count": 3
+        }
+      ],
+      "added": [],
+      "removed": [],
+      "cellCount": 42
+    }
+  ],
+  "nbData": {
+    "cellCount": 42
+  }
+}

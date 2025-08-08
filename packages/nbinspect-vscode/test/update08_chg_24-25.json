@@ -1,0 +1,75 @@
+{
+  "type": "diffs",
+  "timestamp": 1754133324745,
+  "origin": "vscode-webview://1ql27b0grt14rkuj26idbt9ktekivp44iu2s8pgfndvblm2j3iep/index.html?id=49d38061-0400-4d42-afc0-fa2404ce68a8&origin=1e95bb6a-280d-4f6e-8090-7f55f54cbfbd&swVersion=4&extensionId=&platform=electron&vscode-resource-base-authority=vscode-resource.vscode-cdn.net&parentOrigin=vscode-file%3A%2F%2Fvscode-app&purpose=notebookRenderer",
+  "changes": [
+    {
+      "cells": [
+        {
+          "idx": 24,
+          "cell_type": "code",
+          "source": "# cell 24\nfrom itertools import count\nfrom bridget.helpers import displaydh\nfrom IPython.display import HTML, Javascript, clear_output\ncounter = count()\ndh0 = displaydh(HTML('cell 24.0'), metadata={'bridge': {'cell': 24.0}})\ndh1 = displaydh(\n    {'application/x-notebook-state': {'feedback': True, 'hide': False, 'debug': True, 'id': next(counter)}}, \n    raw=True, metadata={'bridge': {'cell': 24.1}})",
+          "id": "X33sZmlsZQ==",
+          "metadata": {
+            "brd": {
+              "id": "e4bbb456-27fa-47d1-b95b-637b61e0e8f5",
+              "renderer": true
+            }
+          },
+          "outputs": [
+            {
+              "output_type": "display_data",
+              "data": {
+                "text/html": "cell 24.0",
+                "text/plain": "<IPython.core.display.HTML object>"
+              },
+              "metadata": {
+                "transient": {
+                  "display_id": "da3533a9883f8a7d4bda27ca15f72173"
+                },
+                "bridge": {
+                  "cell": 24
+                }
+              }
+            },
+            {
+              "output_type": "display_data",
+              "data": {
+                "application/x-notebook-state": "{\"id\":0,\"update\":\"diff\"}"
+              },
+              "metadata": {
+                "transient": {
+                  "display_id": "d8cb258bb011adc01ea0eeb4297c1df4"
+                },
+                "bridge": {
+                  "cell": 25
+                }
+              }
+            }
+          ],
+          "execution_count": 1
+        },
+        {
+          "idx": 25,
+          "cell_type": "code",
+          "source": "# cell 25\ndh1.update({'application/x-notebook-state': {'id': next(counter), 'update': 'diff'}}, raw=True, \n        metadata={'bridge': {'cell': 25}})",
+          "id": "X34sZmlsZQ==",
+          "metadata": {
+            "brd": {
+              "id": "c17db506-165b-43d0-92e3-3eb00569b96c"
+            }
+          },
+          "outputs": [],
+          "execution_count": 8
+        }
+      ],
+      "added": [],
+      "removed": [],
+      "cellCount": 42
+    }
+  ],
+  "nbData": {
+    "cellCount": 42
+  },
+  "reqId": 0
+}

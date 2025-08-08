@@ -203,7 +203,7 @@ function getCellMetadata(cell) {
     const renderer = cell.outputs?.some(o => o.items.some(it => it.mime == MIME));
     if (renderer) brd.renderer = true;
   }
-  const metadata = { brd, cell_id: cell.document.uri.fragment };
+  const metadata = { brd };
   if (cellMd.tags?.length > 0) metadata.tags = cellMd.tags;
   if (cellMd.jupyter) metadata.jupyter = cellMd.jupyter;
   return Object.keys(metadata).length > 0 ? metadata : undefined;
@@ -220,7 +220,7 @@ export function processCell(cell) {
   const cellType = getCellType(cell);
   const source = cell.document.getText();//splitMultilineString(cell.document.getText());
   const metadata = getCellMetadata(cell);
-  const cellData = { idx: cell.index, cell_type: cellType, source: source };
+  const cellData = { idx: cell.index, cell_type: cellType, source: source, id:cell.document.uri.fragment };
   if (metadata) cellData.metadata = metadata;
   if (cell.kind === vscode.NotebookCellKind.Code) {
     cellData.outputs = cell.outputs.map(processOutput);
@@ -234,11 +234,13 @@ export function processCell(cell) {
  * @param {vscode.NotebookCell} cell
  */
 export function setupCellBrd(cell) {
-  const id = cell.metadata.metadata?.brd?.id;
-  if (!id) cell.metadata.metadata.brd = { 
-    id: randomUUID(),
-    renderer: cell.outputs?.some(o => o.items.some(it => it.mime == MIME)) || false
-  };
+  let brd = cell.metadata.metadata?.brd;
+  if (!brd?.id) {
+    cell.metadata.metadata.brd = brd = { id: randomUUID() };
+  }
+  const hasNBMimeOutput = cell.outputs?.some(o => o.items.some(it => it.mime == MIME));
+  if (hasNBMimeOutput) brd.renderer = true;
+  else delete brd.renderer;
 }
 
 export default {

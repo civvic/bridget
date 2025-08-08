@@ -1,0 +1,61 @@
+{
+  "type": "diffs",
+  "timestamp": 1754133708669,
+  "origin": "vscode-webview://1ql27b0grt14rkuj26idbt9ktekivp44iu2s8pgfndvblm2j3iep/index.html?id=23fcbce5-103a-4d27-b45f-55c1057120bc&origin=1e95bb6a-280d-4f6e-8090-7f55f54cbfbd&swVersion=4&extensionId=&platform=electron&vscode-resource-base-authority=vscode-resource.vscode-cdn.net&parentOrigin=vscode-file%3A%2F%2Fvscode-app&purpose=notebookRenderer",
+  "changes": [
+    {
+      "cells": [
+        {
+          "idx": 35,
+          "cell_type": "code",
+          "source": "# cell 35\ndh2 = displaydh({'application/x-notebook-state': {'feedback': True, 'debug': True, 'id': next(counter)}}, \n        raw=True, metadata={'bridge': {'cell': 35}})\n# clear_output()",
+          "id": "X50sZmlsZQ==",
+          "metadata": {
+            "brd": {
+              "id": "e7eb193d-f9fe-41b6-b817-1328963ff734",
+              "renderer": true
+            }
+          },
+          "outputs": [
+            {
+              "output_type": "display_data",
+              "data": {
+                "application/x-notebook-state": "{\"id\":12}"
+              },
+              "metadata": {
+                "transient": {
+                  "display_id": "8b84132db4be4b9e39c5e7eeca59e283"
+                },
+                "bridge": {
+                  "cell": 36,
+                  "update": true
+                }
+              }
+            }
+          ],
+          "execution_count": 12
+        },
+        {
+          "idx": 36,
+          "cell_type": "code",
+          "source": "# cell 36\ndh2.update({'application/x-notebook-state': {'id': next(counter)}}, raw=True, \n        metadata={'bridge': {'cell': 36, 'update': True}})",
+          "id": "X51sZmlsZQ==",
+          "metadata": {
+            "brd": {
+              "id": "dae10da0-df1d-4e79-baec-528472d53959"
+            }
+          },
+          "outputs": [],
+          "execution_count": 14
+        }
+      ],
+      "added": [],
+      "removed": [],
+      "cellCount": 42
+    }
+  ],
+  "nbData": {
+    "cellCount": 42
+  },
+  "reqId": 12
+}

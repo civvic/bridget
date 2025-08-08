@@ -1,0 +1,30 @@
+{
+  "type": "diffs",
+  "timestamp": 1754133831578,
+  "origin": "vscode-webview://1ql27b0grt14rkuj26idbt9ktekivp44iu2s8pgfndvblm2j3iep/index.html?id=23fcbce5-103a-4d27-b45f-55c1057120bc&origin=1e95bb6a-280d-4f6e-8090-7f55f54cbfbd&swVersion=4&extensionId=&platform=electron&vscode-resource-base-authority=vscode-resource.vscode-cdn.net&parentOrigin=vscode-file%3A%2F%2Fvscode-app&purpose=notebookRenderer",
+  "changes": [
+    {
+      "cells": [],
+      "added": [
+        {
+          "idx": 2,
+          "cell_type": "code",
+          "source": "",
+          "id": "X60sZmlsZQ==",
+          "metadata": {
+            "brd": {
+              "id": "a342ba79-d8c8-4c1b-8674-3f5b84574573"
+            }
+          },
+          "outputs": [],
+          "execution_count": null
+        }
+      ],
+      "removed": [],
+      "cellCount": 43
+    }
+  ],
+  "nbData": {
+    "cellCount": 43
+  }
+}

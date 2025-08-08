@@ -17,3 +17,7 @@
 ## Release Notes
 
 ---
+VSCode run task: pnpm:watch
+
+❯ pnpm version patch
+❯ vsce package

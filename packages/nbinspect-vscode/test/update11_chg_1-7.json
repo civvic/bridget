@@ -1,28 +1,32 @@
 {
-  "type": "state",
-  "timestamp": 1741431650990,
-  "origin": "vscode-webview://1ql27b0grt14rkuj26idbt9ktekivp44iu2s8pgfndvblm2j3iep/index.html?id=3e5077db-ef65-4cbd-9150-c1c001e815ff&origin=1e95bb6a-280d-4f6e-8090-7f55f54cbfbd&swVersion=4&extensionId=&platform=electron&vscode-resource-base-authority=vscode-resource.vscode-cdn.net&parentOrigin=vscode-file%3A%2F%2Fvscode-app&purpose=notebookRenderer",
+  "type": "diffs",
+  "timestamp": 1754133769315,
+  "origin": "vscode-webview://1ql27b0grt14rkuj26idbt9ktekivp44iu2s8pgfndvblm2j3iep/index.html?id=23fcbce5-103a-4d27-b45f-55c1057120bc&origin=1e95bb6a-280d-4f6e-8090-7f55f54cbfbd&swVersion=4&extensionId=&platform=electron&vscode-resource-base-authority=vscode-resource.vscode-cdn.net&parentOrigin=vscode-file%3A%2F%2Fvscode-app&purpose=notebookRenderer",
   "changes": [
     {
       "cells": [
         {
           "idx": 1,
           "cell_type": "code",
-          "source": "# cell 1\nfrom itertools import count\n\nimport ipywidgets as W\nimport matplotlib.pyplot as plt\nfrom bridget.display_helpers import displaydh\nfrom IPython.display import HTML, Image, Javascript, JSON, DisplayHandle, clear_output\ncounter = count()",
+          "source": "# cell 1\nimport time\nfrom itertools import count\n\nimport ipywidgets as W\nimport matplotlib.pyplot as plt\nfrom bridget.helpers import displaydh\nfrom IPython.display import HTML, Image, Javascript, JSON, DisplayHandle, clear_output\ncounter = count()",
+          "id": "W1sZmlsZQ==",
           "metadata": {
-            "brd": { "id": "ca92cce1-b16c-487b-9869-899330cec0ac", "renderer": false },
-            "cell_id": "W1sZmlsZQ=="
+            "brd": {
+              "id": "717322f8-95fa-425c-839d-8b9e7d4ef921"
+            }
           },
           "outputs": [],
-          "execution_count": 2
+          "execution_count": 15
         },
         {
           "idx": 2,
           "cell_type": "code",
-          "source": "# cell 2\nimport time\n# time.sleep(2)\nprint(1)",
+          "source": "# cell 2\nprint(1)",
+          "id": "W2sZmlsZQ==",
           "metadata": {
-            "brd": { "id": "d6eeecf8-fe3f-46ea-bb44-1d2c24f8d601", "renderer": false },
-            "cell_id": "W2sZmlsZQ=="
+            "brd": {
+              "id": "92f3e304-fd32-4de2-badf-11577f9e7a4a"
+            }
           },
           "outputs": [
             {
@@ -31,15 +35,17 @@
               "text": "1\n"
             }
           ],
-          "execution_count": 3
+          "execution_count": 16
         },
         {
           "idx": 3,
           "cell_type": "code",
           "source": "# cell 3\ndisplaydh('cell 3', metadata={'bridge': {'cell': 3}});",
+          "id": "W3sZmlsZQ==",
           "metadata": {
-            "brd": { "id": "asdf-qwer", "renderer": false },
-            "cell_id": "W3sZmlsZQ=="
+            "brd": {
+              "id": "f2c19c18-a3f7-4acb-88e4-c7239178c401"
+            }
           },
           "outputs": [
             {
@@ -49,7 +55,7 @@
               },
               "metadata": {
                 "transient": {
-                  "display_id": "fedc536c57a62a53eb7bf2fc51305438"
+                  "display_id": "e90721de6e8a41ca5434057b1a502855"
                 },
                 "bridge": {
                   "cell": 3
@@ -57,15 +63,17 @@
               }
             }
           ],
-          "execution_count": 4
+          "execution_count": 17
         },
         {
           "idx": 4,
           "cell_type": "code",
-          "source": "# cell 4\ndisplaydh(HTML('cell 4'), metadata={'bridge': {'cell': 4}});",
+          "source": "# cell 4\nimport time\ntime.sleep(2)\ndisplaydh(HTML('cell 4'), metadata={'bridge': {'cell': 4}});",
+          "id": "W4sZmlsZQ==",
           "metadata": {
-            "brd": { "id": "40846a3a-1851-48b8-b3eb-53a66addc66f", "renderer": false },
-            "cell_id": "W4sZmlsZQ=="
+            "brd": {
+              "id": "798f7f83-9b31-4e21-a36b-5520c6f72a2d"
+            }
           },
           "outputs": [
             {
@@ -76,7 +84,7 @@
               },
               "metadata": {
                 "transient": {
-                  "display_id": "e5aa2d43212d752cd1ed7b296b8ea3a4"
+                  "display_id": "6c17044efe568a1aa91769386bf87144"
                 },
                 "bridge": {
                   "cell": 4
@@ -84,15 +92,17 @@
               }
             }
           ],
-          "execution_count": 5
+          "execution_count": 18
         },
         {
           "idx": 5,
           "cell_type": "code",
           "source": "# cell 5\ndisplaydh(Javascript('console.log(\"cell 5\")'), metadata={'bridge': {'cell': 5}});",
+          "id": "W5sZmlsZQ==",
           "metadata": {
-            "brd": { "id": "29ec7a36-9ec4-441d-8f34-f98ff9578ef5", "renderer": false },
-            "cell_id": "W5sZmlsZQ=="
+            "brd": {
+              "id": "a20081a9-4e7e-4301-be25-2a44f45bfc71"
+            }
           },
           "outputs": [
             {
@@ -103,7 +113,7 @@
               },
               "metadata": {
                 "transient": {
-                  "display_id": "4d9300fb269af0049034f5aa9d59fb8d"
+                  "display_id": "5ce830e43dd06b947765b179364c0653"
                 },
                 "bridge": {
                   "cell": 5
@@ -111,15 +121,17 @@
               }
             }
           ],
-          "execution_count": 6
+          "execution_count": 19
         },
         {
           "idx": 6,
           "cell_type": "code",
           "source": "# cell 6\nprint(6.1)\nprint(6.2)",
+          "id": "W6sZmlsZQ==",
           "metadata": {
-            "brd": { "id": "045e164b-a793-4084-a51a-6003c749659e", "renderer": false },
-            "cell_id": "W6sZmlsZQ=="
+            "brd": {
+              "id": "e1ba8c0c-d248-44ff-9437-17482a711358"
+            }
           },
           "outputs": [
             {
@@ -128,15 +140,17 @@
               "text": "6.1\n6.2\n"
             }
           ],
-          "execution_count": 7
+          "execution_count": 20
         },
         {
           "idx": 7,
           "cell_type": "code",
           "source": "# cell 7\ndisplaydh(HTML('cell 7.1'), metadata={'bridge': {'cell': 7.1}})\ndisplaydh(HTML('cell 7.2'), metadata={'bridge': {'cell': 7.2}});",
+          "id": "X10sZmlsZQ==",
           "metadata": {
-            "brd": { "id": "7bdaa174-01eb-4cba-b2d8-24a2fdc6ccea", "renderer": false }, 
-            "cell_id": "X10sZmlsZQ=="
+            "brd": {
+              "id": "7512abfe-f7d2-4047-a6b1-56aefbf9457e"
+            }
           },
           "outputs": [
             {
@@ -147,7 +161,7 @@
               },
               "metadata": {
                 "transient": {
-                  "display_id": "ff9d4c680958a97fc69c02f7a775ec58"
+                  "display_id": "003645027e9e5a657a4682339a3c27e3"
                 },
                 "bridge": {
                   "cell": 7.1
@@ -162,7 +176,7 @@
               },
               "metadata": {
                 "transient": {
-                  "display_id": "4dbef9291ef85b12c5b5ef2e974e35d5"
+                  "display_id": "e233959c45834cd5bf853242099cc4cb"
                 },
                 "bridge": {
                   "cell": 7.2
@@ -170,15 +184,15 @@
               }
             }
           ],
-          "execution_count": 8
+          "execution_count": 21
         }
       ],
       "added": [],
       "removed": [],
-      "cellCount": 40
+      "cellCount": 42
     }
   ],
   "nbData": {
-    "cellCount": 40
+    "cellCount": 42
   }
 }

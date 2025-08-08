@@ -1,7 +1,7 @@
 {
-  "type": "state",
-  "timestamp": 1741429742780,
-  "origin": "vscode-webview://1ql27b0grt14rkuj26idbt9ktekivp44iu2s8pgfndvblm2j3iep/index.html?id=2356f3bb-fcb3-4e1e-b74d-8e3b9e611f34&origin=1e95bb6a-280d-4f6e-8090-7f55f54cbfbd&swVersion=4&extensionId=&platform=electron&vscode-resource-base-authority=vscode-resource.vscode-cdn.net&parentOrigin=vscode-file%3A%2F%2Fvscode-app&purpose=notebookRenderer",
+  "type": "diffs",
+  "timestamp": 1754133176732,
+  "origin": "vscode-webview://1ql27b0grt14rkuj26idbt9ktekivp44iu2s8pgfndvblm2j3iep/index.html?id=49d38061-0400-4d42-afc0-fa2404ce68a8&origin=1e95bb6a-280d-4f6e-8090-7f55f54cbfbd&swVersion=4&extensionId=&platform=electron&vscode-resource-base-authority=vscode-resource.vscode-cdn.net&parentOrigin=vscode-file%3A%2F%2Fvscode-app&purpose=notebookRenderer",
   "changes": [
     {
       "cells": [
@@ -9,9 +9,11 @@
           "idx": 17,
           "cell_type": "code",
           "source": "# cell 17\ndh = displaydh(HTML('cell 17'), metadata={'bridge': {'cell': 17}})",
+          "id": "X23sZmlsZQ==",
           "metadata": {
-            "brd": { "id": "c68780ed-8ade-48df-96a5-23e55e033250", "renderer": false },
-            "cell_id": "X23sZmlsZQ=="
+            "brd": {
+              "id": "91e5d05a-6a56-4649-b8ad-8eae1bbd6727"
+            }
           },
           "outputs": [
             {
@@ -22,7 +24,7 @@
               },
               "metadata": {
                 "transient": {
-                  "display_id": "d59a269dbb2a1a80d238c180c977d54a"
+                  "display_id": "b925f6a9251f0418b5ce3946d0becff2"
                 },
                 "bridge": {
                   "cell": 18
@@ -30,26 +32,28 @@
               }
             }
           ],
-          "execution_count": 4
+          "execution_count": 5
         },
         {
           "idx": 18,
           "cell_type": "code",
           "source": "# cell 18\ndh.update(HTML('cell 18'), metadata={'bridge': {'cell': 18}})",
+          "id": "X24sZmlsZQ==",
           "metadata": {
-            "brd": { "id": "c3c5a882-c35c-49f6-8599-0e3de82a90f2", "renderer": false },
-            "cell_id": "X24sZmlsZQ=="
+            "brd": {
+              "id": "05bc7556-dd06-4434-ba68-6d438ed2cf56"
+            }
           },
           "outputs": [],
-          "execution_count": 5
+          "execution_count": 6
         }
       ],
       "added": [],
       "removed": [],
-      "cellCount": 40
+      "cellCount": 42
     }
   ],
   "nbData": {
-    "cellCount": 40
+    "cellCount": 42
   }
 }
