@@ -29,7 +29,7 @@ function consoleFmt(ts, ns, color, msg) {
 function debugFactory(namespace, color, fmt, sink) {
   let prevTime;
   function debug(...args) {
-    if (!debugFactory.enabled) return;
+    if (!debugFactory.enabled || !debug.enabled) return;
     const curr = Number(new Date());
     const ms = curr - (prevTime || curr);
     // @ts-ignore
@@ -42,8 +42,6 @@ function debugFactory(namespace, color, fmt, sink) {
     const ts = (debug.prev && ms < 1000 ? `+${ms}` : `${curr}`).padStart(13, '\u00A0');
     debug.sink(...debug.fmt(ts, namespace, debug.color, msg));
   }
-  debug.enabled = true;
-  debug.namespace = namespace;
   debug.useColors = true;
   debug.color = color ?? selectColor(namespace);
   debug.sink = sink ?? defaultSink;
@@ -52,12 +50,19 @@ function debugFactory(namespace, color, fmt, sink) {
     prevTime = 0;
     return debug;
   };
+  debug.namespace = namespace;
+  debugFactory.nss.set(namespace, debug);
+  debug.enabled = true;
   return debug;
 }
 
-debugFactory.nss = new Map([['brd', {}]]);
-debugFactory.enable = (namespace) => { debugFactory.enabled = true; }
-debugFactory.disable = () => { debugFactory.enabled = false; }
+debugFactory.nss = new Map();
+debugFactory.enable = (namespace) => {
+  ((namespace ? debugFactory.nss.get(namespace) : debugFactory) ?? debugFactory).enabled = true;
+}
+debugFactory.disable = (namespace) => {
+  (namespace ? debugFactory.nss.get(namespace) : debugFactory).enabled = false;
+}
 debugFactory.enabled = true;
 const debug = debugFactory;
 
