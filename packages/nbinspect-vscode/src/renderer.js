@@ -56,7 +56,7 @@ class NBStateRenderer {
   /** @type {Disposable} - listener for messages from the extension */
   listener;
   /** @type {Options} */
-  _defaultOpts = { feedback: true, watch: false, debug: false };
+  _defaultOpts = { feedback: true, hide: false, debug: false };
   opts;
   /** @type {Map<string, Output>} */
   outputs = new Map();  // Track outputs
@@ -232,15 +232,15 @@ class NBStateRenderer {
   }
   
   #render(opts={}, itemId, mime) {
+    const msgType = opts.update ? MSG_TYPE[opts.update] : 'updateState';
+    /** @type {RendererStateMessage} */
+    const msg = { type: msgType, reqId: opts.id ?? kounter(), opts: this.opts, origin: this.docId };
+    this.context.postMessage(msg);
     if (DEBUG) logAll(
         [`${Date.now()} render`],
         [`output:`, itemId, mime],
         [`opts: ${JSON.stringify(opts)}`]
       );
-    const msgType = opts.update ? MSG_TYPE[opts.update] : 'updateState';
-    /** @type {RendererStateMessage} */
-    const msg = { type: msgType, reqId: opts.id ?? kounter(), opts: this.opts, origin: this.docId };
-    this.context.postMessage(msg);
   }
 
   /** 
@@ -300,7 +300,7 @@ export function activate(context) {
 /**
  * @typedef {Object} Options
  * @property {boolean?} feedback - Show feedback so user can see changes
- * @property {boolean?} watch - Watch for changes (extension)
+ * @property {boolean?} hide - Hide the output (renderer)
  * @property {boolean?} debug - Show debug messages
  */
 
@@ -309,7 +309,7 @@ export function activate(context) {
  * @property {string} id - ID of the message
  * @property {'full'|'diff'|'opts'|null} update - full or diff update or only options, default is diff
  * @property {boolean?} feedback - Show feedback so user can see changes
- * @property {boolean?} watch - Watch for changes (extension)
+ * @property {boolean?} hide - Hide the output (renderer)
  * @property {boolean?} debug - Show debug messages
  */
 

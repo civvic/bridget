@@ -25,6 +25,5 @@ export function activate(context) {
 }
 
 export function deactivate() {
-  NBStateMonitor.monitors.forEach( monitor => monitor.watch = false );
   NBStateMonitor.monitors.clear();
 }

@@ -1,5 +1,5 @@
 // @ts-check
-// debugger;
+
 import { truncate } from './utils.js';
 import { debug } from '../../common/debug.js';
 import { ChangeCollatorVSCode, eventSummary } from './changeCollatorVSCode.js';
@@ -40,7 +40,6 @@ export class NBStateMonitor {
   #changeTracker;
 
   static defaultOpts = {
-    watch: true,  // watch for changes, otherwise only send state on renderer request
     debug: false
   };
   static defaultDebounceDelay = 600;
@@ -119,9 +118,6 @@ export class NBStateMonitor {
     }, NBStateMonitor.restoreDebounceDelay);
   }
 
-  get watch() { return this.#opts.watch; }
-  set watch(flag) { this.#opts.watch = flag; }
-
   get renderer() { return this.#renderer; }
   set renderer(origin) {
     this.#renderer = origin;
@@ -184,16 +180,14 @@ export class NBStateMonitor {
       if ((diffs.length+this.#pending.length) < this.nb.cellCount/2) {
         const changes = this.#getNBStateChanges(diffs);
         if (changes.length > 0) {
-          /* if (this.watch) { */
-            /** @type {DiffsMessage} */
-            const msg = { type: "diffs", timestamp: ts, origin: this.renderer, 
-              changes: this.#pending.concat(changes), 
-              nbData: { cellCount: this.nb.cellCount }, reqId: reqMsg?.reqId }
-            this.#pending.length = 0;
-            NBStateMonitor.messaging.postMessage(msg);
-            log.reset()(">>>> sent >>>>", this.renderer ? '' : '(no renderer)');
-            return;
-          /* } */
+          /** @type {DiffsMessage} */
+          const msg = { type: "diffs", timestamp: ts, origin: this.renderer, 
+            changes: this.#pending.concat(changes), 
+            nbData: { cellCount: this.nb.cellCount }, reqId: reqMsg?.reqId }
+          this.#pending.length = 0;
+          NBStateMonitor.messaging.postMessage(msg);
+          log.reset()(">>>> sent >>>>", this.renderer ? '' : '(no renderer)');
+          return;
           /* this.#pending.push(...changes);
           log(">>>> pending", this.#pending.length);
           return; */
@@ -255,7 +249,6 @@ export class NBStateMonitor {
       return;
     }
     log('---- waiting for changes...');
-    if (nOpts.watch !== undefined) monitor.watch = nOpts.watch;
     if (nOpts.debug !== undefined) monitor.#opts.debug = nOpts.debug;
     
     monitor.#pendingRendererMessage = message;

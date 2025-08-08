@@ -84,7 +84,7 @@ function messageSummary(message) {
  * @param {Object} message - StateMessage or DiffsMessage
  * @param {Object} opts - Options object
  * @param {boolean} [opts.feedback=true] - Show detailed feedback
- * @param {boolean} [opts.watch=false] - Watch mode enabled
+ * @param {boolean} [opts.hide=false] - Hide the output
  * @param {boolean} [opts.debug=false] - Debug mode enabled
  * @returns {string} HTML string
  */
@@ -92,7 +92,7 @@ function renderNBStateFeedback(message, opts = {}) {
   // Set defaults
   const options = {
     feedback: true,
-    watch: false,
+    hide: false,
     debug: false,
     ...opts
   };
@@ -101,10 +101,14 @@ function renderNBStateFeedback(message, opts = {}) {
   const t = new Date(message.timestamp);
   const ts = timeFormatter.format(t);
   
-  // opts is an object {feedback: true, watch: true, debug: false}; convert to HTML
+  // opts is an object {feedback: true, hide: false, debug: false}; convert to HTML
   const optsShow = Object.entries(options).map(
     ([k, v]) => `<b>${k}</b>: <span style="color:${v?'green':'red'}">${v}</span>`).join(' ');
   
+    if (options.hide) return `
+    <div class="${NBSTATE_FEEDBACK_CLS}" style="display: none;"></div>
+  `;
+
   if (!options.feedback) return `
     <div class="${NBSTATE_FEEDBACK_CLS}">
       <div class="timestamp">Last updated: ${ts} - ${optsShow}</div>
