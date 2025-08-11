@@ -4,4 +4,5 @@ node_modules
 **/package.json
 !/package.json
 nbinspect_lab
-src
+*.d.ts
+tsconfig.tsbuildinfo

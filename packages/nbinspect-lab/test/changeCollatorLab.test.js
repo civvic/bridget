@@ -1,4 +1,4 @@
-import { ChangeCollatorLab } from '../src/changeCollatorLab.js';
+import { ChangeCollatorLab } from '../lib/changeCollatorLab.js';
 
 // Mock JupyterLab dependencies
 const mockCellModel = (id, index, type = 'code') => ({
