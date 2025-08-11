@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { randomUUID } from 'crypto';
 import { MIME } from './utils.js';
+import { debug } from '../../common/debug.js';
 
 // Adapted from VSCode ipynb serializers
 
@@ -62,7 +63,7 @@ function bufferToString(data, mime) {
       try {
         return JSON.parse(data.toString('utf8'));
       } catch (e) {
-        console.warn(`Failed to parse JSON for ${mime}`, e);
+        debug.enabled && console.warn(`Failed to parse JSON for ${mime}`, e);
         return data.toString('utf8');
       }
     }

@@ -129,7 +129,7 @@ export class ChangeCollatorVSCode extends ChangeCollator {
     if (debug.enabled) {
       if (diffs.length) {
         const lastDiff = diffs.at(-1);
-        console.assert(lastDiff[3] === this.cellCount && this.cellCount === this.notebook.cellCount, 
+        if (log.enabled) console.assert(lastDiff[3] === this.cellCount && this.cellCount === this.notebook.cellCount, 
           `cellCount ${this.notebook.cellCount} mismatch: diffs ${lastDiff[3]} collator ${this.cellCount}`);
       }
     }

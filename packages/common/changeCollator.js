@@ -1,5 +1,5 @@
 import { debug } from './debug.js';
-const DEBUG_NAMESPACE = 'collator';
+const DEBUG_NAMESPACE = 'nb:collator';
 const log = debug(DEBUG_NAMESPACE, 'dimgray');
 // const logError = debug(`${DEBUG_NAMESPACE}:error`, 'red');
 
@@ -294,7 +294,7 @@ export class ChangeCollator extends Map {
   
   /** Provides a string summary for debugging. */
   showSummary() {
-    if (!debug.enabled) return;
+    if (!log.enabled) return;
 
     const baseSummary = this.summary();
 

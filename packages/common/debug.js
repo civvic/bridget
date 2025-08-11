@@ -57,11 +57,18 @@ function debugFactory(namespace, color, fmt, sink) {
 }
 
 debugFactory.nss = new Map();
-debugFactory.enable = (namespace) => {
-  ((namespace ? debugFactory.nss.get(namespace) : debugFactory) ?? debugFactory).enabled = true;
-}
-debugFactory.disable = (namespace) => {
-  (namespace ? debugFactory.nss.get(namespace) : debugFactory).enabled = false;
+debugFactory.enable = (namespace, enabled=true) => {
+  if (!namespace) {
+    debugFactory.enabled = enabled;
+    namespace = '*';
+  }
+  if (namespace.includes('*')) {
+    const rx = new RegExp(`^${namespace.replace(/\*/g, '.*')}$`);
+    for (const [ns, debugFn] of debugFactory.nss) if (rx.test(ns)) debugFn.enabled = enabled;
+  } else {
+    const debugFn = debugFactory.nss.get(namespace);
+    if (debugFn) debugFn.enabled = enabled;
+  }
 }
 debugFactory.enabled = true;
 const debug = debugFactory;

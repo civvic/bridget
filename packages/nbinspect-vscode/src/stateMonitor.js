@@ -6,7 +6,7 @@ import { ChangeCollatorVSCode, eventSummary } from './changeCollatorVSCode.js';
 import { processCell, setupCellBrd } from './nbformatHelpers.js';
 // import { Bridged } from './bridged.js';
 
-const log = debug('monitor', 'darkblue');
+const log = debug('nb:monitor', 'darkblue');
 
 /** 
  * @typedef {import('vscode').NotebookEditor} NotebookEditor 
@@ -210,7 +210,7 @@ export class NBStateMonitor {
   static onRendererMessage({ editor, message }) {
     const nOpts = message.opts;
     if (nOpts && nOpts.debug !== undefined) {
-      nOpts.debug ? debug.enable('nbinspect:*') : debug.disable();
+      debug.enable('nb:*', nOpts.debug);
     }
     const nb = editor.notebook;
     const monitor = NBStateMonitor.get(nb);
@@ -312,13 +312,11 @@ export class NBStateMonitor {
       if (event.cellChanges.length === 1 && event.cellChanges[0].document) {
         // skip bare document changes
         monitor.#pendingDocChanges.add(event.cellChanges[0].cell.index);
-        console.log(".......... d")
+        log.enabled && console.log(".......... d")
         return;
       }
-      if (debug.enabled) {
-        // console.log(".......... e");
-        log('.......... e:', eventSummary(event));
-      }
+      // log.enabled && console.log(".......... e");
+      log('.......... e:', eventSummary(event));
       // monitor.#pendingDocChangesTimer = clearTimeout(monitor.#pendingDocChangesTimer);
       const collator = tracker.collator;
       collator.addEvent(event);
@@ -334,7 +332,7 @@ export class NBStateMonitor {
         monitor.restoreDebounceDelay();
         tracker.delay = NBStateMonitor.shortDebounceDelay;
         if (collator.hasDiffs) {
-          if (debug.enabled) collator.showSummary();
+          log.enabled && collator.showSummary();
           /** @type {Diff[]} */
           const diffs = collator.getDiffs();
           monitor.sentNBState(diffs);
@@ -342,7 +340,7 @@ export class NBStateMonitor {
           if (!collator.isEmpty) {
             collator.cleanup()
           }
-          if (debug.enabled) {
+          if (log.enabled) {
             if (collator.isEmpty) {
               console.log("     ____ empty collator ____\n");
             } else {
