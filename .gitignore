@@ -156,7 +156,8 @@ node_modules/
 _docs
 
 _testbed/**
-nbs/js/_old/**
+.cursor/
+**/_old/
 nbs/js/htmx-attribute-swap/**
 packages/ipynb/**
 packages/nbdev-vscode/**

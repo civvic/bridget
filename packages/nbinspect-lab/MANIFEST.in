@@ -1,0 +1,28 @@
+include README.md
+include LICENSE  
+include pyproject.toml
+include package.json
+include install.json
+
+# Include the built extension (this is the important part)
+recursive-include nbinspect_lab/labextension *.js *.json
+graft nbinspect_lab
+
+# Exclude everything else
+global-exclude *.py[co] 
+global-exclude __pycache__
+global-exclude .DS_Store
+global-exclude *.bak
+global-exclude *~
+exclude .gitignore
+exclude CHANGELOG.md
+exclude RELEASE.md  
+exclude environment.yml
+exclude setup.py
+exclude tsconfig.json
+prune style
+prune src
+prune test*
+prune nbs
+prune node_modules
+prune .github
