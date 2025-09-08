@@ -1,3 +1,5 @@
+// observer.js
+
 /**
  * @typedef {Object} ObserverConfig
  * @property {Element} target - Element to observe or null
@@ -95,11 +97,7 @@ class ObserverManager {
 /** Get or create the global ObserverManager instance
  * @returns {ObserverManager}
  */
-function getObserverManager() {
+export function getObserverManager() {
     window.observerManager ??= new ObserverManager();
     return window.observerManager;
 }
-
-if (window.$Brd) window.$Brd.observerManager = getObserverManager();
-
-export default getObserverManager;

@@ -5,37 +5,68 @@
 # %% ../nbs/01_helpers.ipynb 1
 from __future__ import annotations
 
+
 # %% auto 0
-__all__ = ['emptyd', 'emptyl', 'emptyt', 'bridge_cfg', 'kounter', 'BridgeCfg', 'arun_command', 'run_command', 'Singleling',
-           'Kounter', 'simple_id', 'id_gen', 'patch_cached', 'patch_cached_property', 'cached_property',
-           'bridge_metadata', 'skip', 'compose_first']
+__all__ = ['emptyd', 'emptyl', 'emptyt', 'bridge_cfg', 'kounter', 'SESSION_TS', 'IN_VSCODE', 'DEBUG', 'BundleCfg', 'BridgeCfg',
+           'arun_command', 'run_command', 'ts', 'ms2str', 'Kounter', 'simple_id', 'id_gen', 'patch_cached',
+           'patch_cached_property', 'cached_property', 'bridge_metadata', 'skip', 'compose_first', 'nb_app', 'CLog',
+           'displaydh', 'Val', 'NameVal', 'DetailsJSON', 'HTML', 'in_vscode', 'in_vscode_notebook']
 
 # %% ../nbs/01_helpers.ipynb
-import dataclasses
 import functools
-import importlib
 import os
 import sys
+import time
 from binascii import hexlify
+from datetime import datetime
 from functools import cache
 from functools import partial
+from math import floor
 from pathlib import Path
 from types import ModuleType
 from typing import Any
+from typing import Callable
 from typing import DefaultDict
+from typing import Mapping
+from typing import overload
+from typing import Sequence
 
 import fastcore.all as FC
+import IPython.display
+import nbdev.config
+from fastcore.xml import to_xml
+from fasthtml.core import FastHTML
+from fasthtml.core import FT
+from fasthtml.xtend import Style
+from IPython.display import DisplayHandle
+from olio.common import bundle_path
 from olio.common import Config
+from olio.common import is_listy
+from olio.common import shorten
+from olio.common import update_
 
+
+# %% ../nbs/01_helpers.ipynb
+from fasthtml.components import Span, Summary, Ul, Details, Li
 
 # %% ../nbs/01_helpers.ipynb
 emptyd, emptyl, emptyt = {}, [], ()
+_n = '\n'
 
 # %% ../nbs/01_helpers.ipynb
-# @dataclasses.dataclass
+def DEBUG(iftrue:Any=True, iffalse:Any=False, k='DEBUG_BRIDGET'):
+    "Returns `iftrue` if debug environment variable is set, otherwise `iffalse`"
+    return iftrue if os.environ.get(k, '').lower() in ('true', '1', 'yes', 'y') else iffalse
+
+# %% ../nbs/01_helpers.ipynb
+class BundleCfg(Config):
+    out_dir: list[Path] = [nbdev.config.get_config().lib_path/'js']  # directories to search for js modules
+    rewrite_imports: bool = True  # rewrite imports to use dynamic import
+    import_name: str = 'brdimport'  # name of the dynamic import function
+
 class BridgeCfg(Config):
     """
-    Settings for core `Bridget` behavior.
+    Core Bridget behavior settings.
     
     if `True`:
     - `auto_show`: FastHTML objects display as HTML instead of markdown.
@@ -43,19 +74,24 @@ class BridgeCfg(Config):
     - `auto_id`: display elements get auto-generated IDs.
     - `bootstrap`: load bridget.js on import.
     - `current_did`: the ID of the current display cell.
-    - `debug_req`: request debugging is enabled.
     """
     auto_show: bool = False
     auto_mount: bool = False
     auto_id: bool = False
+    bundle_cfg: BundleCfg = BundleCfg()
     bootstrap: bool = os.environ.get('BRIDGET_BOOTSTRAP', '').lower() in ('true', '1', 'on', 'yes', 'y')
     current_did: str|None = None
-    debug_req: bool = False
+
+    def for_module(self, module: str|ModuleType, dir='js') -> BridgeCfg:
+        "Set up BridgeCfg for a specific module by adding its js directory to bundle search paths"
+        if (p := bundle_path(module).resolve())/dir not in self.bundle_cfg.out_dir: self.bundle_cfg.out_dir.insert(0, p/dir)
+        return self
 
 bridge_cfg = BridgeCfg()
 
 # %% ../nbs/01_helpers.ipynb
 async def arun_command(command: str, cwd: Path|None=None, **kwargs):
+    "Async version of run_command using anyio"
     import anyio
     import subprocess
     try:
@@ -69,6 +105,7 @@ async def arun_command(command: str, cwd: Path|None=None, **kwargs):
         return e.stdout.decode('utf-8'), e.stderr.decode('utf-8')
 
 def run_command(command: str, cwd: Path|None=None, **kwargs):
+    "Execute shell command synchronously, returns (stdout, stderr)"
     import subprocess
     result = subprocess.run(
         command,
@@ -84,40 +121,47 @@ def run_command(command: str, cwd: Path|None=None, **kwargs):
     return result.stdout, result.stderr
 
 # %% ../nbs/01_helpers.ipynb
-def _noop(*args, **kwargs): pass
-class Singleling:
-    def __new__(cls, *args, **kwargs):
-        if '__instance__' not in cls.__dict__: cls.__instance__ = super().__new__(cls, *args, **kwargs)
-        cls.__instance__.__init__(*args, **kwargs)
-        setattr(type(cls.__instance__), '__init__', _noop)
-        return cls.__instance__
+def ts(): return f"{datetime.now():%H:%M:%S.%f}"[:-3]
+
+# %% ../nbs/01_helpers.ipynb
+def ms2str(ts) -> str:
+    "format timestamp as in milliseconds to readable time hours:minutes:seconds:milliseconds"
+    return datetime.fromtimestamp(ts).time().isoformat().rstrip('0')
 
 # %% ../nbs/01_helpers.ipynb
 class Kounter:
+    "Counter that tracks occurrences of keys and returns incremented count"
     def __init__(self): self.d = DefaultDict(int)
     def __call__(self, k): d = self.d; d[k] += 1; return self.d[k]
 
 kounter = Kounter()
 
 # %% ../nbs/01_helpers.ipynb
+SESSION_TS = str(floor(time.time()))
+
 def simple_id():
+    "Generate simple hex ID using random bytes"
     return 'b'+hexlify(os.urandom(16), '-', 4).decode('ascii')
 
 def id_gen():
+    "Create ID generator function that produces unique session-based IDs"
     kntr = Kounter()
-    def _(o:Any=None): 
+    def _(o=None): 
         if o is None: return simple_id()
         # return f"{type(o).__name__}_{hash(o) if isinstance(o, Hashable) else kntr(type(o).__name__)}"
-        return f"{type(o).__name__}_{kntr(type(o).__name__)}"
+        if isinstance(o, str): return f"{o}_{kntr(o)}-{SESSION_TS}"
+        return f"{type(o).__name__}_{kntr(type(o).__name__)}-{SESSION_TS}"
     return _
 
 # %% ../nbs/01_helpers.ipynb
 def patch_cached(cls, f, name:str|None=None):
+    "Add cached method to class using functools.cache"
     name = name or (f if not isinstance(f, partial) else f.func).__name__ 
     setattr(cls, name, cache(f))
 
 # %% ../nbs/01_helpers.ipynb
 def patch_cached_property(cls, f, name:str|None=None):
+    "`cached_property` with `partial` support"
     is_partial, prop = isinstance(f, partial), functools.cached_property(f)
     if is_partial: prop.__doc__ = f.func.__doc__
     prop.attrname = name or (f if not is_partial else f.func).__name__ 
@@ -125,6 +169,7 @@ def patch_cached_property(cls, f, name:str|None=None):
 
 # %% ../nbs/01_helpers.ipynb
 class cached_property(functools.cached_property):
+    "Enhanced cached_property that preserves function attributes"
     def __init__(self, func):
         super().__init__(func)
         for o in functools.WRAPPER_ASSIGNMENTS: setattr(self, o, getattr(func, o))
@@ -135,23 +180,128 @@ class cached_property(functools.cached_property):
 
 # %% ../nbs/01_helpers.ipynb
 def bridge_metadata(metadata:dict|None=None, **kwargs):
+    "Add or update 'bridge' key in metadata dict with kwargs"
     if not metadata: metadata = {'bridge': {**kwargs}}
     elif not 'bridge' in metadata: metadata['bridge'] = {**kwargs}
     else: metadata['bridge'].update(**kwargs)
     return metadata
 
-def skip(metadata:dict|None=None, **kwargs): return bridge_metadata(metadata, skip=True, **kwargs)
+def skip(metadata:dict|None=None, **kwargs):
+    "Convenience function to add skip=True to bridge metadata"
+    return bridge_metadata(metadata, skip=True, **kwargs)
 
 # %% ../nbs/01_helpers.ipynb
-def compose_first(*funcs, order=None):
-    "Create a function that composes all functions in `funcs`, passing along remaining `*args` and `**kwargs` to first function"
-    funcs = FC.listify(funcs)
+def compose_first(*funcs:Callable, order:Callable | None = None) -> Callable:
+    """Create a function that composes all functions in `funcs`, passing remaining `*args` and 
+    `**kwargs` to first function only. `order`: key function to sort funcs before composing"""
+    funcs = FC.listify(funcs)  # type: ignore
     if len(funcs)==0: return FC.noop
     if len(funcs)==1: return funcs[0]
-    if order is not None: funcs = FC.sorted_ex(funcs, key=order)
+    if order is not None: funcs = FC.sorted_ex(funcs, key=order)  # type: ignore
     def _inner(x, *args, **kwargs):
         x = funcs[0](x, *args, **kwargs)  # type: ignore
         for f in funcs[1:]: x = f(x)  # type: ignore
         return x
     return _inner
 
+# %% ../nbs/01_helpers.ipynb
+@FC.delegates(FastHTML)  # type: ignore
+def nb_app(**kwargs):
+    from starlette.middleware.cors import CORSMiddleware
+    kwargs.update(default_hdrs=False, sess_cls=None)
+    app = FastHTML(**kwargs)
+    app.user_middleware = list(filter(lambda x: x.cls is not CORSMiddleware, app.user_middleware))
+    return app
+
+
+# %% ../nbs/01_helpers.ipynb
+def CLog(*o):
+    return f"<script>console.log({','.join(map(repr, o))})</script>"
+
+# %% ../nbs/01_helpers.ipynb
+@FC.delegates(display, keep=True)  # type: ignore
+def displaydh(*objs, **kwargs) -> DisplayHandle:
+    return display(*objs, **update_(kwargs, display_id=True))  # type: ignore
+displaydh.__doc__ = IPython.display.display.__doc__  # type: ignore
+
+# %% ../nbs/01_helpers.ipynb
+@overload
+def display(
+    *objs, include=None, exclude=None, metadata=None, transient=None,
+    display_id:bool|str=True,
+    raw=False, clear=False, **kwargs) -> DisplayHandle: ...
+@overload
+def display(
+    *objs, include=None, exclude=None, metadata=None, transient=None,
+    display_id=None,
+    raw=False, clear=False, **kwargs) -> None: ...
+def display(
+    *objs, include=None, exclude=None, metadata=None, transient=None,
+    display_id=None,
+    raw=False, clear=False, **kwargs) -> DisplayHandle | None: ...
+
+display = IPython.display.display  # type: ignore
+
+# %% ../nbs/01_helpers.ipynb
+def Val(v): 
+    "Render value with appropriate CSS class based on type"
+    c = (
+        'null' if v is None else 
+        'true' if v is True else 
+        'false' if v is False else 
+        'string' if isinstance(v, str) else 
+        'number' if isinstance(v, (int, float)) else 
+        '')
+    return Span(shorten(v, 'r', 140) if v is not None else 'None', cls=f"v {c}")
+def NameVal(k, v):
+    "Render key-value pair with name and value styling"
+    return Span(Span(k, cls='n'), ': ', Val(v))
+
+class DetailsJSON(dict):
+    "Interactive collapsible JSON viewer with HTML details/summary structure"
+    def __init__(self, *args, summary:str='', open:bool=True, openall:bool=False, skip:Sequence[str]=(), **kwargs):
+        super().__init__(*args, **kwargs)
+        self.summary, self.open, self.openall, self.skip = str(summary), open, openall, skip
+    def __ft__(self, d:Mapping|None=None, summary:str|None=None, lvl:int=0, open:bool=False):
+        if d is None: d = self; summary = self.summary or 'summary'; open=self.open
+        open = self.openall or open
+        return (
+            Style(self._css_) if lvl == 0 else (), 
+            Details(open=open)(
+                Summary(summary, _n),
+                Ul()(*(
+                    Li(NameVal(k, v)) if k in self.skip else
+                    self.__ft__(v, k, lvl+1) if isinstance(v, Mapping) else
+                    self.__ft__(dict(list(zip(range(len(v)), v))), k, lvl+1) if is_listy(v) else
+                    Li(NameVal(k, v)) 
+                    for k,v in d.items()))))
+    # _css_ = 'details ul { list-style-type:none; list-style-position: outside; padding-inline-start: 22px; margin: 0; } '
+    _css_ = (
+        'details ul { list-style-type:none; list-style-position: outside; padding-inline-start: 22px; margin: 0; } '
+        '''details .string { color: #24837b; } details .string::before { content: "'"; } details .string::after { content: "'"; } '''
+        'details .number { color: #ad8301; } '
+        'details .true { color: blue; } '
+        'details .false { color: red; } '
+        'details .null { color: gray; } '
+        'span.n { color: darkgrey; } '
+    )
+
+# %% ../nbs/01_helpers.ipynb
+class HTML(IPython.display.HTML):
+    def __init__(self, data=None, url=None, filename=None, metadata=None, **kwargs):
+        if kwargs:
+            if not metadata: metadata = kwargs
+            else: metadata.update(kwargs)
+        if isinstance(data, FT) or hasattr(data, '__ft__'): data = to_xml(data)
+        elif hasattr(data, 'to_html'): data = data.to_html()  # type: ignore
+        super().__init__(data, url, filename, metadata)
+
+# %% ../nbs/01_helpers.ipynb
+def in_vscode():
+    "Check if the code is running in VSCode"
+    return 'vscode' in sys.modules
+def in_vscode_notebook(glbs):
+    "Check if the code is running in VSCode"
+    return '__vsc_ipynb_file__' in glbs
+
+IN_VSCODE = in_vscode()

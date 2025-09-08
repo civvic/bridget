@@ -6,276 +6,204 @@
 from __future__ import annotations
 
 # %% auto 0
-__all__ = ['NBSTATE_MIME', 'nbstate_js', 'nbstate_esm', 'FIRST', 'LAST', 'show_notebook_state', 'update_notebook_state',
-           'clear_notebook_state', 'NBStateFetcher', 'NBState', 'this', 'these', 'Bridge', 'get_bridge']
+__all__ = ['NBSTATE_MIME', 'NBStateFeedback', 'nbstate_js', 'FIRST', 'LAST', 'NBStateFetcher', 'StateProvider', 'NBState', 'this',
+           'get_nb']
 
 # %% ../nbs/21_nb_state.ipynb
-import inspect
 import json
-import os
 import sys
-import urllib.parse
+from datetime import datetime
 from inspect import Parameter
-from pathlib import Path
 from typing import Mapping
+from typing import overload
+from typing import Protocol
+from typing import runtime_checkable
+from typing import SupportsIndex
 
-import anywidget
 import fastcore.all as FC
-import ipykernel
-import traitlets as T
 from fastcore.foundation import L
-from IPython.display import clear_output
+from IPython.core.getipython import get_ipython
 from IPython.display import display
-from IPython.display import DisplayHandle
 from IPython.display import HTML
+from olio.basic import AD
 from olio.basic import bundle_path
+from olio.basic import update_
 
 
 # %% ../nbs/21_nb_state.ipynb
-from .bridge import BridgeBase
-from .bridge import HTMXCommander
-from .bridge_helpers import bridge_js
-from .bridge_helpers import BridgeWidget
-from .bridge_helpers import loader_js
-from .display_helpers import displaydh
-from .display_helpers import NBLogger
+import bridget.nb_hooks
+from .bridge import BridgePlugin
+from .bridge import get_bridge
+from .bridge_plugins import NBHooksPlugin
+from .bridge_widget import blocks
+from .bridge_widget import bundled
+from .helpers import bridge_cfg
+from .helpers import id_gen
 from .helpers import kounter
-from .helpers import skip
+from .helpers import ms2str
 from .nb import NB
 from .nb import NBCell
-from .widget_helpers import anysource
-from .widget_helpers import bundled
+
 
 # %% ../nbs/21_nb_state.ipynb
-DEBUG = os.environ.get('DEBUG', None) == 'True'
 BUNDLE_PATH = bundle_path(__name__)
 _EMPTY = Parameter.empty
 EmptyT = type[_EMPTY]
+new_id = id_gen()
 
 # %% ../nbs/21_nb_state.ipynb
 NBSTATE_MIME = 'application/x-notebook-state'
 
-def show_notebook_state(options:Mapping={'feedback': True, 'watch': True, 'debug': True}) -> DisplayHandle:
-    "Display notebook state with our custom mime type"
-    dh = display({NBSTATE_MIME: options}, raw=True, display_id=True)
-    return dh  # type: ignore
+class _NBStateFeedback:
+    def __init__(self, **options):
+        self.options = AD(feedback=True, hide=False, debug=True, **options)
+        self.dh = None; self.shown = False
+    def show(self, hide=False, **options):
+        if self.dh: self.dh.update(HTML(''))
+        self.dh = display({NBSTATE_MIME: update_(self.options, **options, hide=hide)}, raw=True, display_id=True)
+        self.shown = True
+    def update(self, **options):
+        if self.dh: self.dh.update({NBSTATE_MIME: {**update_(self.options, **options), 'id': kounter('nbstate')}}, raw=True)
+    def hide(self):
+        if self.dh: self.dh.update({NBSTATE_MIME: {**update_(self.options, hide=True), 'id': kounter('nbstate')}}, raw=True)
 
-def update_notebook_state(dh: DisplayHandle|None, options:Mapping|None=None):
-    if dh: dh.update({NBSTATE_MIME: {**(options or {}), 'id': kounter('nbstate')}}, 
-        raw=True)
 
-def clear_notebook_state(dh: DisplayHandle|None): 
-    if dh: dh.update(HTML(''))
+NBStateFeedback = _NBStateFeedback()
 
 # %% ../nbs/21_nb_state.ipynb
 nbstate_js = BUNDLE_PATH / 'js/nbstate.js'
-nbstate_esm = bundled(nbstate_js, bundle=__name__, bundler='copy')
 
-class NBStateFetcher(BridgeWidget):
-    _esm = anysource(nbstate_esm(debugger=DEBUG), '''
-export default { initialize: ({model}) => { return initializeNBState(model) } };
-''')
-    feedback = True; watch = True; debug = True;
-    ctx_name = T.Unicode('nbstate').tag(sync=True)
-    state = T.Instance(NB, default_value=NB())
+# %% ../nbs/21_nb_state.ipynb
+class NBStateFetcher(BridgePlugin):
+    src = bundled('''
+import { initializeNBState } from './nbstate.js';
+export default async function initializeFetcher(bridge) {
+    const cleanup = initializeNBState(bridge);
+    return () => cleanup();
+}
+''')()
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.feedback_dh = display(HTML(''), display_id=True, metadata=skip())
-        self.updates = []
-    
-    def close(self):
-        if self.feedback_dh: self.feedback_dh.update(HTML(''), metadata=skip())
-        self.feedback_dh = None
-        super().close()
+    ctx_name = 'fetcher'
+
+    def __init__(self):
+        self.feedback = True; self.debug = True; self._renderer = True
+        self._last_update = []
+        super().__init__()
 
     @property
-    def opts(self): return {'feedback': self.feedback, 'watch': self.watch, 'debug': self.debug}
+    def opts(self): return {'feedback': self.feedback, 'debug': self.debug}
 
-    def _update_notebook_state(self, req_id):
-        if self.feedback_dh and not self._loading: self.feedback_dh.update(
-            {NBSTATE_MIME: {**self.opts, 'id': req_id}}, raw=True, metadata=skip())
-    def update_notebook_state(self, 
-            watch:bool|None=None, feedback:bool|None=None, debug:bool|None=None): 
-        if watch is not None: self.watch = watch
-        if feedback is not None: self.feedback = feedback
-        if debug is not None: self.debug = debug
-        return self._update_notebook_state(kounter('nbstate'))
+    def update(self, timeout: float|None=None, **kwargs):
+        kwargs['id'] = new_id(self)
+        self.send({'ctx': self.ctx_name, 'cmd': 'get_state', **kwargs}, timeout=timeout)
 
-    def update(self, timeout: float|None=None):
-        if not self.watch:
-            self.update_notebook_state()
-            self.send({'cmd': 'get_state'}, timeout=timeout)
+    async def aupdate(self, timeout: float=3, **kwargs):
+        kwargs['id'] = new_id(self)
+        await self.asend({'ctx': self.ctx_name, 'cmd': 'get_state', **kwargs}, timeout=timeout)
 
-    async def aupdate(self, timeout: float=20.0):
-        if not self.watch:
-            self.update_notebook_state()
-            await self.asend({'cmd': 'get_state'}, timeout=timeout)
-    
-    def setup_notebook_state(self):
-        self.feedback_dh.update({NBSTATE_MIME: {**self.opts, 'id': kounter('nbstate'), 'update':'full'}},  # type: ignore
-            raw=True, metadata=skip())
-    
-    def on_info(self, *args, info:str, **kwargs):
-        super().on_info(*args, info=info, **kwargs)
-        if info == 'loaded':
-            self.logger.log('Requesting initial notebook state...')
-            self.setup_notebook_state()
-        elif info == 'found existing state observers':
-            self.logger.log('Found existing state observer.')
+    def on_init(self, *args, info:str, **kwargs):
+        super().on_init(*args, info=info, **kwargs)
+        if info == 'initialized':
+            self.bridge.state = bridget.nb_hooks.get_nb_from_hooks()
+            if self._renderer:
+                self.log('Requesting initial notebook state...')
+                self.update(update='full')
+        elif info == 'renderer not found':
+            self._renderer = False
+            self.log("Renderer not found: NBState is empty. Try calling update(update='full') again...")
     
     def on_state_update(self, *args, state:dict|str, **kwargs):
         d = (json.loads(state) if isinstance(state, str) else state or {})
-        nbData = d.get('nbdata', {})
-        # self.logger.log(f" watch: {self.watch} feedback: {self.feedback} debug: {self.debug}")
-        self.updates.append(d)
-        self.logger.log(f"State update - type: {d['type']} ts: {d['timestamp']}")
+        self.log(f"State update - type: {d['type']} ts: {ms2str(float(d['timestamp'])/1000)}")
+        self._last_update.append(d)
         if d['type'] == 'state':
-            self.logger.log(f"---- #cells: {len(d.get('cells', []))}")
-            self.state = NB.fromStateMessage(d)
+            self.log(f"---- #cells: {len(d.get('cells', []))}")
+            self.bridge.state.setup(**d)
         else:
-            self.state.apply_diffsMessage(d)
-            diffs:list[dict] = d.get('changes', [])
-            self.logger.log(f"#diffs: {len(diffs)}")
-            for i, d in enumerate(diffs):
-                self.logger.log(f"---- {i} - cells: {[c['idx'] for c in d['cells']]} added: {[c['idx'] for c in d.get('added', [])]} removed: {d.get('removed', [])}")
+            if len(self.bridge.state.cells) == 0: return
+            try:
+                self.bridge.state.apply_diffsMessage(d)
+                diffs:list[dict] = d.get('changes', [])
+                # self.log(f"#diffs: {len(diffs)}")
+                for i, d in enumerate(diffs): self.log(
+                    f"---- {i} - cells: {[c['idx'] for c in d['cells']]} "
+                    f"added: {[c['idx'] for c in d.get('added', [])]} "
+                    f"removed: {d.get('removed', [])}")
+            except Exception as e:
+                self.log(f"Error applying diffs: {e}")
 
 # %% ../nbs/21_nb_state.ipynb
-class NBState(T.HasTraits, FC.GetAttr):
-    state = T.Instance(NB, default_value=NB())
+@runtime_checkable
+class StateProvider(Protocol):
+    @property
+    def state(self) -> NB:...
+
+
+class NBState(FC.GetAttr):
     _default = 'state'
-    def __init__(self, source: NBStateFetcher|Mapping|None=None):
-        if source is None: source = NBStateFetcher(show=True)
+    def __init__(self, source: StateProvider|Mapping|None=None, *bridge_args, plugins=None, **bridge_kw):
+        self._state = None
+        if source is None:
+            if not NBStateFeedback.shown: NBStateFeedback.show(hide=True)
+            plugins = [NBHooksPlugin(), NBStateFetcher()]
+            if 'wait' not in bridge_kw: bridge_kw['wait'] = 3
+            source = get_bridge(*bridge_args, plugins=plugins, **bridge_kw)
+        elif isinstance(source, Mapping): self._state = NB(**source)
         self.source = source
 
+    @overload
+    def __getitem__(self, key: SupportsIndex|str, /) -> NBCell: ...
+    @overload
+    def __getitem__(self, key: slice, /) -> L: ...
+    def __getitem__(self, key) -> NBCell|L: 
+        if isinstance(key, str):
+            cc = self.cells.filter(lambda c: c.metadata['cell_id'] == key)
+            return cc[0] if len(cc) else L()  # type: ignore
+        return self.cells[key]  # type: ignore
+
     @property
-    def source(self): return self._source
-    @source.setter
-    def source(self, source: NBStateFetcher|Mapping|None=None):
-        if hasattr(self, '_link'): self._link.unlink()
-        if isinstance(source, NBStateFetcher): 
-            self._link = T.dlink((source, 'state'), (self, 'state'))
-        elif isinstance(source, Mapping): self.state = NB(**source)
-        else: self.state = NB()
-        # try: del self.processor
-        # except: pass
-        self._source = source
+    def state(self) -> NB:
+        return self.source.state if self._state is None else self._state  # type: ignore
 
-    def update(self):
-        if isinstance(self.source, NBStateFetcher): self.source.update_notebook_state()
-    
     def this(self: NBState, idx:int|None=None) -> NBCell:...
-    
-    def __del__(self):
-        if hasattr(self, '_link'): self._link.unlink()
-
 
 # %% ../nbs/21_nb_state.ipynb
 FIRST = -sys.maxsize
 LAST = sys.maxsize
 
-def _this(nb):
-    this_id = f"this_{kounter('this')}"
-    _= displaydh(metadata=skip(this=this_id))
-    nb.source.send({'cmd': 'get_state'}, timeout=5)
-    clear_output(wait=True)
-    this_cell = nb.state.find(this_id, 'outputs.0.metadata.bridge.this')[0]
-    this_idx = nb.cells.index(this_cell)
-    return this_idx, this_cell
-
-@FC.patch
-def this(self: NBState, idx:int|None=None) -> NBCell:
-    "Current cell if `idx` is None, or cell at `idx` from current cell upwards. Raises if not found."
-    if not isinstance(self.source, NBStateFetcher): return self.cells[idx or -1]
-    this_idx, this_cell = _this(self)
-    if not idx: return this_cell
-    return self.cells[max(0, this_idx + idx)] if idx < 0 else self.cells[min(len(self.cells)-1, this_idx + idx)]
-
-@FC.patch
-def these(self: NBState, above:int|None=None, below:int|None=None) -> L:
-    if not isinstance(self.source, NBStateFetcher): return self.cells[above or 0:below or None]
-    this_idx, _ = _this(self)
-    return self.cells[max(0, this_idx + (above or FIRST)):min(len(self.cells), this_idx+1+(below or 0))]
-
+# this: Literal['this'] = 'this'
 
 # %% ../nbs/21_nb_state.ipynb
-@FC.delegates()
-class Bridge(BridgeBase):
-    _esm = anysource('debugger;' if DEBUG else '', bridge_js, loader_js, nbstate_js,'''
-export default { 
-    initialize({ model }) {
-        const cleanupLoader = initializeLoader(model);
-        const cleanupNbState = initializeNBState(model);
-        model.send({ ctx: 'bridge', kind: 'info', info: 'initialized' });
-        return () => {
-            cleanupLoader();
-            cleanupNbState();
-        };
-    }
-};
-''')
+def this(idx:int|None=None) -> NBCell:
+    "Current cell if `idx` is None, or cell at `idx` from current cell upwards. Raises if not found."
+    # if not ((bridge := get_bridge()).plugins.get('fetcher', None)):
+    #     bridge.add_plugins(fetcher := NBStateFetcher(), wait=3)
+    #     blocks(lambda: fetcher.is_initialized is not None, 3)
+    # Ummm, don't really need the `fetcher` for this to work
+    if not ((bridge := get_bridge()).plugins.get('nbhooks', None)): bridge.add_plugins(NBHooksPlugin())
+    shell = get_ipython()
+    if shell is None: raise IndexError('No IPython shell found')
+    cellinfo = shell.user_ns.get('__cellinfo__')
+    if not cellinfo: raise IndexError('__cellinfo__ is not set')
+    this_cell = bridge.state[cellinfo.cell_id]
+    this_cell.source = cellinfo.source
+    if not idx: return this_cell
+    this_idx, cells = this_cell.idx, bridge.state.cells
+    return cells[
+        max(0, this_idx + idx)] if idx < 0 else cells[min(len(cells)-1, this_idx + idx)]  # type: ignore
 
-    ctx_name = set(('bridge', 'loader', 'nbstate'))
-    feedback = True; watch = False; debug = True;
-    state = T.Instance(NB, default_value=NB())
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.feedback_dh = display(HTML(''), display_id=True, metadata=skip())
-    
-    def close(self):
-        if self.feedback_dh: self.feedback_dh.update(HTML(''), metadata=skip())
-        self.feedback_dh = None
-        super().close()
+# %% ../nbs/21_nb_state.ipynb
+__nbstate__ = None
 
-    @property
-    def opts(self): return {'feedback': self.feedback, 'watch': self.watch, 'debug': self.debug}
+@FC.delegates(get_bridge)  # type: ignore
+def get_nb(*args, show_feedback:bool=False, **kwargs):
+    global __nbstate__
+    if __nbstate__ is None:
+        wait=kwargs.pop('wait', 5)
+        __nbstate__ = NBState(*args, wait=wait, **kwargs)
+    else: get_bridge(*args, **kwargs)
+    if show_feedback: NBStateFeedback.show()
+    return __nbstate__
 
-    def _update_notebook_state(self, req_id):
-        if self.feedback_dh and not self._loading: self.feedback_dh.update(
-            {NBSTATE_MIME: {**self.opts, 'id': req_id, 'update': True}}, raw=True, metadata=skip())
-    def update_notebook_state(self, 
-            watch:bool|None=None, feedback:bool|None=None, debug:bool|None=None): 
-        if watch is not None: self.watch = watch
-        if feedback is not None: self.feedback = feedback
-        if debug is not None: self.debug = debug
-        return self._update_notebook_state(kounter('nbstate'))
-
-    def update(self, timeout: float|None=None):
-        if not self.watch:
-            self.update_notebook_state()
-            self.send({'cmd': 'get_state'}, timeout=timeout)
-
-    async def aupdate(self, timeout: float=20.0):
-        if not self.watch:
-            self.update_notebook_state()
-            await self.asend({'cmd': 'get_state'}, timeout=timeout)
-    
-    def setup_notebook_state(self):
-        self.feedback_dh.update({NBSTATE_MIME: {**self.opts, 'id': kounter('nbstate')}},  # type: ignore
-            raw=True, metadata=skip())
-    
-    def on_info(self, *args, info:str, **kwargs):
-        super().on_info(*args, info=info, **kwargs)
-        if info == 'initialized':
-            self.logger.show('Requesting notebook state...')
-            self.setup_notebook_state()
-        elif info == 'found existing state observers':
-            self.logger.show('Found existing state observer.')
-    
-    def on_state_update(self, *args, state:str, **kwargs):
-        d = (json.loads(state) if state else {})
-        self.state = NB(**d)
-        # this shouldn't trigger another update
-        self.logger.show(  f"State updated type: {d['type']} #cells {len(d['cells'])} @{d['timestamp']}" 
-                    # f" watch: {self.watch} feedback: {self.feedback} debug: {self.debug}"
-        )
-
-
-def get_bridge(): 
-    def companions_loader(brd: Bridge):
-        cc = []
-        if 'htmx' in brd.loaded:  # ensure htmx is loaded - loader should inform us
-            cc.append(HTMXCommander(logger=brd.logger, show=False))
-        return cc
-    return Bridge.instance(companions_loader=companions_loader)
-
+# %% ../nbs/21_nb_state.ipynb
+if bridge_cfg.bootstrap: get_nb(show_logger=True)

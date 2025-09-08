@@ -5,29 +5,21 @@
 # %% ../nbs/32_bridget.ipynb 1
 from __future__ import annotations
 
-
 # %% auto 0
-__all__ = ['Bridgeable', 'observer_js', 'commander_js', 'bridget_js', 'ScriptsDetails', 'bridget_scripts', 'ClientP',
-           'request2httpx_request', 'HasFT', 'HasHTML', 'request2response', 'httpx_response_to_json', 'BridgeBase',
-           'Bridget', 'get_bridget', 'get_app']
+__all__ = ['Bridgeable', 'ClientP', 'request2httpx_request', 'HasFT', 'HasHTML', 'request2response', 'httpx_response_to_json',
+           'BridgetClient', 'Bridget', 'get_bridget', 'get_app']
 
 # %% ../nbs/32_bridget.ipynb
-import inspect
 import time
-from pathlib import Path
 from types import MethodType
 from typing import Any
 from typing import Mapping
 from typing import Protocol
 from typing import TypeAlias
 
-import anywidget
 import fastcore.all as FC
-import traitlets as T
 from anyio import from_thread
-from fastcore.xml import escape
 from fastcore.xml import FT
-from fastcore.xml import NotStr
 from fastcore.xml import to_xml
 from fasthtml.core import APIRouter
 from fasthtml.core import Client
@@ -38,69 +30,38 @@ from httpx import codes
 from httpx import Request
 from httpx import Response
 from IPython.display import display
+from IPython.display import DisplayHandle
 from IPython.display import HTML
-from olio.common import update_
+from olio.basic import bundle_path
 
 
 # %% ../nbs/32_bridget.ipynb
-from fasthtml.components import Div, Details, Summary, B, Pre, Span
+from fasthtml.components import Div, Details, Summary, B, Pre, Span, Strong
 
 
 # %% ../nbs/32_bridget.ipynb
-import bridget
-from .cell_display import DisplayId
-from .display_helpers import BasicLogger
-from .display_helpers import nb_app
-from .display_helpers import pretty_repr
+from .bridge import BridgePlugin
+from .bridge import get_bridge
+from .bridge_plugins import HTMXCommanderPlugin
+from .bridge_plugins import NBHooksPlugin
+from .bridge_widget import bundled
 from .helpers import bridge_cfg
+from .helpers import DetailsJSON
 from .helpers import id_gen
-from .htmx import swap
-from .htmx import SwapStyleT
+from .helpers import nb_app
+from .nb_state import get_nb
 from .routing import add_routes
+from .routing import mount
 from .routing import RouteProviderP
-from .widget_helpers import anysource
-from .widget_helpers import BlockingMixin
 
 
 # %% ../nbs/32_bridget.ipynb
-DEBUG = True
+BUNDLE_PATH = bundle_path(__name__)
 new_id = id_gen()
 IDISPLAY = display
 
-
-# %% ../nbs/32_bridget.ipynb
-BUNDLE_PATH = Path() if __name__ == "__main__" else Path(inspect.getfile(bridget)).parent
-
-
 # %% ../nbs/32_bridget.ipynb
 _n = '\n'
-
-# %% ../nbs/32_bridget.ipynb
-class ScriptsDetails:
-    def __init__(self, scs, title='Loaded scripts', open=True): 
-        self.scs = scs; self.title = title; self.open = open
-    def __ft__(self):
-        return Details(open=self.open)(
-            Summary(B(self.title)),
-            Pre(NotStr('\n'.join(escape(to_xml(_, indent=False, do_escape=False).strip()) for _ in self.scs))),
-        )
-
-def _bridget_scripts_extra():
-    from fasthtml.core import surrsrc, scopesrc
-    return {'surreal': surrsrc, 'css_scope_inline': scopesrc}
-
-def _bridget_scripts(htmx=True):
-    from fasthtml.core import fhjsscr
-    from fasthtml.xtend import Script
-    htmxsrc = Script(src=f"https://unpkg.com/htmx.org@next/dist/htmx.{'' if DEBUG else 'min.'}js")()
-    return update_({'htmx': htmxsrc } if htmx else {}, fasthtml_js=fhjsscr, **_bridget_scripts_extra())
-def _load_scripts(scs):
-    display(HTML(to_xml((*(scvals := [_ for _ in scs.values()]), ScriptsDetails(scvals)))))
-def bridget_scripts(load=False, htmx=True):
-    scs = _bridget_scripts(htmx)
-    if load: _load_scripts(scs)
-    return scs
-
 
 # %% ../nbs/32_bridget.ipynb
 # if typing.TYPE_CHECKING:
@@ -111,7 +72,6 @@ class ClientP(Protocol):
     def put(self, url: str, **kwargs) -> Response: ...
     def patch(self, url: str, **kwargs) -> Response: ...
     def options(self, url: str, **kwargs) -> Response: ...
-
 
 # %% ../nbs/32_bridget.ipynb
 def request2httpx_request(cli:AsyncClient, http_request: dict[str, Any]) -> Request:
@@ -156,10 +116,13 @@ def httpx_response_to_json(response: Response) -> dict[str, Any]:
 
 
 # %% ../nbs/32_bridget.ipynb
-class BridgeBase:
+class BridgetClient:
     "A simple wrapper around `FastHTML` and `Client`."
 
-    def setup(self, app: FastHTML):
+    def setup(self, app: FastHTML|None=None):
+        if app is None:
+            app = nb_app()
+            app.user_middleware.clear()
         self.app = app
         cli:ClientP = Client(self.app, 'http://nb)')  # type: ignore
         self.cli = cli
@@ -168,168 +131,121 @@ class BridgeBase:
     
     def __call__(self, rt:Bridgeable='', method='GET', req=None, **kwargs):
         "Display FastHTML components, routes or requests in notebook cells."
-        if isinstance(rt, FT) or hasattr(rt, '__ft__'): cts = to_xml(rt)  # type: ignore
-        elif hasattr(rt, '__html__'): cts = rt.__html__()  # type: ignore
+        if isinstance(rt, FT) or hasattr(rt, '__ft__'): cts = HTML(to_xml(rt))  # type: ignore
+        # elif hasattr(rt, '__html__'): cts = rt.__html__()  # type: ignore
+        elif hasattr(rt, '__html__'): cts = HTML(rt.__html__())  # type: ignore
         else:
             if isinstance(rt, Mapping):
                 http_request = {**(req or {}), **rt}
                 if 'method' not in http_request: http_request['method'] = method
             else: http_request = {'headers': {'hx-request': '1'}, 'method': method, 'url': rt}
-            cts = request2response(self._cli, http_request).text
+            cts = HTML(request2response(self._cli, http_request).text)
         if not cts:
-            try: cts = to_xml(rt)
+            try: cts = HTML(to_xml(rt))
             except: pass
         if cts:
-            display_id, update = kwargs.pop('display_id', None), kwargs.pop('update', False)
-            dhdl = display_id if isinstance(display_id, DisplayId) else DisplayId(display_id=display_id)
-            if display_id and update: dhdl.update(cts)
-            else: dhdl.display(cts)
+            # display_id, update = kwargs.pop('display_id', None), kwargs.pop('update', False)
+            display_id = kwargs.pop('display_id', None)
+            # dhdl = display_id if isinstance(display_id, DisplayId) else DisplayId(display_id=display_id)
+            dhdl = display_id if isinstance(display_id, DisplayHandle) else DisplayHandle(display_id=display_id)
+            # if display_id and update: dhdl.update(cts)
+            if display_id: dhdl.update(cts)
+            # else: dhdl.display(HTML(cts))
+            # return None if dhdl is display_id else dhdl
+            else: display(cts, display_id=dhdl.display_id)
             return None if dhdl is display_id else dhdl
+
+    # def __call__(self, rt: Bridgeable='', method='GET', req=None, **kwargs):
+    #     "Display FastHTML components, routes or requests in notebook cells."
+    #     if isinstance(rt, FT) or hasattr(rt, '__ft__'): o = HTML(to_xml(rt))
+    #     elif hasattr(rt, '__html__'): o = HTML(getattr(rt, '__html__')())
+    #     else:
+    #         if isinstance(rt, Mapping):
+    #             http_request = {**(req or {}), **rt}
+    #             if 'method' not in http_request: http_request['method'] = method
+    #         else: http_request = {'headers': {'hx-request': '1'}, 'method': method, 'url': rt}
+    #         o = HTML(request2response(self._cli, http_request).text)
+    #     if not o:
+    #         try: o = HTML(to_xml(rt))
+    #         except: pass
+    #     if o:
+    #         display_id = kwargs.pop('display_id', None)
+    #         dh = display_id if isinstance(display_id, DisplayHandle) else DisplayHandle(display_id=display_id)
+    #         if display_id: dh.update(o)
+    #         else: display(o, display_id=dh.display_id)
 
     def _response(self, req:dict[str, Any]): return request2response(self._cli, req)
     
     def mount(self, prov:APIRouter|RouteProviderP, 
             path:str|None=None, name:str|None=None, index:str|None=None, 
             show:bool=True):
-        ar = add_routes(self.app, prov, True, path, name)
+        ar = mount(self.app, prov, path, name)
         if hasattr(prov, '_mounted'): setattr(prov, '_mounted', True)
         if hasattr(prov, 'bridget'): setattr(prov, 'bridget', self)
         if show: self(index or f"{ar.to()}/")  # type: ignore
         return ar
 
-    def swap(self,
-            target, 
-            content, 
-            *, 
-            # ---- swapSpec:SwapSpec, 
-            swapStyle: SwapStyleT='innerHTML',
-            swapDelay: int|None=None, settleDelay: int|None=None,
-            transition: bool|None=None,
-            # ignoreTitle: bool|None=None, head: Literal['merge', 'append']|None=None,
-            scroll: str|None=None, scrollTarget: str|None=None,
-            show: str|None=None, showTarget: str|None=None, focusScroll: bool|None=None,
-            # ---- swapOptions=None,
-            select: str|None=None, selectOOB: str|None=None,
-            # eventInfo: dict|None=None,
-            anchor: str|None=None,        
-            # contextElement: str|None=None,
-            # afterSwapCallback: Callable|None=None, afterSettleCallback: Callable|None=None,
-        ): ...
-
-
-FC.patch_to(BridgeBase)(swap)
-
+# %% ../nbs/32_bridget.ipynb
+bridget_js = BUNDLE_PATH / 'js/bridget.js'
+bridget_esm = bundled(bridget_js)
 
 # %% ../nbs/32_bridget.ipynb
-observer_js = BUNDLE_PATH / 'observer.js'
-commander_js = BUNDLE_PATH / 'commander.js'
-bridget_js = BUNDLE_PATH / 'bridget.js'
+class Bridget(BridgePlugin, BridgetClient):
+    src = bundled('''
+import { setupBridget } from './bridget.js';
 
-
-class Bridget(anywidget.AnyWidget, BridgeBase):
-    "Bridge this notebook kernel and front-end, intercepting HTMX Ajax requests."
-    _esm = anysource('debugger;', observer_js, commander_js, bridget_js, '''
-export default async () => {
-    const bridget = new Bridget();
-    return {
-        initialize: async (context) => await bridget.initialize(context)//,
-        // render: (context) => bridget.render(context),
-    }
+export default async function initializeBridget(bridge) {
+    return setupBridget();
 }
-''')
-
-    request = T.Dict({}).tag(sync=True)   # Incoming HTMX requests
-    response = T.Dict({}).tag(sync=True)  # Outgoing responses
-
-    htmx = T.Bool(True).tag(sync=True)
-    output_sels = T.List(['.output', '.jp-Cell-outputArea']).tag(sync=True)
-
-    libraries = T.Dict({k:v.src for k,v in bridget_scripts().items()}).tag(sync=True)
-
-    def __new__(cls, *args, **kwargs) -> Bridget:
-        "Ensure single instance per notebook"
-        if '__instance__' not in cls.__dict__: cls.__instance__ = super().__new__(cls, *args, **kwargs)
-        return cls.__instance__
+''')()
+    ctx_name = 'bridget'
     
-    def __init__(self, app=None, *args, logger:BasicLogger|None=None, show:bool=False, **kwargs):
-        "Initialize with FastHTML app and optional debug display"
-        if not hasattr(self, 'app'):
-            assert app, "Bridget must be initialized with an app"
-            self._loading = True
-            self.setup(app)
-            self.on_msg(self._on_message)
-            self.logger = logger or BasicLogger().setup(height=400)
-            self.logger.show('Loading Bridget...')
-            super().__init__(*args, **kwargs)
-        elif not self._loading and show:
-            self.show()
-        # if display: self.display()
-
-    def show(self):
-        "Display debug area"
-        self.logger.close()
-        self.logger = BasicLogger().setup(height=400)
-        self.logger.show('Bridget already initialized!')
-        self.logger.show(str(vars(bridge_cfg)))
-    # def display(self):
-    #     "Display widget and initialize debug output"
-    #     from IPython.display import display
-    #     if self.dhdl:
-    #         self.dhdl.update('')
-    #     display(self)
-    #     self.dhdl = DisplayId()
-    #     self.dhdl.display()
+    request: dict   # Incoming HTMX requests
+    response: dict  # Outgoing responses
     
-    def close(self):
-        "Clean up widget instance and display"
-        if hasattr(self, '__instance__'):
-            del Bridget.__instance__
-            self.logger.close()
-        super().close()
+    def __init__(self, app: FastHTML|None=None, *args, **kwargs):
+        self.setup(app)
+        super().__init__(*args, **kwargs)
 
-    def _on_message(self, _, content, buffers):
-        "Handle messages from the front-end"
-        self._loading = False
-        kind = content.get('kind')
-        self.logger.show(f"_handle_message: {kind}")
-        if kind == 'info':
-            if content['info'] == 'initialized':
-                self.logger.show('Bridget initialized!')
-                self.logger.show(str(vars(bridge_cfg)))
-
-    @T.observe('request')
-    def _on_request(self, chg):
+    def on_request(self, *args, request:dict[str, Any], **kwargs):
         "Handle incoming HTMX requests"
-        req = chg['new']
-        response = self._response(req)
+        self.request = request
+        response =  self._response(request)
         resp = httpx_response_to_json(response)
-        resp['req_id'] = req['req_id']
-        if bridge_cfg.debug_req: self._show_req(req, resp)
+        resp['req_id'] = request['req_id']
+        self._show_req(request, resp)
         self.response = resp
+        self.send({ 'ctx': self.ctx_name, 'cmd': 'response', 'response': resp })
     
     def _show_req(self, req:dict[str, Any], resp:dict[str, Any]):
-        self.logger.show(
+        # if bridge_cfg.debug_req: self._show_req(request, resp)
+        self.log(
                 # pretty_repr(req, text=False) + pretty_repr(resp, text=False)
-                to_xml(Div(cls='bridget-debug')(
-                    'Request: ', NotStr(pretty_repr(req, text=False)),
-                    'Response: ', NotStr(pretty_repr(resp, text=False))
-                )),
-                True
+                # to_xml(Div(cls='bridget-debug')(
+                #     'Request: ', NotStr(pretty_repr(req, text=False)),
+                #     'Response: ', NotStr(pretty_repr(resp, text=False))
+                # ))
+                to_xml(DetailsJSON({
+                    'Request': req,
+                    'Response': resp
+                }))
             )
 
 
-def get_bridget(app=None, *args, logger:BasicLogger|None=None, show:bool=False, **kwargs):
-    if Bridget.__instance__: 
-        if show: Bridget.__instance__.show()
-        return Bridget.__instance__
-    return Bridget(app, *args, logger=logger, **kwargs)
-
-
+@FC.delegates(get_bridge, keep=True)  # type: ignore
+def get_bridget(app=None, **kwargs) -> Bridget:
+    bridge, plgns = get_bridge(**kwargs), []
+    if not bridge.plugins.get('commander'): plgns.append(HTMXCommanderPlugin())
+    if not bridge.plugins.get('bridget'): plgns.append(Bridget(app))
+    if plgns: bridge = get_bridge(plugins=plgns, wait=5)
+    return bridge.plugins['bridget']  # type: ignore
 
 # %% ../nbs/32_bridget.ipynb
-def get_app(setup_scripts=False, app=None, appkw:dict[str, Any]={}, **cfargs) -> tuple[FastHTML, Bridget, MethodType]: 
-    bridge_cfg.update(**cfargs)
-    if setup_scripts: bridget_scripts(True, htmx=False)
-    app = app or nb_app(**appkw)
-    return app, get_bridget(app), app.route  # type: ignore
-
+@FC.delegates(get_bridge, keep=True)  # type: ignore
+def get_app(hooks=False, nb=False, cfg:Mapping|None=None, **kwargs) -> tuple[FastHTML, Bridget, MethodType]:
+    if cfg: bridge_cfg.update(**cfg)
+    if nb: get_nb()
+    plugins = kwargs.pop('plugins', [])
+    if not nb and hooks: plugins.append(NBHooksPlugin())
+    bridget = get_bridget(plugins=plugins, **kwargs)
+    return bridget.app, bridget, bridget.app.route  # type: ignore

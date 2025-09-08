@@ -156,6 +156,8 @@ node_modules/
 _docs
 
 _testbed/**
+nbs/js/_old/**
+nbs/js/htmx-attribute-swap/**
 packages/ipynb/**
 packages/nbdev-vscode/**
 packages/nbinspect-vscode/src/_old/**

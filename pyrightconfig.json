@@ -1,7 +1,8 @@
 {
-    // "ignore": [
-    //     "**"
-    // ]
+    "ignore": [
+        // "**",
+        // "nbs/*"
+    ],
     "reportWildcardImportFromLibrary": "none",
     "exclude": [
     ]
