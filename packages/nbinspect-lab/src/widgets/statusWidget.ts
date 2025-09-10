@@ -3,7 +3,7 @@ import { INotebookTracker } from '@jupyterlab/notebook';
 import { NotebookStateManager } from '../stateManager';
 import type { DiffsMessage, StateMessage } from '../types';
 // Import the common feedback renderer
-import { renderStatusText } from '../common/feedbackRenderer.js';
+import { renderStatusText } from '../../../common/feedbackRenderer.js';
 
 const NBSTATE_STATUS_CLASS = 'jp-NotebookState-status';
 
@@ -43,7 +43,12 @@ export class NotebookStateStatusWidget extends Widget {
     }
     
     // Use the common feedback renderer for consistent status text
-    this.node.textContent = renderStatusText(message);
+    const statusText = renderStatusText(message);
+    const span = this.node.querySelector('.jp-StatusBar-TextItem') as HTMLElement;
+    if (span) {
+      span.textContent = statusText;
+      span.title = statusText;
+    }
 
     // Add a flash animation to indicate an update
     this.node.classList.add('jp-mod-highlighted');
@@ -56,10 +61,12 @@ export class NotebookStateStatusWidget extends Widget {
   private _onActiveNotebookChanged(): void {
     const current = this._notebookTracker.currentWidget;
     if (current) {
-        this.node.textContent = `NBState: Monitoring ${current.context.path.split('/').pop()}`;
+        const text = `NBState: Monitoring ${current.context.path.split('/').pop()}`
+        this.node.innerHTML = `<span class="jp-StatusBar-TextItem" title="${text}" tabindex="0">${text}</span>`;
         this.show();
     } else {
-        this.node.textContent = 'NBState: No active notebook';
+        const text = 'NBState: No active notebook';
+        this.node.innerHTML = `<span class="jp-StatusBar-TextItem" title="${text}" tabindex="0">${text}</span>`;
         this.hide();
     }
   }

@@ -1,5 +1,5 @@
 // Import the common feedback renderer
-import { renderNBStateFeedback } from './common/feedbackRenderer.js';
+import { renderNBStateFeedback } from '../../common/feedbackRenderer.js';
 
 let DEBUG = true;
 function log(...args) { if (DEBUG) console.log(...args); }

@@ -3,8 +3,8 @@ import type { IRenderMime } from '@jupyterlab/rendermime';
 import type { NotebookStateManager } from '../stateManager';
 import type { JSONObject } from '@lumino/coreutils';
 // Import the common feedback renderer
-import { renderNBStateFeedback } from '../common/feedbackRenderer.js';
-import { debug } from '../common/debug.js';
+import { renderNBStateFeedback } from '../../../common/feedbackRenderer.js';
+import { debug } from '../../../common/debug.js';
 
 export const MIME_TYPE = 'application/x-notebook-state';
 

@@ -1,6 +1,6 @@
-import { ChangeCollator } from './common/changeCollator.js';
+import { ChangeCollator } from '../../common/changeCollator.js';
 
-import { debug } from './common/debug.js';
+import { debug } from '../../common/debug.js';
 const DEBUG_NAMESPACE = 'nb:collator';
 const log = debug(DEBUG_NAMESPACE, 'purple');
 const logError = debug(`${DEBUG_NAMESPACE}:error`, 'red');

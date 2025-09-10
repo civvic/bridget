@@ -1,6 +1,6 @@
 // debugger;
 
-import { debug } from './common/debug.js';
+import { debug } from '../../common/debug.js';
 const log = debug('nb:monitor', 'darkgreen');
 const logError = debug('nb:monitor:error', 'red');
 import { ChangeCollatorLab } from './changeCollatorLab.js'; // <-- Import the Lab-specific collator
@@ -17,7 +17,7 @@ import type { INotebookModel } from '@jupyterlab/notebook';
 import type { NotebookPanel } from '@jupyterlab/notebook';
 import type { ICellModel, ICodeCellModel } from '@jupyterlab/cells';
 import type { IObservableList } from '@jupyterlab/observables';
-import type { Diff } from './common/changeCollator.js'; // Import Diff type
+import type { Diff } from '../../common/changeCollator.js'; // Import Diff type
 
 /**
  * Monitors a notebook for cell changes using a ChangeCollatorLab.
