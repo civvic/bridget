@@ -31,10 +31,11 @@ pnpm install
 pip install -e ".[dev]"
 ```
 
+Note: step 2 is only necessary if you are going to use Jupyter Lab/Notebook. For VSCode, simply install the extension. See below.
 
 ## VSCode Extension Installation
 
-For VSCode and Cursor users, the `nbinspect-vscode` extension must be installed manually. You can find the `.vsix` installation file inside the `packages/nbinspect-vscode` directory. To install, open the Extensions view, click the "..." menu, and select "Install from VSIX...".
+For VSCode and Cursor users, the `nbinspect-vscode` extension must be installed manually. You can find the `.vsix` installation file inside the `packages/nbinspect-vscode` directory. To install, run command `Extensions: install from VSIX...` or open the Extensions view, click the "..." menu, and select "Install from VSIX...".
 
 
 ## Quick Start
@@ -61,11 +62,11 @@ For more detailed examples, review the notebooks in the `nbs/` directory, especi
 
 ## Compatibility and Development
 
-Bridget is developed with [nbdev](https://nbdev.fast.ai/) and requires Python 3.12+. Core dependencies like `fasthtml` and `anywidget` are installed automatically. It is regularly tested on macOS with VSCode, Jupyter Notebook, and JupyterLab, and is expected to function in any environment where `anywidget` is supported. Please note that while most features work in NbClassic, notebook state introspection is not yet implemented for that environment. The project is also expected to work on Windows and Linux.
+Bridget is developed with [nbdev](https://nbdev.fast.ai/) and requires Python 3.12+. Core dependencies like `fasthtml` and `anywidget` are installed automatically. It is regularly tested on macOS with VSCode, Jupyter Notebook, and JupyterLab, and is expected to function in any environment where `anywidget` is supported. Please note that while most features work in NBClassic, notebook state introspection is not yet implemented for that environment.
 
 
 ## Exploring the Codebase
-The project is developed entirely in Jupyter Notebooks using `nbdev`. To understand how it works, explore these key source notebooks in the `nbs/` directory.
+The project is developed entirely in Jupyter Notebooks using `nbdev`. It follows a literate programming approach, meaning the notebooks in `nbs/` are the primary source of truth from which the Python library is generated.
 
 ### FastHTML Foundation
 Bridget's core depends on adapting FastHTML for a serverless environment. **`03_fasthtml_patching.ipynb`** details the minimal modifications made to enable this, while **`04_route_provider.ipynb`** explains the modified routing system allows Bridget to use methods as route endpoints.
@@ -80,16 +81,16 @@ Finally, **`32_bridget.ipynb`** provides the main `Bridget` class and the `get_a
 For practical examples, see **`40_details_json.ipynb`** for an advanced, lazy-loading JSON viewer, **`50_widget.ipynb`** for first steps developing widgets, and the notebooks inside the **`nbs/examples/`** directory for simpler HTMX patterns.
 
 ### Notebook State Introspection
-While optional, Bridget's most powerful features come from its ability to introspect the notebook's state.  **`15_nb_hooks.ipynb`** and **`21_nb_state.ipynb`** implement the core logic for capturing the live state of the notebook—- its structure, cells, content, and metadata.  
+While optional, Bridget's most powerful features will come from its ability to introspect the notebook's state.  **`15_nb_hooks.ipynb`** and **`21_nb_state.ipynb`** implement the core logic for capturing the live state of the notebook—- its structure, cells, content, and metadata.  
 The high-level API for interacting with this state is defined in **`07_nb.ipynb`**. **`21_nb_state.ipynb`** also defines the `Bridge` plugin.
 
 ### Companion Extensions
-The state introspection functionality is powered by two companion extensions located in the `packages/` directory. `nbinspect-lab` serves JupyterLab and Notebook environments, while `nbinspect-vscode` supports VSCode and Cursor. These extensions act as the front-end agents, capturing notebook events and sending them to the Python kernel for processing.
+The state introspection functionality is powered by two companion extensions located in the `packages/` directory. `nbinspect-lab` serves JupyterLab and Notebook environments, while `nbinspect-vscode` supports VSCode and derivations. These extensions act as the front-end agents, capturing notebook events and sending them to the Python kernel for processing.
 
 ## Project Status
 This is an experimental project that integrates Jupyter, FastHTML, and HTMX.  
 
-Its primary goal, inspired by Donald Knuth's concept of Literate Programming, is to create truly dynamic documents where any content (including cell outputs) can be directly edited and interacted with. The project aims to provide a simple and lightweight IDE-like experience within the notebook itself. This enables a wide range of applications, from authoring programs and libraries in the style of `nbdev` to creating sophisticated live context editors for generative models.
+Its primary goal, inspired by Donald Knuth's concept of Literate Programming, is to create truly dynamic documents where any content (including cell outputs) can be directly edited and interacted with. The project aims to provide a simple and lightweight editor-like experience within the notebook itself. This enables a wide range of applications, from authoring programs and libraries in the style of `nbdev` to creating sophisticated live context editors for generative models.
 
 Current status:
 - ✅ Core architecture for serverless HTMX and notebook introspection is functional.
