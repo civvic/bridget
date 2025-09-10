@@ -21,7 +21,7 @@ You can find the installable `nbinspect-*.vsix` file in this directory. To insta
 From the `bridget` repository root, run `pnpm install` to install all JavaScript dependencies for the monorepo, including those for this package.
 
 ```bash
-# In the Bridget/ root directory
+# In the Bridget root directory
 pnpm install
 ```
 
@@ -86,9 +86,22 @@ This file sets up a background task to automatically recompile the extension whe
 
 ### Packaging the Extension
 
-To create a new `.vsix` package for distribution, you may first need to install `@vscode/vsce` globally (`npm install -g @vscode/vsce`). Then, run the packaging command from this directory.
+To create a new `.vsix` package for distribution:
 
-```bash
-# From this directory (packages/nbinspect-vscode):
-vsce package
-```
+1. **Build the extension:**
+   ```bash
+   # From this directory (packages/nbinspect-vscode):
+   pnpm compile
+   ```
+
+2. **Create the package:**
+   ```bash
+   # Install vsce globally if you haven't already
+   npm install -g @vscode/vsce
+   
+   # Package the extension
+   pnpm version patch
+   vsce package
+   ```
+
+This will create a `nbinspect-*.vsix` file in the current directory that can be installed in VSCode/Cursor.

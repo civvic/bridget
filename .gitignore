@@ -160,6 +160,7 @@ _testbed/**
 **/_old/
 nbs/js/htmx-attribute-swap/**
 requirements.txt
+!requirements-dev.txt
 packages/ipynb/**
 packages/nbdev-vscode/**
 packages/nbinspect-vscode/src/_old/**

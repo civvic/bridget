@@ -27,8 +27,8 @@ cd bridget
 # 2. Install JavaScript dependencies for the monorepo
 pnpm install
 
-# 3. Install Python packages and build the extension
-pip install -e ".[dev]"
+# 3. Install Python packages in editable mode
+pip install -r requirements-dev.txt
 ```
 
 Note: step 2 is only necessary if you are going to use Jupyter Lab/Notebook. For VSCode, simply install the extension. See below.

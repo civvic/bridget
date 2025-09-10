@@ -30,7 +30,7 @@ requirements += shlex.split(cfg.get('requirements', ''))
 if cfg.get('pip_requirements'): requirements += shlex.split(cfg.get('pip_requirements', ''))
 min_python = cfg['min_python']
 lic = licenses.get(cfg['license'].lower(), (cfg['license'], None))
-dev_requirements = (cfg.get('dev_requirements') or '').split()
+dev_requirements = shlex.split(cfg.get('dev_requirements', ''))
 project_urls = {}
 if cfg.get('doc_host'): project_urls["Documentation"] = cfg['doc_host'] + cfg.get('doc_baseurl', '')
 

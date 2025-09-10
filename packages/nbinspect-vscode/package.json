@@ -6,14 +6,14 @@
   "publisher": "spikey-summers",
   "repository": {
     "type": "git",
-    "url": "https://github.com/civvic/nb-bridget.git",
-    "directory": "nbinspect-vscode"
+    "url": "https://github.com/civvic/bridget.git",
+    "directory": "packages/nbinspect-vscode"
   },
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/yourusername/bridget/issues"
+    "url": "https://github.com/civvic/bridget/issues"
   },
-  "homepage": "https://github.com/civvic/bridget/tree/main/nbinspect-vscode#readme",
+  "homepage": "https://github.com/civvic/bridget/tree/main/packages/nbinspect-vscode#readme",
   "engines": {
     "vscode": "^1.93.0",
     "node": ">=20.17.0"
@@ -48,6 +48,7 @@
   "scripts": {
     "compile": "node esbuild.js",
     "watch": "node esbuild.js --watch",
+    "clean:all": "rimraf dist *.vsix",
     "lint": "eslint .",
     "test": "mocha",
     "test:watch": "mocha --watch"

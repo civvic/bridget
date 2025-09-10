@@ -53,11 +53,11 @@ ensured-targets = [
 skip-if-exists = ["nbinspect_lab/labextension/static/style.js"]
 
 [tool.hatch.build.hooks.jupyter-builder.build-kwargs]
-build_cmd = "pnpm build:prod"
+build_cmd = "build:prod"
 npm = ["pnpm"]
 
 [tool.hatch.build.hooks.jupyter-builder.editable-build-kwargs]
-build_cmd = "pnpm install:extension"
+build_cmd = "install:extension"
 npm = ["pnpm"]
 source_dir = "src"
 build_dir = "nbinspect_lab/labextension"

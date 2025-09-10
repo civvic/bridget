@@ -4,8 +4,7 @@
   "private": true,
   "packageManager": "pnpm@9.15.0",
   "scripts": {
-    "compile": "node esbuild.js",
-    "watch": "node esbuild.js --watch"
+    "clean": "pnpm -r clean:all"
   },
   "devDependencies": {
     "esbuild": "^0.25.0",
