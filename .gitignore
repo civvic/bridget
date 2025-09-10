@@ -159,6 +159,7 @@ _testbed/**
 .cursor/
 **/_old/
 nbs/js/htmx-attribute-swap/**
+requirements.txt
 packages/ipynb/**
 packages/nbdev-vscode/**
 packages/nbinspect-vscode/src/_old/**
@@ -173,3 +174,5 @@ _notes.md
 SYSTEM.md
 .eslintcache
 .cursorindexingignore
+llms-ctx-full.txt
+llms-ctx.txt
