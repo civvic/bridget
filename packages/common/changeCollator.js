@@ -17,19 +17,30 @@ export class ChangeSummary {
   metadataExecutionCount;
   /** @type {'running' | 'finished' | undefined} Last known execution status */
   executionStatus;
+  /** @type {number | null | undefined} Timestamp of the last change */
+  timestamp;
 
   constructor(initialChangeType) {
-    if (initialChangeType) this[`${initialChangeType}Changed`] = true;
+    this.update(initialChangeType);
+  }
+
+  update(changeType) {
+    if (changeType) {
+      this[`${changeType}Changed`] = true;
+      this.timestamp = Date.now();
+    }
   }
 
   updateExecution(executionStatus) {
     this.executionChanged = true;
     this.executionStatus = executionStatus;
+    this.timestamp = Date.now();
   }
 
   updateMetadata(execution_count) {
     this.metadataChanged = true;
     this.metadataExecutionCount = execution_count;
+    this.timestamp = Date.now();
   }
 }
 
@@ -65,12 +76,34 @@ export class ChangeCollator extends Map {
   }
 
   getSummary(cellIndex, summaryType) {
-    let summary = this.get(cellIndex);
+    let summary = this.get(cellIndex) || this.full.get(cellIndex);
     if (!summary) {
       summary = new ChangeSummary(summaryType);
       this.set(cellIndex, summary);
+    } else {
+      summary.update(summaryType);
     }
     return summary;
+  }
+
+  _setFull(cellIndex, summary) { // Updated parameter type
+    this.full.set(cellIndex, summary);
+    this.delete(cellIndex);  // Remove from pending changes map (this)
+    this.pending.delete(cellIndex);  // Remove from execution pending set
+  }
+
+  /**
+   * Sets a cell change as "full" (completely processed) and cleans up related state
+   * @private
+   * @param {CellIdx} cellIndex - Index of the cell
+   * @param {ChangeSummary} summary - Change summary
+   */
+  #setFull(cellIndex, summary) { // Updated parameter type
+    if (!summary) {
+        // logError(`Attempted to #setFull for cell ${cellIndex} without a summary.`);
+        return;
+    }
+    this._setFull(cellIndex, summary);
   }
 
   /**
@@ -116,6 +149,10 @@ export class ChangeCollator extends Map {
     // Track pending executions
     if (status === 'running') {
       this.pending.add(cellIndex);
+      if (this.full.has(cellIndex)) {
+        this.set(cellIndex, summary);
+        this.full.delete(cellIndex);
+      }
     } else if (status === 'finished') {
       this.#setFull(cellIndex, summary);
       log(`Execution completed cell ${cellIndex}`);
@@ -145,8 +182,10 @@ export class ChangeCollator extends Map {
   _recordOutputsUpdate(cellIndex, change) {
     const summary = this.getSummary(cellIndex, 'outputs');
     if (summary.executionChanged === undefined) {
-      // outputs appear outside of execution cycle (e.g., display handle updates or clear outputs)
-      log(`.... Dangling outputs: cell ${cellIndex} -> full.`);
+      if (!this.full.has(cellIndex)) {
+        // outputs appear outside of execution cycle (e.g., display handle updates or clear outputs)
+        // log(`.... Dangling outputs: cell ${cellIndex} -> full.`);
+      }
       this.#setFull(cellIndex, summary);
     }
   }
@@ -186,8 +225,21 @@ export class ChangeCollator extends Map {
     });
   }
 
+  hasChanges() {
+    // Should generate diff if pending executions are done OR if there are structural/doc changes.
+    return Boolean(this.pending.size === 0 &&
+      (this.documentChanges.size || this.full.size || this.added.length || this.removed.length));
+  }
+
+  /** @returns {CellIdx[]} */
+  #getChanges() {
+    const full = [...this.full.keys()];
+    this.full.clear(); // Clear the processed 'full' state
+    return full;
+  }
+
   get hasDiffs() {
-    return this.#hasChanges() || this.diffs.length > 0;
+    return this.hasChanges() || this.diffs.length > 0;
   }
 
   get isEmpty() {
@@ -196,22 +248,11 @@ export class ChangeCollator extends Map {
             this.diffs.length === 0);
   }
 
-  /** @returns {Diff[]} */
-  getDiffs() {
-    this.addDiff();
-    return this.diffs.splice(0, this.diffs.length);
-  }
-
-  addDiff() {
-    const all = this.#getDiffs();
-    if (all) this.diffs.push(all);
-  }
-
   /**
    * @returns {[CellIdx[], Added[], Removed[], number]}
    */
   #getDiffs() {
-    if (this.#hasChanges()) {
+    if (this.hasChanges()) {
       this.documentChanges.forEach(idx => this.has(idx) && this.#setFull(idx, this.get(idx)));
       this.documentChanges.clear();
       let full = this.#getChanges();
@@ -225,21 +266,15 @@ export class ChangeCollator extends Map {
     }
   }
 
-  /**
-   * Sets a cell change as "full" (completely processed) and cleans up related state
-   * @private
-   * @param {CellIdx} cellIndex - Index of the cell
-   * @param {ChangeSummary} summary - Change summary
-   */
-  #setFull(cellIndex, summary) { // Updated parameter type
-    if (!summary) {
-        // logError(`Attempted to #setFull for cell ${cellIndex} without a summary.`);
-        return;
-    }
-    // log(`Setting cell ${cellIndex} to full.`);
-    this.full.set(cellIndex, summary);
-    this.delete(cellIndex);  // Remove from pending changes map (this)
-    this.pending.delete(cellIndex);  // Remove from execution pending set
+  addDiff() {
+    const all = this.#getDiffs();
+    if (all) this.diffs.push(all);
+  }
+  
+  /** @returns {Diff[]} */
+  getDiffs() {
+    this.addDiff();
+    return this.diffs.splice(0, this.diffs.length);
   }
 
   #clearCell(cellIndex) {
@@ -261,19 +296,6 @@ export class ChangeCollator extends Map {
         for (let i = startIndex; i < endIndex; i++) this.#clearCell(i);
     });
     return { added, removed };
-  }
-
-  #hasChanges() {
-    // Should generate diff if pending executions are done OR if there are structural/doc changes.
-    return Boolean(this.pending.size === 0 &&
-      (this.documentChanges.size || this.full.size || this.added.length || this.removed.length));
-  }
-
-  /** @returns {CellIdx[]} */
-  #getChanges() {
-    const full = [...this.full.keys()];
-    this.full.clear(); // Clear the processed 'full' state
-    return full;
   }
 
   /** Raw events for debugging. */
@@ -301,7 +323,7 @@ export class ChangeCollator extends Map {
     const ll = [];
     const formatChanges = (arr, type) => arr.map(c => `${type} ${JSON.stringify(c)}`).join('\n  ');
 
-    log(`**** VSCode Collator Summary ****`);
+    log(`**** Collator Summary ****`);
     if (baseSummary.diffs.length > 0) ll.push(`Diffs Queued: ${baseSummary.diffs.length}`);
     if (this.documentChanges.size > 0) ll.push(`Pending Doc Changes: ${[...this.documentChanges].toString()}`);
     if (baseSummary.pending.length > 0) ll.push(`Pending Execution: ${baseSummary.pending.toString()}`);

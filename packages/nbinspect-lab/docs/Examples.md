@@ -55,8 +55,8 @@ class StateObserverWidget(anywidget.AnyWidget):
             }
             
             // Subscribe to state changes
-            if (window.$Ren) {
-                const cleanup = window.$Ren.addStateObserver(onStateChange);
+            if (window.$Nb) {
+                const cleanup = window.$Nb.addStateObserver(onStateChange);
                 return cleanup; // Return cleanup function
             }
         }
@@ -88,9 +88,9 @@ class StateRequestWidget(anywidget.AnyWidget):
             const button = document.createElement('button');
             button.textContent = 'Get Full State';
             button.onclick = async () => {
-                if (window.$Ren) {
+                if (window.$Nb) {
                     try {
-                        const state = await window.$Ren.aupdate({
+                        const state = await window.$Nb.aupdate({
                             id: Date.now().toString(),
                             update: 'full'
                         });

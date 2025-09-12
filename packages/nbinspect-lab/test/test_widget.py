@@ -8,7 +8,7 @@ import ipywidgets as widgets
 
 def create_test_widget():
     """
-    Create a test widget that demonstrates the global $Ren API.
+    Create a test widget that demonstrates the global $Nb API.
     """
     
     # Create output widget to show state changes
@@ -38,15 +38,15 @@ def create_test_widget():
         }
         
         function checkAPI() {
-            if (window.$Ren) {
+            if (window.$Nb) {
                 statusEl.textContent = 'API Available';
                 statusEl.style.color = 'green';
-                log('✓ Global $Ren API is available');
+                log('✓ Global $Nb API is available');
                 return true;
             } else {
                 statusEl.textContent = 'API Not Available';
                 statusEl.style.color = 'red';
-                log('✗ Global $Ren API not found');
+                log('✗ Global $Nb API not found');
                 return false;
             }
         }
@@ -58,7 +58,7 @@ def create_test_widget():
         document.getElementById('get-state').onclick = function() {
             if (!checkAPI()) return;
             
-            const state = window.$Ren.getNBState();
+            const state = window.$Nb.getNBState();
             if (state) {
                 log(`Current state: ${state.type} with ${state.nbData?.cellCount || 'unknown'} cells`);
                 log(`Timestamp: ${new Date(state.timestamp).toLocaleString()}`);
@@ -76,7 +76,7 @@ def create_test_widget():
                 return;
             }
             
-            cleanup = window.$Ren.addStateObserver(function(state) {
+            cleanup = window.$Nb.addStateObserver(function(state) {
                 log(`📢 State change: ${state.type}`);
                 if (state.type === 'diffs') {
                     log(`   Changes: ${state.changes?.length || 0}`);

@@ -1,10 +1,10 @@
 import { Widget } from '@lumino/widgets';
 import type { IRenderMime } from '@jupyterlab/rendermime';
-import type { NotebookStateManager } from '../stateManager';
 import type { JSONObject } from '@lumino/coreutils';
 // Import the common feedback renderer
 import { renderNBStateFeedback } from '../../../common/feedbackRenderer.js';
 import { debug } from '../../../common/debug.js';
+import type { DiffsMessage, StateMessage, MIMEMessage } from '../types';
 
 export const MIME_TYPE = 'application/x-notebook-state';
 
@@ -17,33 +17,43 @@ export class NotebookStateMimeRenderer
   implements IRenderMime.IRenderer
 {
   private _mimeType: string;
-  private _stateManager: NotebookStateManager;
-  private _options: any = { feedback: true, hide: false, debug: false };
+  private _options: any = { feedback: true, hide: false, debug: true };
+  private _stateObserverDisconnect: (() => void) | null = null;
 
   constructor(options: {
     mimeType: string;
-    stateManager: NotebookStateManager;
   }) {
     super();
     this._mimeType = options.mimeType;
-    this._stateManager = options.stateManager;
-    
     // Set up initial display
     this.node.innerHTML = '<div>NBState Renderer: Waiting for data...</div>';
-    
-    // Listen for state changes to display feedback
-    this._stateManager.stateChanged.connect(this._onStateChanged, this);
+    // Subscribe to state changes via window.$Nb (like Python widgets do)
+    this._subscribeToStateChanges();
   }
 
   /**
-   * Handle state changes from the state manager.
+   * Subscribe to state changes using the global $Nb API
    */
-  private _onStateChanged(
-    sender: NotebookStateManager,
-    message: any
-  ): void {
-    if (message && this._options.feedback) {
-      // Use the common feedback renderer to display rich feedback
+  private _subscribeToStateChanges(): void {
+    // Check if $Nb is available (active notebook monitor sets it up)
+    const $Nb = (window as any).$Nb;
+    if ($Nb && $Nb.addStateObserver) {
+      this._stateObserverDisconnect = $Nb.addStateObserver(
+        (state: DiffsMessage | StateMessage) => {
+          this._onStateChanged(state);
+        }
+      );
+    } else {
+      // $Nb not available yet, try again later
+      setTimeout(() => this._subscribeToStateChanges(), 100);
+    }
+  }
+
+  /**
+   * Handle state changes from the active notebook's monitor
+   */
+  private _onStateChanged(message: DiffsMessage | StateMessage): void {
+    if (message) {
       const feedbackHTML = renderNBStateFeedback(message, this._options);
       this.node.innerHTML = feedbackHTML;
     }
@@ -56,10 +66,8 @@ export class NotebookStateMimeRenderer
    */
   renderModel(model: IRenderMime.IMimeModel): Promise<void> {
     const data = model.data[this._mimeType] as JSONObject;
-
     if (data) {
       debug.enabled && console.log('Received data for custom MIME renderer:', data);
-      
       // Handle configuration from Python
       if (typeof data.feedback === 'boolean') {
         this._options.feedback = data.feedback;
@@ -71,35 +79,25 @@ export class NotebookStateMimeRenderer
         this._options.debug = data.debug;
         debug.enable('nb:*', this._options.debug);
       }
-      
-      // Update display with current state if available
-      const currentState = this._stateManager.currentState;
-      if (currentState) {
-        const feedbackHTML = renderNBStateFeedback(currentState, this._options);
-        this.node.innerHTML = feedbackHTML;
+      if (typeof data.update === 'string') {
+        if (data.update === 'full') {
+          const $Nb = (window as any).$Nb;
+            if ($Nb && $Nb.update) {
+              $Nb.update(data);
+            }
+        }
       }
-      // if (currentState && this._options.feedback) {
-      //   const feedbackHTML = renderNBStateFeedback(currentState, this._options);
-      //   this.node.innerHTML = feedbackHTML;
-      // } else {
-      //   this.node.innerHTML = `
-      //     <div>
-      //       <h4>NBState Configuration Updated</h4>
-      //       <p>Options: ${JSON.stringify(this._options, null, 2)}</p>
-      //       ${this._options.feedback ? '<p>Feedback enabled - waiting for notebook changes...</p>' : '<p>Feedback disabled</p>'}
-      //     </div>
-      //   `;
-      // }
+      // Note: don't render current state here to avoid double rendering
+      // _onStateChanged will handle it when state changes of this cell occur
     }
-
     return Promise.resolve();
   }
 
-  /**
-   * Dispose of the renderer.
-   */
   dispose(): void {
-    this._stateManager.stateChanged.disconnect(this._onStateChanged, this);
+    if (this._stateObserverDisconnect) {
+      this._stateObserverDisconnect();
+      this._stateObserverDisconnect = null;
+    }
     super.dispose();
   }
-} 
+}

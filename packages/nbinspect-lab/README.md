@@ -4,7 +4,7 @@
 
 ## Features
 
-The extension actively monitors the notebook and provides a front-end API for its findings. Key features include tracking changes to the notebook's cell structure and content, monitoring cell execution status, and providing visual feedback through a custom MIME renderer. All state changes are broadcast via a global `window.$Ren` API that front-end components can subscribe to.
+The extension actively monitors the notebook and provides a front-end API for its findings. Key features include tracking changes to the notebook's cell structure and content, monitoring cell execution status, and providing visual feedback through a custom MIME renderer. All state changes are broadcast via a global `window.$Nb` API that front-end components can subscribe to.
 
 ## Requirements
 *   JupyterLab >= 4.0.0 or Notebook >= 7.0
@@ -21,7 +21,7 @@ Alternatively, you can install this extension standalone from its directory:
 pip install -e .
 ```
 
-**Note on Standalone Usage:** While `nbinspect-lab` is part of Bridget, it has no direct dependency on the Python package and can be used in isolation. If you choose this path, you are responsible for creating your own front-end widget to subscribe to the state change events provided by the extension's `window.$Ren` API.
+**Note on Standalone Usage:** While `nbinspect-lab` is part of Bridget, it has no direct dependency on the Python package and can be used in isolation. If you choose this path, you are responsible for creating your own front-end widget to subscribe to the state change events provided by the extension's `window.$Nb` API.
 
 ## Uninstalling
 

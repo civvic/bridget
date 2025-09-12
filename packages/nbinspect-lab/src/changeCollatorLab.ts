@@ -1,4 +1,5 @@
 import { ChangeCollator } from '../../common/changeCollator.js';
+import type { ChangeSummary, Diff } from './types.js';
 
 import { debug } from '../../common/debug.js';
 const DEBUG_NAMESPACE = 'nb:collator';
@@ -50,6 +51,33 @@ export class ChangeCollatorLab extends ChangeCollator {
   /** The JupyterLab notebook model */
   private _model: INotebookModel;
 
+  declare documentChanges: Set<number>;
+  declare added: any[];
+  declare removed: any[];
+  declare full: Map<number, any>;
+
+  declare getSummary: (cellIndex: number, summaryType: string) => ChangeSummary;
+  declare _recordCellAddition: (args: { startIndex: number, addedCellIndexes: number[] }) => void;
+  declare _recordCellRemoval: (args: { startIndex: number, endIndex: number, removedCount: number }) => void;
+  declare _recordNotebookMetadataChange: (args: { metadata: any }) => void;
+  declare _recordCellMetadataChange: (cellIndex: number, metadata: any) => void;
+  declare _recordOutputsUpdate: (cellIndex: number, outputsChange: any) => void;
+  declare _recordExecutionUpdate: (cellIndex: number, executionStatus: string) => void;
+  declare setDocumentChanges: (cellIdxs: number[]) => void;
+  declare _setFull: (cellIndex: number, summary: any) => void;
+  declare addDiff: () => void;
+  declare getDiffs: () => Diff[];
+
+  declare readonly isEmpty: boolean;
+
+  declare pending: Set<number>;
+  declare cellCount: number;
+
+  // Map methods (inherited from Map via ChangeCollator)
+  declare keys: () => IterableIterator<number>;
+  declare delete: (key: number) => boolean;
+  declare get: (key: number) => any;
+  
   /**
    * Creates an instance of ChangeCollatorLab.
    * @param model The notebook model to monitor.
@@ -103,36 +131,47 @@ export class ChangeCollatorLab extends ChangeCollator {
     
     if (executionCountChange) {
       const count = executionCountChange?.newValue ?? (cellModel as any).execution_count;
-      (this as any)._recordCellMetadataChange(cellIndex, { execution_count: count });
+      this._recordCellMetadataChange(cellIndex, { execution_count: count });
     }
-    if (outputsChange) (this as any)._recordOutputsUpdate(cellIndex, outputsChange);
+    if (outputsChange) this._recordOutputsUpdate(cellIndex, outputsChange);
     if (executionStateChange) {
       const newState = executionStateChange.newValue;
       const oldState = executionStateChange.oldValue;
       
-      // Refined execution state mapping to handle complete JupyterLab kernel state range
+      // execution state mapping to handle complete JupyterLab kernel state range
       // Reference: https://jupyterlab.readthedocs.io/en/latest/api/modules/services.kernel.html
       // Valid states: "unknown" | "starting" | "idle" | "busy" | "terminating" | "restarting" | "autorestarting" | "dead"
-      
-      if (this._isExecutionActiveState(newState)) {
+      if (newState === 'idle' && oldState === undefined) {
+        // clear output probably
+        this._recordExecutionUpdate(cellIndex, 'finished');
+        log(`Cell #${cellIndex}: Execution idle (no previous state)`);
+        // const summary = this.getSummary(cellIndex, 'execution');
+        // if (summary) {
+        //   this._setFull(cellIndex, summary);
+        //   log(`Cell #${cellIndex}: Execution idle (no previous state)`);
+        // } else {
+        //   this._setFull(cellIndex, summary);
+        //   log(`Cell #${cellIndex}: Unhandled execution state transition (${oldState} → ${newState})`);
+        // }
+      } else if (this._isExecutionActiveState(newState)) {
         // States indicating execution is active/starting
-        (this as any)._recordExecutionUpdate(cellIndex, 'running');
-        log(`Cell #${cellIndex}: Execution started (${oldState} → ${newState})`);
+        this._recordExecutionUpdate(cellIndex, 'running');
+        log(`#${cellIndex}: exe started (${oldState} → ${newState})`);
       } else if (this._isExecutionFinishedState(newState, oldState)) {
         // States indicating execution completed (successfully or with error)
-        (this as any)._recordExecutionUpdate(cellIndex, 'finished');
-        log(`Cell #${cellIndex}: Execution finished (${oldState} → ${newState})`);
+        this._recordExecutionUpdate(cellIndex, 'finished');
+        log(`#${cellIndex}: exe finished (${oldState} → ${newState})`);
       } else if (this._isExecutionInterruptedState(newState, oldState)) {
         // States indicating execution was interrupted/failed
-        (this as any)._recordExecutionUpdate(cellIndex, 'finished');
-        log(`Cell #${cellIndex}: Execution interrupted/failed (${oldState} → ${newState})`);
+        this._recordExecutionUpdate(cellIndex, 'finished');
+        log(`#${cellIndex}: exe interrupted/failed (${oldState} → ${newState})`);
       } else {
         // Log unhandled state transitions for debugging
-        log(`Cell #${cellIndex}: Unhandled execution state transition (${oldState} → ${newState})`);
+        log(`#${cellIndex}: Unhandled exe state transition (${oldState} → ${newState})`);
       }
     }
     if (attachmentsChange) {
-      log(`Cell #${cellIndex}: Attachments changed (not processed by base class)`);
+      log(`#${cellIndex}: Attachments changed (not processed by base class)`);
     }
   }
 
@@ -151,14 +190,14 @@ export class ChangeCollatorLab extends ChangeCollator {
         if (validAddedIndexes.length !== newValues.length) {
             logError('Could not find indexes for all added cells.');
         }
-        (this as any)._recordCellAddition({ startIndex: newIndex, addedCellIndexes: validAddedIndexes });
+        this._recordCellAddition({ startIndex: newIndex, addedCellIndexes: validAddedIndexes });
         break;
       }
 
       case 'remove': {
         const removedCount = oldValues.length;
         const endIndex = oldIndex + removedCount;
-        (this as any)._recordCellRemoval({ startIndex: oldIndex, endIndex: endIndex, removedCount: removedCount });
+        this._recordCellRemoval({ startIndex: oldIndex, endIndex: endIndex, removedCount: removedCount });
         break;
       }
 
@@ -238,12 +277,11 @@ export class ChangeCollatorLab extends ChangeCollator {
    * but are actually in an inconsistent state (empty, no outputs, no execution count).
    */
   cleanup(): void {
-    const indexes = [...(this as any).keys()];
-    let cleanedCount = 0;
+    const indexes = [...this.keys()];
+    const cleaned = [];
     
     indexes.forEach(idx => {
-      const summary = (this as any).get(idx);
-      
+      const summary = this.get(idx);
       // Check if the summary represents a potentially dangling execution state:
       if (summary && summary.executionChanged && summary.executionStatus === 'running') {
         try {
@@ -261,31 +299,29 @@ export class ChangeCollatorLab extends ChangeCollator {
             
             if (!hasOutputs && !hasExecutionCount && !hasContent) {
               log(`Cleaning up dangling summary for empty cell ${idx}`);
-              (this as any).delete(idx);
-              (this as any).pending.delete(idx);
-              cleanedCount++;
+              this.delete(idx);
+              this.pending.delete(idx);
+              cleaned.push(idx);
             }
           } else {
             // Cell no longer exists in the model - definitely dangling
             logError(`Cell ${idx} no longer exists in model during cleanup`);
-            (this as any).delete(idx);
-            (this as any).pending.delete(idx);
-            cleanedCount++;
+            this.delete(idx);
+            this.pending.delete(idx);
+            cleaned.push(idx);
           }
         } catch (e) {
           logError(`Error accessing cell ${idx} during cleanup:`, e);
           // If we can't access the cell, assume it's dangling and remove it
-          (this as any).delete(idx);
-          (this as any).pending.delete(idx);
-          cleanedCount++;
+          this.delete(idx);
+          this.pending.delete(idx);
+          cleaned.push(idx);
         }
       }
     });
     
-    if (cleanedCount > 0) {
-      log(`ChangeCollatorLab cleanup: Removed ${cleanedCount} dangling summaries`);
-    } else {
-      log('ChangeCollatorLab cleanup: No dangling summaries found');
+    if (cleaned.length > 0) {
+      log(`ChangeCollatorLab cleanup: Removed ${cleaned.length} dangling summaries`);
     }
   }
 
@@ -295,7 +331,7 @@ export class ChangeCollatorLab extends ChangeCollator {
    */
   showSummary(): void {
     if (!log.enabled) return;
-    log('**** ChangeCollatorLab Summary ****');
+    // log('**** ChangeCollatorLab Summary ****');
     // Call the base class showSummary method
     super.showSummary();
   }
@@ -312,22 +348,22 @@ export class ChangeCollatorLab extends ChangeCollator {
       return this;
     }
     
-    const t = timestamp ?? Date.now();
-    if (log.enabled) {
-      log('Processing unified Lab event:', JSON.stringify({
-        cellChanges: evt.cellChanges?.length || 0,
-        contentChanges: evt.contentChanges?.length || 0,
-        hasMetadata: !!evt.metadata,
-        timestamp: t
-      }));
-    }
+    // if (log.enabled) {
+    //   const t = timestamp ?? Date.now();
+    //   log('Processing unified Lab event:', JSON.stringify({
+    //     cellChanges: evt.cellChanges?.length || 0,
+    //     contentChanges: evt.contentChanges?.length || 0,
+    //     hasMetadata: !!evt.metadata,
+    //     timestamp: t
+    //   }));
+    // }
     
     try {
       const { metadata, contentChanges, cellChanges } = evt;
       
       // 1. Handle Notebook-level metadata changes
       if (metadata) {
-        (this as any)._recordNotebookMetadataChange({ metadata });
+        this._recordNotebookMetadataChange({ metadata });
       }
       
       // 2. Handle Content Changes (Cell Add/Remove/Move)
@@ -338,9 +374,9 @@ export class ChangeCollatorLab extends ChangeCollator {
         
         // Verify cell count consistency
         const currentCellCount = this._model.cells.length;
-        if ((this as any).cellCount !== currentCellCount) {
-          log(`Cell count mismatch (${(this as any).cellCount} vs ${currentCellCount}). Forcing diff.`);
-          (this as any).addDiff(); // Trigger diff check due to potential structural change
+        if (this.cellCount !== currentCellCount) {
+          log(`Cell count mismatch (${this.cellCount} vs ${currentCellCount}). Forcing diff.`);
+          this.addDiff(); // Trigger diff check due to potential structural change
         }
       }
       
@@ -354,9 +390,9 @@ export class ChangeCollatorLab extends ChangeCollator {
       
       // 4. Final cell count verification
       const finalCellCount = this._model.cells.length;
-      if ((this as any).cellCount !== finalCellCount) {
-        log(`Final cell count mismatch (${(this as any).cellCount} vs ${finalCellCount}). Forcing diff.`);
-        (this as any).addDiff();
+      if (this.cellCount !== finalCellCount) {
+        log(`Final cell count mismatch (${this.cellCount} vs ${finalCellCount}). Forcing diff.`);
+        this.addDiff();
       }
       
     } catch (error) {
@@ -375,4 +411,15 @@ export class ChangeCollatorLab extends ChangeCollator {
     evts.forEach(evt => this.addEvent(evt));
     return this;
   }
-} 
+
+  hasChanges() {
+    // Should generate diff if there are full changes OR if there are structural/doc changes.
+    return (this.documentChanges.size || this.full.size || this.added.length || this.removed.length);
+  }
+
+  get hasDiffs() {
+    this.addDiff();
+    return super.hasDiffs;
+  }
+
+}

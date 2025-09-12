@@ -1,6 +1,6 @@
 import { Widget } from '@lumino/widgets';
-import { INotebookTracker } from '@jupyterlab/notebook';
-import { NotebookStateManager } from '../stateManager';
+import type { NotebookPanel } from '@jupyterlab/notebook';
+import type { NotebookMonitor } from '../notebookMonitor';
 import type { DiffsMessage, StateMessage } from '../types';
 // Import the common feedback renderer
 import { renderStatusText } from '../../../common/feedbackRenderer.js';
@@ -11,69 +11,86 @@ const NBSTATE_STATUS_CLASS = 'jp-NotebookState-status';
  * A widget for displaying notebook state in the status bar.
  */
 export class NotebookStateStatusWidget extends Widget {
-  private _stateManager: NotebookStateManager;
-  private _notebookTracker: INotebookTracker;
+  private _stateChangedDisconnect: (() => void) | null = null;
 
-  constructor(
-    stateManager: NotebookStateManager,
-    notebookTracker: INotebookTracker
-  ) {
+  constructor() {
     super();
     this.addClass(NBSTATE_STATUS_CLASS);
     this.node.textContent = 'NBState: Ready';
-
-    this._stateManager = stateManager;
-    this._notebookTracker = notebookTracker;
-
-    this._stateManager.stateChanged.connect(this._onStateChanged, this);
-    this._notebookTracker.currentChanged.connect(this._onActiveNotebookChanged, this);
-
-    this._onActiveNotebookChanged(); // Set initial state
+    this._updateDisplay(null); // Set initial state
   }
 
   /**
-   * Handle state changes from the state manager.
+   * Called by the plugin when the active notebook changes.
+   * @param panel - The new active notebook panel (or null if none)
+   * @param currentMonitor - The current active monitor (or null if none)
    */
-  private _onStateChanged(
-    sender: NotebookStateManager,
-    message: DiffsMessage | StateMessage | null
+  public onActiveNotebookChanged(
+    panel: NotebookPanel | null,
+    currentMonitor: NotebookMonitor | null
   ): void {
-    if (!message || message.origin !== this._notebookTracker.currentWidget?.context.path) {
-      return; // Ignore if message is for a non-active notebook
+    // Disconnect from previous monitor
+    if (this._stateChangedDisconnect) {
+      this._stateChangedDisconnect();
+      this._stateChangedDisconnect = null;
+    }
+
+    if (currentMonitor) {
+      // Connect to this monitor's state changes
+      currentMonitor.stateChanged.connect(this._onStateChanged, this);
+      
+      // Store disconnect function
+      this._stateChangedDisconnect = () => {
+        currentMonitor.stateChanged.disconnect(this._onStateChanged, this);
+      };
     }
     
-    // Use the common feedback renderer for consistent status text
+    this._updateDisplay(panel);
+  }
+
+  /**
+   * Handle state changes from the active monitor.
+   */
+  private _onStateChanged(sender: NotebookMonitor, message: DiffsMessage | StateMessage): void {
     const statusText = renderStatusText(message);
     const span = this.node.querySelector('.jp-StatusBar-TextItem') as HTMLElement;
     if (span) {
       span.textContent = statusText;
       span.title = statusText;
     }
-
-    // Add a flash animation to indicate an update
+    
+    // Add flash animation
     this.node.classList.add('jp-mod-highlighted');
     setTimeout(() => this.node.classList.remove('jp-mod-highlighted'), 800);
   }
 
   /**
-   * Update the status when the active notebook changes.
+   * Update the display based on the current active notebook.
    */
-  private _onActiveNotebookChanged(): void {
-    const current = this._notebookTracker.currentWidget;
-    if (current) {
-        const text = `NBState: Monitoring ${current.context.path.split('/').pop()}`
-        this.node.innerHTML = `<span class="jp-StatusBar-TextItem" title="${text}" tabindex="0">${text}</span>`;
-        this.show();
+  private _updateDisplay(panel: NotebookPanel | null): void {
+    const text = panel 
+      ? `NBState: Monitoring ${panel.context.path.split('/').pop()}`
+      : 'NBState: No active notebook';
+    
+    // Create proper status bar structure
+    this.node.innerHTML = `<span class="jp-StatusBar-TextItem" title="${text}" tabindex="0">${text}</span>`;
+    
+    if (panel) {
+      this.show();
     } else {
-        const text = 'NBState: No active notebook';
-        this.node.innerHTML = `<span class="jp-StatusBar-TextItem" title="${text}" tabindex="0">${text}</span>`;
-        this.hide();
+      this.hide();
     }
   }
 
-  dispose() {
-    this._stateManager.stateChanged.disconnect(this._onStateChanged, this);
-    this._notebookTracker.currentChanged.disconnect(this._onActiveNotebookChanged, this);
+  /**
+   * Dispose of the status widget.
+   */
+  dispose(): void {
+    // Disconnect from current monitor
+    if (this._stateChangedDisconnect) {
+      this._stateChangedDisconnect();
+      this._stateChangedDisconnect = null;
+    }
     super.dispose();
   }
-} 
+}

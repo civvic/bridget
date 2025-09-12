@@ -2,11 +2,11 @@
 
 ## Overview
 
-The NBInspect Lab extension provides a global `$Ren` API for Python widgets to monitor and interact with notebook state changes. This API maintains compatibility with the VSCode extension.
+The NBInspect Lab extension provides a global `$Nb` API for Python widgets to monitor and interact with notebook state changes. This API maintains compatibility with the VSCode extension.
 
-## Global API: `window.$Ren`
+## Global API: `window.$Nb`
 
-The `$Ren` object is available in the browser's global scope and provides the following methods:
+The `$Nb` object is available in the browser's global scope and provides the following methods:
 
 ### `addStateObserver(callback)`
 Subscribe to notebook state changes.
@@ -19,7 +19,7 @@ Subscribe to notebook state changes.
 
 **Example:**
 ```javascript
-const unsubscribe = window.$Ren.addStateObserver((state) => {
+const unsubscribe = window.$Nb.addStateObserver((state) => {
     console.log('Notebook state changed:', state);
 });
 
@@ -94,7 +94,7 @@ Configuration for update requests:
 ### Basic State Monitoring
 ```javascript
 // Subscribe to all state changes
-const cleanup = window.$Ren.addStateObserver((state) => {
+const cleanup = window.$Nb.addStateObserver((state) => {
     if (state.type === 'diffs') {
         console.log('Incremental changes:', state.changes);
     } else if (state.type === 'state') {
@@ -106,14 +106,14 @@ const cleanup = window.$Ren.addStateObserver((state) => {
 ### Request State Updates
 ```javascript
 // Synchronous update request
-window.$Ren.update({
+window.$Nb.update({
     id: 'my-request-1',
     update: 'full',
     feedback: true
 });
 
 // Asynchronous update request
-const state = await window.$Ren.aupdate({
+const state = await window.$Nb.aupdate({
     id: 'my-request-2', 
     update: 'diff'
 });
