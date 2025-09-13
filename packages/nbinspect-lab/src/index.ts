@@ -18,9 +18,7 @@ import { debug } from '../../common/debug.js';
 const log = debug('nb:ext', 'blue');
 const logError = debug('nb:ext:error', 'red');
 
-/**
- * The plugin registration information.
- */
+
 const plugin: JupyterFrontEndPlugin<void> = {
   id: '@bridget/lab-inspect:plugin',
   description: 'A JupyterLab extension for notebook state monitoring.',
@@ -35,7 +33,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
   ) => {
     console.log('JupyterLab extension @bridget/lab-inspect is activated!');
 
-    // Map to track monitors for each notebook
+    // Map to track monitors for each document context (not panels!)
     const monitors = new Map<string, NotebookMonitor>();
     
     // Track currently active monitor
@@ -67,7 +65,8 @@ const plugin: JupyterFrontEndPlugin<void> = {
       
       // 2. Activate new monitor (if any)
       if (panel) {
-        const newMonitor = monitors.get(panel.id);
+        const contextPath = panel.context.path;
+        const newMonitor = monitors.get(contextPath);
         if (newMonitor) {
           newMonitor.setActive();
           currentActiveMonitor = newMonitor;
@@ -91,36 +90,40 @@ const plugin: JupyterFrontEndPlugin<void> = {
         })
     });
 
-    // Listen for notebook creation
+    // Listen for notebook panel creation - but only to detect new contexts
     notebookTracker.widgetAdded.connect((sender, panel) => {
-      const id = panel.id;
-      console.log(`Notebook added, waiting for context to be ready: ${id}`);
-
       void panel.context.ready.then(() => {
-        console.log(`Notebook context ready: ${id}`);
+        const contextPath = panel.context.path;
         
-        // Create monitor for this notebook (no stateManager needed)
-        const monitor = new NotebookMonitor(panel);
-        monitors.set(id, monitor);
+        // Check if we already have a monitor for this document context
+        if (!monitors.has(contextPath)) {
+          console.log(`Creating monitor for new document: ${contextPath}`);
+          
+          // Create monitor for this document context
+          const monitor = new NotebookMonitor(panel.context);
+          monitors.set(contextPath, monitor);
 
-        // If this is the first/only notebook, make it active
-        if (monitors.size === 1 || notebookTracker.currentWidget === panel) {
-          handleActiveNotebookChanged(panel);
+          // Listen for context disposal (when document is closed completely)
+          panel.context.disposed.connect(() => {
+            console.log(`Document context disposed: ${contextPath}`);
+            
+            // If disposing the active monitor, clear active state
+            if (currentActiveMonitor === monitor) {
+              handleActiveNotebookChanged(null);
+            }
+            
+            // Dispose monitor and clean up
+            monitor.dispose();
+            monitors.delete(contextPath);
+          });
+        } else {
+          console.log(`Document ${contextPath} already has monitor - multiple views detected`);
         }
 
-        // Listen for this specific panel's disposal
-        panel.disposed.connect(() => {
-          console.log(`Notebook disposed: ${id}`);
-
-          // If disposing the active monitor, clear active state
-          if (currentActiveMonitor === monitor) {
-            handleActiveNotebookChanged(null);
-          }
-
-          // Dispose monitor for this notebook
-          monitor.dispose();
-          monitors.delete(id);
-        });
+        // If this is the active notebook, make its monitor active
+        if (notebookTracker.currentWidget === panel) {
+          handleActiveNotebookChanged(panel);
+        }
       });
     });
 
@@ -129,10 +132,6 @@ const plugin: JupyterFrontEndPlugin<void> = {
       handleActiveNotebookChanged(panel);
     });
 
-    // Clean up on app shutdown
-    app.restored.then(() => {
-      console.log('Lab inspect extension: App restored');
-    });
   }
 };
 

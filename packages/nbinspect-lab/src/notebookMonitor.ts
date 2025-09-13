@@ -1,4 +1,11 @@
 // debugger;
+import type { INotebookModel } from '@jupyterlab/notebook';
+import type { NotebookPanel } from '@jupyterlab/notebook';
+import type { ICellModel, ICodeCellModel } from '@jupyterlab/cells';
+import type { IObservableList } from '@jupyterlab/observables';
+import type { DocumentRegistry } from '@jupyterlab/docregistry';
+import type { Diff } from '../../common/changeCollator.js'; // Import Diff type
+import { ISignal, Signal } from '@lumino/signaling';
 
 import { debug } from '../../common/debug.js';
 const log = debug('nb:monitor', 'darkgreen');
@@ -14,21 +21,15 @@ import type {
   NBStateAPI
 } from './types.js';
 
-import type { INotebookModel } from '@jupyterlab/notebook';
-import type { NotebookPanel } from '@jupyterlab/notebook';
-import type { ICellModel, ICodeCellModel } from '@jupyterlab/cells';
-import type { IObservableList } from '@jupyterlab/observables';
-import type { Diff } from '../../common/changeCollator.js'; // Import Diff type
-import { ISignal, Signal } from '@lumino/signaling';
 
 /**
- * Monitors a notebook for cell changes using a ChangeCollatorLab.
+ * Monitors a notebook document context for cell changes using a ChangeCollatorLab.
+ * This monitor tracks the document/model, not specific UI panels.
  */
 export class NotebookMonitor {
-  private _panel: NotebookPanel | null = null;
-  private _model: INotebookModel | null = null;
-  private _notebook: NotebookPanel['content'] | null = null;
-  private _changeCollator: ChangeCollatorLab | null = null;
+  private _context: DocumentRegistry.IContext<INotebookModel>;
+  private _model: INotebookModel;
+  private _changeCollator: ChangeCollatorLab;
   
   // State management
   private _stateChanged = new Signal<this, DiffsMessage | StateMessage>(this);
@@ -59,16 +60,14 @@ export class NotebookMonitor {
   private _debounceDelay = 500; // Default delay, adjust as needed
 
   /** Creates an instance of NotebookMonitor.
-   * @param panel - The notebook panel to monitor
-   * @param stateManager - The global state manager
+   * @param context - The document context to monitor
    */
-  constructor(panel: NotebookPanel) {
-    this._panel = panel;
-    this._model = panel?.model;
-    this._notebook = panel?.content;
+  constructor(context: DocumentRegistry.IContext<INotebookModel>) {
+    this._context = context;
+    this._model = context.model;
 
-    if (!this._model || !this._notebook) {
-      logError('Notebook model or notebook content not available at monitor creation!');
+    if (!this._model) {
+      logError('Notebook model not available at monitor creation!');
       return;
     }
     
@@ -77,7 +76,7 @@ export class NotebookMonitor {
     this._connectSignals();
     this._sendInitialState();
     
-    // log('NotebookMonitor: Attached to notebook panel');
+    log(`NotebookMonitor: Attached to document ${context.path}`);
   }
 
   /**
@@ -87,23 +86,18 @@ export class NotebookMonitor {
     return this._stateChanged;
   }
 
-  /**
-   * Current state of this notebook
-   */
   get currentState(): DiffsMessage | StateMessage | null {
     return this._currentState;
   }
 
-  /**
-   * Whether this monitor is for the active notebook
-   */
   get isActive(): boolean {
     return this._isActive;
   }
 
-  /**
-   * Creates the $Nb API for this notebook
-   */
+  public getContextPath(): string {
+    return this._context.path;
+  }
+
   private _createNbAPI(): void {
     this._nbAPI = {
       addStateObserver: (callback: (state: DiffsMessage | StateMessage) => void) => {
@@ -174,7 +168,7 @@ export class NotebookMonitor {
     w.$Nb = this._nbAPI;
     if (this._bridge) w.bridge = this._bridge;
     if (this._brdimport) w.brdimport = this._brdimport;
-    log(`Monitor for ${this._panel.context.path.split('/').pop()} is now active`);
+    log(`Monitor for ${this._context.path.split('/').pop()} is now active`);
   }
 
   /**
@@ -182,7 +176,7 @@ export class NotebookMonitor {
    */
   public setInactive(): void {
     this._isActive = false;
-    log(`Monitor for ${this._panel.context.path.split('/').pop()} is now inactive`);
+    log(`Monitor for ${this._context.path.split('/').pop()} is now inactive`);
     const w = window as Window;
     this._bridge = w.bridge;
     this._brdimport = w.brdimport;
@@ -192,7 +186,7 @@ export class NotebookMonitor {
   }
 
   /**
-   * Updates the state and emits a change signal (moved from StateManager)
+   * Updates the state and emits a change signal
    */
   private updateState(message: DiffsMessage | StateMessage): void {
     this._currentState = message;
@@ -202,36 +196,12 @@ export class NotebookMonitor {
   /** Connects to the notebook's signals.
    */
   private _connectSignals(): void {
-    if (!this._notebook || !this._model) return;
-    
-    // Listen for notebook state changes (selection, mode changes)
-    this._notebook.stateChanged.connect(this._onNotebookStateChanged, this);
-    
+    if (!this._model) return;
+  
     // Listen for cells list changes (structural changes)
     this._model.cells.changed.connect(this._onCellsChanged, this);
     // Connect to existing cells
     this._connectToCells();
-  }
-
-  private _onModelContentChanged(notebook: any): void {
-    // const cellIndex = this._panel.content.activeCellIndex;
-    // log(`onModelContentChanged active cell: ${cellIndex}`);
-    // this._pendingDocumentChanges.add(cellIndex);
-  }
-
-  /**
-   * Handles notebook state changes to process deferred document changes.
-   * @param notebook - The notebook widget
-   * @param changed - The change details
-   */
-  private _onNotebookStateChanged(notebook: NotebookPanel['content'], changed: any): void {
-    // log(`onNotebookStateChanged: ${changed.name} = ${changed.newValue}`);
-    
-    // Process pending document changes when user changes selection or exits edit mode
-    if (changed.name === 'activeCellIndex' || 
-        (changed.name === 'mode' && changed.newValue === 'command')) {
-      this._processDocumentChanges();
-    }
   }
 
   /**
@@ -250,7 +220,7 @@ export class NotebookMonitor {
     
     if (this._changeCollator.isEmpty) {
       // Send directly as a simple diff - no other changes pending
-      const diffs: Diff[] = [[docChanges, [], [], this._model!.cells.length]];
+      const diffs: Diff[] = [[docChanges, [], [], this._model.cells.length]];
       log('>>>> Diffs Received (document-only):', JSON.stringify(diffs));
       this._sendDiffs(diffs);
     } else {
@@ -260,18 +230,13 @@ export class NotebookMonitor {
     }
   }
 
-  /** Connect to signals from all cells in the notebook
-   */
   private _connectToCells(): void {
-    const cells = this._model!.cells;
+    const cells = this._model.cells;
     for (let i = 0; i < cells.length; i++) {
       this._connectToCell(cells.get(i));
     }
   }
 
-  /**
-   * Sends initial full state when the notebook is first loaded
-   */
   private _sendInitialState(): void {
     if (!this._model) return;
     
@@ -359,7 +324,7 @@ export class NotebookMonitor {
 
       case 'remove': {
         // Identify which cell IDs are no longer in the model
-        const currentCellIds = new Set([...this._model!.cells].map(c => c.id));
+        const currentCellIds = new Set([...this._model.cells].map(c => c.id));
         const handlersToRemove: string[] = [];
 
         for (const cellId of this._cellSignalHandlers.keys()) {
@@ -423,21 +388,10 @@ export class NotebookMonitor {
     }
     let sent = false;
     if (this._changeCollator.hasDiffs) {
-      // Check if there are any pending executions - don't send diffs if executions are ongoing
-      // if (this._changeCollator.pending && this._changeCollator.pending.size > 0) {
-      //   log(`Skipping diff emission - ${this._changeCollator.pending.size} executions still pending`);
-      //   // Reset the debounce timer to check again later
-      //   this._triggerDebouncedProcessing();
-      //   return;
-      // }
       const diffs: Diff[] = this._changeCollator.getDiffs();
       log('>>>> Diffs Received:', JSON.stringify(diffs)); // Log the diffs for verification
       this._sendDiffs(diffs);
       sent = true;
-      // Run cleanup if needed to remove dangling summaries
-      // if (!this._changeCollator.isEmpty) {
-      //   this._changeCollator.cleanup();
-      // }
     }
     if (log.enabled) {
       if (this._changeCollator.isEmpty) {
@@ -457,7 +411,7 @@ export class NotebookMonitor {
   private _toStateCells(idxs: number[]): StateCell[] {
     const cells: StateCell[] = [];
     for (const idx of idxs) {
-      const cellModel = this._model!.cells.get(idx);
+      const cellModel = this._model.cells.get(idx);
       if (cellModel) {
         const cell: StateCell = {
           idx: idx,
@@ -482,18 +436,13 @@ export class NotebookMonitor {
   private _nbData(): NBData {
     return {
       cellCount: this._model.cells.length,
-      notebookUri: this._panel.context.path
-      // metadata: this._model.sharedModel.getMetadata(), // TODO: check if this is correct
+      notebookUri: this._context.path
     };
   }
 
-  /**
-   * Creates a full state message
-   * @returns StateMessage with current notebook state
-   */
   private _createFullStateMessage(): StateMessage {
-    if (!this._model || !this._panel) {
-      throw new Error('Cannot create state message: model or panel not available');
+    if (!this._model) {
+      throw new Error('Cannot create state message: model not available');
     }
 
     const cellCount = this._model.cells.length;
@@ -502,7 +451,7 @@ export class NotebookMonitor {
 
     return {
       type: 'state',
-      origin: this._panel.context.path,
+      origin: this._context.path,
       timestamp: Date.now(),
       cells: cells,
       nbData: this._nbData()
@@ -515,7 +464,7 @@ export class NotebookMonitor {
    * @param diffs - The raw diffs to process.
    */
   private _sendDiffs(diffs: Diff[]): void {
-    if (!this._model || !this._panel) return;
+    if (!this._model) return;
 
     const changes: StateChange[] = diffs.map(diff => {
       const [changed, added, removed, cellCount] = diff;
@@ -531,7 +480,7 @@ export class NotebookMonitor {
 
     const diffsMessage: DiffsMessage = {
       type: 'diffs',
-      origin: this._panel.context.path,
+      origin: this._context.path,
       timestamp: Date.now(),
       changes: changes,
       nbData: this._nbData()
@@ -541,13 +490,11 @@ export class NotebookMonitor {
     this.updateState(diffsMessage);
   }
 
-  /** Dispose of the monitor, disconnecting all signals.
-   */
   dispose(): void {
-    if (!this._panel || !this._model) return;
+    if (!this._model) return;
 
     // Process any remaining document changes before disposing
-    this._processDocumentChanges();
+    // this._processDocumentChanges();
 
     // Clear debounce timer
     if (this._processChangesTimer !== null) {
@@ -555,10 +502,11 @@ export class NotebookMonitor {
       this._processChangesTimer = null;
     }
 
-    // Disconnect from notebook-level signals
-    this._notebook?.stateChanged?.disconnect(this._onNotebookStateChanged, this);
-    this._model?.cells?.changed.disconnect(this._onCellsChanged, this);
-
+    // Disconnect from model-level signals
+    if (this._model?.cells?.changed) {
+      this._model.cells.changed.disconnect(this._onCellsChanged, this);
+    }
+  
     // Disconnect from all remaining cell signals
     this._cellSignalHandlers.forEach((signalsAndHandlers, cellId) => {
       if (signalsAndHandlers.sharedModelSignal && signalsAndHandlers.sharedModelHandler) {
@@ -582,16 +530,14 @@ export class NotebookMonitor {
     }
 
     // Nullify references
-    this._panel = null;
+    this._context = null;
     this._model = null;
-    this._notebook = null;
     this._changeCollator = null;
     this._stateChanged = null;
     this._currentState = null;
     this._isActive = false;
 
     log('NotebookMonitor: Disposed');
-
   }
 
   /**
@@ -619,4 +565,4 @@ export class NotebookMonitor {
       timestamp: Date.now()
     };
   }
-} 
+}
