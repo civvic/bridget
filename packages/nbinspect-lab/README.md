@@ -73,3 +73,18 @@ After making changes, refresh your browser to see updates.
 ### Packaging the Extension
 
 Instructions for creating a release are in [RELEASE.md](RELEASE.md).
+
+## Architecture: Session Management
+
+The extension uses a session-aware architecture to handle JupyterLab's shared window context:
+
+### Key Components
+- **SessionManager**: Global state manager mapping file paths to session state
+- **NotebookMonitor**: Document-focused monitor that queries SessionManager
+- **Session Lifecycle**: State persists across panel close/reopen, cleans up on kernel restart
+
+### Session Flow
+1. Notebook opens → Monitor created → Queries SessionManager for existing state
+2. Notebook closes → Monitor disposed → State remains in SessionManager  
+3. Notebook reopens → New monitor → Retrieves existing state from SessionManager
+4. Kernel restarts → SessionManager cleans up session state

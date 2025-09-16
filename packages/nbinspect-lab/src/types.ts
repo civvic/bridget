@@ -82,6 +82,7 @@ export interface MIMEMessage {
  * Available as window.$Nb in both VSCode and Lab extensions.
  */
 export interface NBStateAPI {
+  _sessionId: string;
   /** Add a callback to be called when the notebook state changes */
   addStateObserver(callback: (state: DiffsMessage | StateMessage) => void): () => void;
   /** Get current notebook state */
@@ -133,6 +134,27 @@ export interface Diff {
   cellCount: number;
 }
 
+/**
+ * Represents the persistent state for a notebook session.
+ * Managed by NotebookMonitor, stored by SessionManager.
+ */
+export interface SessionState {
+  /** Current notebook state (diffs or full state) */
+  currentState: DiffsMessage | StateMessage | null;
+  /** List of observer callbacks that persist across monitor recreation */
+  stateObservers: Array<(state: DiffsMessage | StateMessage) => void>;
+  /** Bridge object for Bridget functionality */
+  bridge: any;
+  /** BrdImport object for Bridget functionality */
+  brdimport: any;
+  /** The kernel ID this session was created for */
+  kernelId: string | null;
+  /** Session creation timestamp */
+  createdAt: number;
+  /** Last access timestamp */
+  lastAccessedAt: number;
+}
+
 // Extend the global Window interface to include our API
 declare global {
   interface Window {
@@ -140,4 +162,4 @@ declare global {
     bridge?: any;
     brdimport?: any;
   }
-} 
+}

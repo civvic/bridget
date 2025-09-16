@@ -20,6 +20,8 @@ import type {
   MIMEMessage,
   NBStateAPI
 } from './types.js';
+import { SessionManager } from './sessionManager.js';
+import type { SessionState } from './types.js';
 
 
 /**
@@ -29,21 +31,15 @@ import type {
 export class NotebookMonitor {
   private _context: DocumentRegistry.IContext<INotebookModel>;
   private _model: INotebookModel;
+  private _sessionId: string;
+  private _sessionManager: SessionManager<SessionState>;
   private _changeCollator: ChangeCollatorLab;
-  
+  private _currentKernelId: string | null = null;
+
   // State management
   private _stateChanged = new Signal<this, DiffsMessage | StateMessage>(this);
-  private _currentState: DiffsMessage | StateMessage | null = null;
   private _isActive: boolean = false;
   
-  // $Nb API instance for this notebook
-  private _nbAPI: NBStateAPI | null = null;
-  private _bridge: any = null;
-  private _brdimport: any = null;
-
-  /**
-   * Map storing signal objects and handlers for connected cells.
-   */
   private _cellSignalHandlers = new Map<string, {
     sharedModelSignal: any;
     sharedModelHandler: Function;
@@ -59,24 +55,23 @@ export class NotebookMonitor {
   /** Debounce delay in milliseconds */
   private _debounceDelay = 500; // Default delay, adjust as needed
 
-  /** Creates an instance of NotebookMonitor.
-   * @param context - The document context to monitor
-   */
-  constructor(context: DocumentRegistry.IContext<INotebookModel>) {
+  constructor(
+    context: DocumentRegistry.IContext<INotebookModel>,
+    sessionManager: SessionManager<SessionState>
+  ) {
     this._context = context;
+    this._currentKernelId = this._context.sessionContext?.session?.kernel?.id;
     this._model = context.model;
-
+    this._sessionId = this._createSessionId(context.path);
+    this._sessionManager = sessionManager;
     if (!this._model) {
       logError('Notebook model not available at monitor creation!');
       return;
     }
-    
     this._changeCollator = new ChangeCollatorLab(this._model);
-    this._createNbAPI();
+    this._setupSession();
     this._connectSignals();
     this._sendInitialState();
-    
-    log(`NotebookMonitor: Attached to document ${context.path}`);
   }
 
   /**
@@ -87,7 +82,8 @@ export class NotebookMonitor {
   }
 
   get currentState(): DiffsMessage | StateMessage | null {
-    return this._currentState;
+    const session = this._sessionManager.getSession(this._sessionId);
+    return session?.currentState || null;
   }
 
   get isActive(): boolean {
@@ -98,19 +94,41 @@ export class NotebookMonitor {
     return this._context.path;
   }
 
-  private _createNbAPI(): void {
-    this._nbAPI = {
+  private _createNbAPI(): NBStateAPI {
+    const sessionId = this._sessionId;
+    const sessionManager = this._sessionManager;
+    
+    return {
+      _sessionId: sessionId,
       addStateObserver: (callback: (state: DiffsMessage | StateMessage) => void) => {
-        const slot = (sender: this, state: DiffsMessage | StateMessage) => callback(state);
-        this._stateChanged.connect(slot);
-        return () => this._stateChanged.disconnect(slot);
+        // Store callback in session, not in monitor
+        const session = sessionManager.getSession(sessionId);
+        session.stateObservers.push(callback);
+        sessionManager.setSession(sessionId, session);
+        log(`Session ${sessionId}: Added state observer (${session.stateObservers.length} total)`);
+        // Return unsubscribe function
+        return () => {
+          const session = sessionManager.getSession(sessionId);
+          if (session) {
+            const index = session.stateObservers.indexOf(callback);
+            if (index > -1) {
+              session.stateObservers.splice(index, 1);
+              sessionManager.setSession(sessionId, session);
+              log(`Session ${sessionId}: Removed state observer (${session.stateObservers.length} remaining)`);
+            }
+          }
+        };
       },
+      
       getNBState: () => {
-        return this._currentState;
+        const session = sessionManager.getSession(sessionId);
+        return session?.currentState || null;
       },
+      
       update: (message: MIMEMessage) => {
         this._processUpdateMessage(message, true);
       },
+      
       aupdate: async (message: MIMEMessage) => {
         const result = this._processUpdateMessage(message, false);
         return Promise.resolve(result);
@@ -132,13 +150,13 @@ export class NotebookMonitor {
       case 'diff':
         if (send) {
           // Re-emit last state update
-          if (this._currentState) {
-            this._stateChanged.emit(this._currentState);
+          if (this.currentState) {
+            this._stateChanged.emit(this.currentState);
           }
           return undefined;
         } else {
           // Return current state
-          return this._currentState || undefined;
+          return this.currentState || undefined;
         }
         
       case 'full':
@@ -154,7 +172,7 @@ export class NotebookMonitor {
       default:
         // Handle 'opts' or null - TBD for options handling
         log('Update message with unhandled type:', message.update);
-        return send ? undefined : this._currentState;
+        return send ? undefined : this.currentState;
     }
   }
 
@@ -163,11 +181,14 @@ export class NotebookMonitor {
    */
   public setActive(): void {
     this._isActive = true;
-    // Set up global $Nb to point to this notebook's API
-    const w = window as Window;
-    w.$Nb = this._nbAPI;
-    if (this._bridge) w.bridge = this._bridge;
-    if (this._brdimport) w.brdimport = this._brdimport;
+    const session = this._sessionManager.getSession(this._sessionId);
+    if (session) {
+      // Set up global $Nb with fresh API proxy for this monitor
+      const w = window as Window;
+      w.$Nb = this._createNbAPI(); // Always fresh API
+      if (session.bridge) w.bridge = session.bridge;
+      if (session.brdimport) w.brdimport = session.brdimport;
+    }
     log(`Monitor for ${this._context.path.split('/').pop()} is now active`);
   }
 
@@ -176,30 +197,103 @@ export class NotebookMonitor {
    */
   public setInactive(): void {
     this._isActive = false;
-    log(`Monitor for ${this._context.path.split('/').pop()} is now inactive`);
     const w = window as Window;
-    this._bridge = w.bridge;
-    this._brdimport = w.brdimport;
+    
+    // Store current global state back to session
+    const session = this._sessionManager.getSession(this._sessionId);
+    if (session) {
+      session.bridge = w.bridge;
+      session.brdimport = w.brdimport;
+      session.lastAccessedAt = Date.now();
+      this._sessionManager.setSession(this._sessionId, session);
+    }
+    
+    // Clear globals
     delete w.$Nb;
     delete w.bridge;
     delete w.brdimport;
+    
+    log(`Monitor for ${this._context.path.split('/').pop()} is now inactive`);
   }
 
   /**
    * Updates the state and emits a change signal
    */
   private updateState(message: DiffsMessage | StateMessage): void {
-    this._currentState = message;
+    // Update session state
+    const session = this._sessionManager.getSession(this._sessionId);
+    if (session) {
+      session.currentState = message;
+      session.lastAccessedAt = Date.now();
+      this._sessionManager.setSession(this._sessionId, session);
+      
+      // Notify all stored observers
+      session.stateObservers.forEach((callback, index) => {
+        try {
+          callback(message);
+        } catch (error) {
+          console.error(`Error in state observer ${index} for session ${this._sessionId}:`, error);
+        }
+      });
+      
+      log(`Session ${this._sessionId}: Updated state and notified ${session.stateObservers.length} observers`);
+    }
+    
+    // Still emit signal for immediate observers (like status widget)
     this._stateChanged.emit(message);
   }
 
+  /**
+   * Setup session state - get existing or create new
+   */
+  private _setupSession(): void {
+    const currentKernelId = this._context.sessionContext?.session?.kernel?.id || null;
+    let session = this._sessionManager.getSession(this._sessionId);
+    
+    if (session) {
+      // Validate session against current kernel
+      if (session.kernelId !== currentKernelId) {
+        log(`Session invalid - kernel changed from ${session.kernelId} to ${currentKernelId} - clearing session`);
+        this._sessionManager.clearSession(this._sessionId);
+        session = null; // Force recreation
+      } else {
+        log(`Session valid - same kernel ${currentKernelId}`);
+      }
+    }
+    
+    if (!session) {
+      session = {
+        currentState: null,
+        stateObservers: [],
+        bridge: null,
+        brdimport: null,
+        kernelId: currentKernelId, // Store current kernel ID
+        createdAt: Date.now(),
+        lastAccessedAt: Date.now()
+      };
+      this._sessionManager.setSession(this._sessionId, session);
+    } else {
+      session.lastAccessedAt = Date.now();
+      this._sessionManager.setSession(this._sessionId, session);
+    }
+  }
+  
   /** Connects to the notebook's signals.
    */
   private _connectSignals(): void {
     if (!this._model) return;
-  
+
     // Listen for cells list changes (structural changes)
     this._model.cells.changed.connect(this._onCellsChanged, this);
+    
+    // Listen for kernel lifecycle events
+    if (this._context.sessionContext) {
+      this._context.sessionContext.kernelChanged.connect(this._onKernelChanged, this);
+      this._context.sessionContext.statusChanged.connect(this._onKernelStatusChanged, this);
+    }
+    
+    this._context.pathChanged.connect(this._onPathChanged, this);
+    
     // Connect to existing cells
     this._connectToCells();
   }
@@ -365,6 +459,53 @@ export class NotebookMonitor {
     }
   }
 
+  private _onKernelChanged(): void {
+    const kernel = this._context.sessionContext?.session?.kernel;
+    const newKernelId = kernel?.id || null;
+    
+    if (newKernelId && newKernelId !== this._currentKernelId) {
+      log(`Session ${this._sessionId}: Kernel changed from ${this._currentKernelId} to ${newKernelId}`);
+      // Only clear if we had a previous kernel (not initial connection)
+      if (this._currentKernelId) {
+        this._sessionManager.clearSession(this._sessionId);
+        this._setupSession();
+        // this._sendInitialState(); // not needed, nobody out there is waiting for it
+      }
+      this._currentKernelId = newKernelId;
+    } else if (!newKernelId && this._currentKernelId) {
+      log(`Session ${this._sessionId}: Lost connection to kernel ${this._currentKernelId} - keeping session`);
+      // Don't clear - kernel might reconnect with same ID
+    }
+  }
+
+  private _onKernelStatusChanged(): void {
+    const status = this._context.sessionContext?.kernelDisplayStatus;
+    if (status === 'idle' || status === 'busy') return;
+    
+    if (status === 'restarting') {
+      log(`Session ${this._sessionId}: Kernel restarting - clearing session`);
+      this._sessionManager.clearSession(this._sessionId);
+      this._setupSession();
+      // this._sendInitialState(); // not needed, nobody out there is waiting for it
+    }
+    
+    log(`Session ${this._sessionId}: Kernel status changed to ${status}`);
+  }
+
+  /**
+   * Handle file path changes (rename/move)
+   */
+  private _onPathChanged(sender: any, newPath: string): void {
+    const oldSessionId = this._sessionId;
+    const newSessionId = this._createSessionId(newPath);
+    
+    if (oldSessionId !== newSessionId) {
+      log(`Path changed: ${oldSessionId} → ${newSessionId}`);
+      this._sessionManager.renameSession(oldSessionId, newSessionId);
+      this._sessionId = newSessionId; // Update current session ID
+    }
+  }
+
   /**
    * Clears the existing debounce timer and starts a new one.
    */
@@ -408,6 +549,28 @@ export class NotebookMonitor {
     }
   }
 
+  private _getOutputsWithTransient(cellModel: ICodeCellModel): any[] {
+    const outputs: any[] = [];
+    const outputArea = cellModel.outputs; // IOutputAreaModel
+    for (let i = 0; i < outputArea.length; i++) {
+      const outputModel = outputArea.get(i) as any;
+      // HACK: The _raw property contains all original data including transient
+      if (outputModel._raw) {
+        const rawOutput = { ...outputModel._raw };
+        rawOutput.data = outputModel.data;
+        rawOutput.metadata = outputModel.metadata;
+        if (rawOutput.transient) {
+          rawOutput.metadata.transient = rawOutput.transient;
+          delete rawOutput.transient;
+        }
+        outputs.push(rawOutput);
+      } else {
+        outputs.push(outputModel.toJSON());
+      }
+    }
+    return outputs;
+  }
+
   private _toStateCells(idxs: number[]): StateCell[] {
     const cells: StateCell[] = [];
     for (const idx of idxs) {
@@ -421,7 +584,8 @@ export class NotebookMonitor {
           metadata: cellModel.sharedModel.getMetadata(),
           outputs:
             cellModel.type === 'code'
-              ? (cellModel as ICodeCellModel).sharedModel.outputs.slice()
+              // ? (cellModel as ICodeCellModel).sharedModel.outputs.slice()
+              ? this._getOutputsWithTransient(cellModel as ICodeCellModel)
               : undefined
         };
         if (cellModel.type === 'code') {
@@ -434,9 +598,15 @@ export class NotebookMonitor {
   }
 
   private _nbData(): NBData {
+    const m = this._model;
     return {
-      cellCount: this._model.cells.length,
-      notebookUri: this._context.path
+      cellCount: m.cells.length,
+      notebookUri: this._context.path,
+      metadata: {
+        metadata: m.sharedModel.getMetadata(),
+        nbformat: m.sharedModel.nbformat,
+        nbformat_minor: m.sharedModel.nbformat_minor
+      }
     };
   }
 
@@ -502,6 +672,12 @@ export class NotebookMonitor {
       this._processChangesTimer = null;
     }
 
+    if (this._context.sessionContext) {
+      this._context.sessionContext.kernelChanged.disconnect(this._onKernelChanged, this);
+      this._context.sessionContext.statusChanged.disconnect(this._onKernelStatusChanged, this);
+      this._context.pathChanged.disconnect(this._onPathChanged, this);
+    }
+
     // Disconnect from model-level signals
     if (this._model?.cells?.changed) {
       this._model.cells.changed.disconnect(this._onCellsChanged, this);
@@ -518,10 +694,8 @@ export class NotebookMonitor {
     });
     this._cellSignalHandlers.clear();
 
-    // Clear pending document changes
     this._pendingDocumentChanges.clear();
 
-    // If this was the active monitor, clear global references
     if (this._isActive) {
       const w = window as Window;
       delete w.$Nb;
@@ -529,15 +703,13 @@ export class NotebookMonitor {
       delete w.brdimport;
     }
 
-    // Nullify references
     this._context = null;
     this._model = null;
     this._changeCollator = null;
     this._stateChanged = null;
-    this._currentState = null;
     this._isActive = false;
 
-    log('NotebookMonitor: Disposed');
+    log(`Session ${this._sessionId}: disposed monitor`);
   }
 
   /**
@@ -564,5 +736,14 @@ export class NotebookMonitor {
       contentChanges: [{ change }],
       timestamp: Date.now()
     };
+  }
+
+  private _createSessionId(path: string): string {
+    // Use the full path as session ID for now
+    return path;
+  }
+
+  get sessionId(): string {
+    return this._sessionId;
   }
 }

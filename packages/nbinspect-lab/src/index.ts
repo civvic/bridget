@@ -13,33 +13,81 @@ import {
   NotebookStateMimeRenderer
 } from './widgets/mimeRenderer.js';
 import type { NotebookPanel } from '@jupyterlab/notebook';
+import { SessionManager } from './sessionManager.js';
+import type { SessionState } from './types.js';
+import { IRecentsManager } from '@jupyterlab/docmanager';
 
 import { debug } from '../../common/debug.js';
 const log = debug('nb:ext', 'blue');
 const logError = debug('nb:ext:error', 'red');
 
+/**
+ * Wait for kernel to be in a ready state before creating monitor
+ */
+async function waitForKernelReady(panel: NotebookPanel): Promise<string | null> {
+  const sessionContext = panel.sessionContext;
+  if (!sessionContext) return null;
+  if (sessionContext.kernelDisplayStatus === 'idle') {
+    return sessionContext.session?.kernel?.id || null;
+  }
+  return new Promise((resolve) => {
+    const onStatusChanged = () => {
+      if (sessionContext.kernelDisplayStatus === 'idle') {
+        sessionContext.statusChanged.disconnect(onStatusChanged);
+        resolve(sessionContext.session?.kernel?.id || null);
+      }
+    };
+    sessionContext.statusChanged.connect(onStatusChanged);
+  });
+}
+
+/**
+ * Handle changes in the recents manager to detect file renames (not working, Lab has bugs)
+ */
+function handleRecentsChanged(
+  sessionManager: SessionManager<SessionState>,
+  recentsManager: IRecentsManager,
+): void {
+  const activeSessions = sessionManager.getActiveSessions();
+  if (activeSessions.length === 0) return;
+  const recentPaths = new Set([
+    ...recentsManager.recentlyOpened.map(r => r.path),
+    ...recentsManager.recentlyClosed.map(r => r.path)
+  ]);
+  const orphanedSessions = activeSessions.filter(sessionId => !recentPaths.has(sessionId));
+  if (orphanedSessions.length === 0) return;
+  log(`Found ${orphanedSessions.length} orphaned sessions: ${orphanedSessions.join(', ')}`);
+  orphanedSessions.forEach(oldPath => {
+    sessionManager.clearSession(oldPath);
+  });
+}
 
 const plugin: JupyterFrontEndPlugin<void> = {
   id: '@bridget/lab-inspect:plugin',
   description: 'A JupyterLab extension for notebook state monitoring.',
   autoStart: true,
   requires: [INotebookTracker, IRenderMimeRegistry],
-  optional: [IStatusBar],
+  optional: [IStatusBar, IRecentsManager],
   activate: (
     app: JupyterFrontEnd,
     notebookTracker: INotebookTracker,
     rendermime: IRenderMimeRegistry,
-    statusBar?: IStatusBar
+    statusBar?: IStatusBar,
+    recentsManager?: IRecentsManager
   ) => {
     console.log('JupyterLab extension @bridget/lab-inspect is activated!');
+    const sessionManager = new SessionManager<SessionState>();
+
+    if (recentsManager) {
+      recentsManager.changed.connect(() => {
+        handleRecentsChanged(sessionManager, recentsManager);
+      });
+    }
 
     // Map to track monitors for each document context (not panels!)
     const monitors = new Map<string, NotebookMonitor>();
-    
-    // Track currently active monitor
     let currentActiveMonitor: NotebookMonitor | null = null;
 
-    // Create status widget only if status bar is available
     let statusWidget: NotebookStateStatusWidget | null = null;
     if (statusBar) {
       statusWidget = new NotebookStateStatusWidget();
@@ -53,17 +101,11 @@ const plugin: JupyterFrontEndPlugin<void> = {
       console.log('Status bar not available - running without status widget (Notebook 7 mode)');
     }
 
-    /**
-     * Handle active notebook changes
-     */
     const handleActiveNotebookChanged = (panel: NotebookPanel | null) => {
-      // 1. Deactivate current monitor (if any)
       if (currentActiveMonitor) {
         currentActiveMonitor.setInactive();
         currentActiveMonitor = null;
       }
-      
-      // 2. Activate new monitor (if any)
       if (panel) {
         const contextPath = panel.context.path;
         const newMonitor = monitors.get(contextPath);
@@ -72,8 +114,6 @@ const plugin: JupyterFrontEndPlugin<void> = {
           currentActiveMonitor = newMonitor;
         }
       }
-      
-      // 3. Notify status widget (only if it exists)
       if (statusWidget) {
         statusWidget.onActiveNotebookChanged(panel, currentActiveMonitor);
       }
@@ -84,50 +124,41 @@ const plugin: JupyterFrontEndPlugin<void> = {
       safe: true,
       mimeTypes: [MIME_TYPE],
       createRenderer: options =>
-        new NotebookStateMimeRenderer({
-          ...options,
-          // No stateManager needed - renderer will use window.$Nb
-        })
+        new NotebookStateMimeRenderer({ ...options })
     });
 
-    // Listen for notebook panel creation - but only to detect new contexts
+    // Listen for notebook panel creation to detect new contexts
     notebookTracker.widgetAdded.connect((sender, panel) => {
-      void panel.context.ready.then(() => {
+      void panel.context.ready.then(async () => {
         const contextPath = panel.context.path;
-        
-        // Check if we already have a monitor for this document context
         if (!monitors.has(contextPath)) {
-          console.log(`Creating monitor for new document: ${contextPath}`);
-          
-          // Create monitor for this document context
-          const monitor = new NotebookMonitor(panel.context);
+          log(`=== SESSION: Creating monitor for new document: ${contextPath} ===`);
+          const kernelId = await waitForKernelReady(panel);
+          if (!kernelId) {
+            log(`=== SESSION: No kernel found for document: ${contextPath} ===`);
+          }
+          const monitor = new NotebookMonitor(panel.context, sessionManager);
           monitors.set(contextPath, monitor);
-
-          // Listen for context disposal (when document is closed completely)
+          log(`Monitor attached to document "${contextPath}" (session: "${monitor.sessionId}")`);
           panel.context.disposed.connect(() => {
-            console.log(`Document context disposed: ${contextPath}`);
-            
-            // If disposing the active monitor, clear active state
+            log(`=== SESSION: Document context disposed: ${contextPath} ===`);
             if (currentActiveMonitor === monitor) {
               handleActiveNotebookChanged(null);
             }
-            
-            // Dispose monitor and clean up
             monitor.dispose();
             monitors.delete(contextPath);
+            log(`=== SESSION: Monitor disposed and removed for: ${contextPath} ===`);
           });
+          log(`=== SESSION: Monitor created and registered for: ${contextPath} ===`);
         } else {
-          console.log(`Document ${contextPath} already has monitor - multiple views detected`);
+          log(`Document ${contextPath} already has monitor - multiple views detected`);
         }
-
-        // If this is the active notebook, make its monitor active
         if (notebookTracker.currentWidget === panel) {
           handleActiveNotebookChanged(panel);
         }
       });
     });
 
-    // Listen for active notebook changes
     notebookTracker.currentChanged.connect((sender, panel) => {
       handleActiveNotebookChanged(panel);
     });
