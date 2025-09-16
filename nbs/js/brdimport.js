@@ -26,7 +26,25 @@ async function loadESM(esm) {
 /** @type {Record<string, ESModule>} */
 const __modules = {};
 let _invoke = null;
+let _model = null;
+const _modulesNames = new Set();
 let logger = console;
+
+/** @param {string} moduleName */
+/** @param {ESModule} mod */
+/** @param {boolean} add */
+function _set_module(moduleName, mod, add=true) {
+  _modulesNames.add(moduleName);
+  if (add) __modules[moduleName] = mod;
+  _model.set('_modules', Array.from(_modulesNames)); _model.save_changes();
+}
+
+/** @param {string} moduleName */
+function _unset_module(moduleName) {
+  delete __modules[moduleName];
+  _modulesNames.delete(moduleName);
+  _model.set('_modules', Array.from(_modulesNames)); _model.save_changes();
+}
 
 /** @param {string} moduleName */
 async function brdimport(moduleName, options) {
@@ -40,12 +58,13 @@ async function brdimport(moduleName, options) {
     } catch (e) { logger.warn(`'import.meta.resolve' failed: ${e}`); }
     if (resolved) {
       const result = await loadESM(resolved);
+      _set_module(moduleName, result.mod, false);
       return result.mod;
     } else if (_invoke) {
       [src] = await _invoke("get_module", moduleName, {signal: AbortSignal.timeout(50e3)});
       logger.log(`src: ${src.slice(0, 100)}${src.length>100?'...':''}`);
       const result = await loadESM(src);
-      __modules[moduleName] = result.mod;
+      _set_module(moduleName, result.mod);
       return result.mod;
     }
   } catch (e) { err = e; }
@@ -55,7 +74,7 @@ async function brdimport(moduleName, options) {
 }
 
 brdimport.unload = (moduleName) => {
-  delete __modules[moduleName];
+  _unset_module(moduleName);
 };
 
 brdimport.isLoaded = (moduleName) => {
@@ -67,7 +86,7 @@ brdimport.modules = () => {
 };
 
 brdimport.setModule = (moduleName, mod) => {
-  __modules[moduleName] = mod;
+  _set_module(moduleName, mod);
 };
 
 brdimport.getModule = (moduleName) => {
@@ -76,17 +95,11 @@ brdimport.getModule = (moduleName) => {
 
 brdimport.init = (model, invoke, options) => {
   try {
-    _invoke = invoke;
+    _model = model; _invoke = invoke;
     globalThis.brdimport = brdimport;
     model.set('_loaded', true); model.save_changes();
-    // model.on('change:_loaded', () => {
-    //   if (!model.get('_loaded')) {
-    //     _invoke = null;
-    //   }
-    // })
     return () => {
-      _invoke = null;
-      // model.off('change:_loaded');
+      _invoke = model = null;
       model.set('_loaded', false); model.save_changes();
     };
   } catch (e) {
