@@ -1,5 +1,5 @@
 import { debug } from './debug.js';
-const DEBUG_NAMESPACE = 'nb:collator';
+const DEBUG_NAMESPACE = 'nb:collator_cm';
 const log = debug(DEBUG_NAMESPACE, 'dimgray');
 // const logError = debug(`${DEBUG_NAMESPACE}:error`, 'red');
 
