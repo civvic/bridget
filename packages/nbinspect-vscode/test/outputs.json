@@ -591,7 +591,7 @@
     {
       "idx": 24,
       "cell_type": "code",
-      "source": "# cell 24\nfrom itertools import count\nfrom bridget.helpers import displaydh\nfrom IPython.display import HTML, Javascript, clear_output\ncounter = count()\ndh0 = displaydh(HTML('cell 24.0'), metadata={'bridge': {'cell': 24.0}})\ndh1 = displaydh(\n    {'application/x-notebook-state': {'feedback': True, 'hide': False, 'debug': True, 'id': next(counter)}}, \n    raw=True, metadata={'bridge': {'cell': 24.1}})",
+      "source": "# cell 24\nfrom itertools import count\nfrom bridget.helpers import displaydh\nfrom IPython.display import HTML, Javascript, clear_output\ncounter = count()\ndh0 = displaydh(HTML('cell 24.0'), metadata={'bridge': {'cell': 24.0}})\ndh1 = displaydh(\n    {'application/x-notebook-state+json': {'feedback': True, 'hide': False, 'debug': True, 'id': next(counter)}}, \n    raw=True, metadata={'bridge': {'cell': 24.1}})",
       "id": "X33sZmlsZQ==",
       "metadata": {
         "brd": {
@@ -620,7 +620,7 @@
           "output_type": "display_data",
           "data": {
             "text/plain": "",
-            "application/x-notebook-state": "{\"debug\":true,\"id\":9}"
+            "application/x-notebook-state+json": {"debug":true,"id":9}
           },
           "metadata": {
             "transient": {
@@ -637,7 +637,7 @@
     {
       "idx": 25,
       "cell_type": "code",
-      "source": "# cell 25\ndh1.update({'application/x-notebook-state': {'id': next(counter), 'update': 'diff'}}, raw=True, \n        metadata={'bridge': {'cell': 25}})",
+      "source": "# cell 25\ndh1.update({'application/x-notebook-state+json': {'id': next(counter), 'update': 'diff'}}, raw=True, \n        metadata={'bridge': {'cell': 25}})",
       "id": "X34sZmlsZQ==",
       "metadata": {
         "brd": {
@@ -730,7 +730,7 @@
     {
       "idx": 28,
       "cell_type": "code",
-      "source": "# cell 28\ndh1.update({'application/x-notebook-state': {'id': next(counter)}}, raw=True, \n        metadata={'bridge': {'cell': 28}})\ndh0.update(HTML('cell 28'), metadata={'bridge': {'cell': 28, 'cnt': next(counter)}})",
+      "source": "# cell 28\ndh1.update({'application/x-notebook-state+json': {'id': next(counter)}}, raw=True, \n        metadata={'bridge': {'cell': 28}})\ndh0.update(HTML('cell 28'), metadata={'bridge': {'cell': 28, 'cnt': next(counter)}})",
       "id": "X40sZmlsZQ==",
       "metadata": {
         "brd": {
@@ -743,7 +743,7 @@
     {
       "idx": 29,
       "cell_type": "code",
-      "source": "# cell 29\ndh1.update({'application/x-notebook-state': {'feedback': False, 'id': next(counter), 'update':'opts'}}, raw=True, \n        metadata={'bridge': {'cell': 29}})",
+      "source": "# cell 29\ndh1.update({'application/x-notebook-state+json': {'feedback': False, 'id': next(counter), 'update':'opts'}}, raw=True, \n        metadata={'bridge': {'cell': 29}})",
       "id": "X41sZmlsZQ==",
       "metadata": {
         "brd": {
@@ -756,7 +756,7 @@
     {
       "idx": 30,
       "cell_type": "code",
-      "source": "# cell 30\ndh1.update({'application/x-notebook-state': {'feedback': True, 'id': next(counter), 'update':'opts'}}, raw=True, \n        metadata={'bridge': {'cell': 30}})",
+      "source": "# cell 30\ndh1.update({'application/x-notebook-state+json': {'feedback': True, 'id': next(counter), 'update':'opts'}}, raw=True, \n        metadata={'bridge': {'cell': 30}})",
       "id": "X42sZmlsZQ==",
       "metadata": {
         "brd": {
@@ -769,7 +769,7 @@
     {
       "idx": 31,
       "cell_type": "code",
-      "source": "# cell 31\ndh1.update({'application/x-notebook-state': {'hide': True, 'id': next(counter), 'update':'opts'}}, raw=True, \n        metadata={'bridge': {'cell': 31}})",
+      "source": "# cell 31\ndh1.update({'application/x-notebook-state+json': {'hide': True, 'id': next(counter), 'update':'opts'}}, raw=True, \n        metadata={'bridge': {'cell': 31}})",
       "id": "X43sZmlsZQ==",
       "metadata": {
         "brd": {
@@ -782,7 +782,7 @@
     {
       "idx": 32,
       "cell_type": "code",
-      "source": "# cell 32\ndh1.update({'application/x-notebook-state': {'hide': False, 'id': next(counter), 'update':'opts'}}, raw=True, \n        metadata={'bridge': {'cell': 32}})",
+      "source": "# cell 32\ndh1.update({'application/x-notebook-state+json': {'hide': False, 'id': next(counter), 'update':'opts'}}, raw=True, \n        metadata={'bridge': {'cell': 32}})",
       "id": "X44sZmlsZQ==",
       "metadata": {
         "brd": {
@@ -795,7 +795,7 @@
     {
       "idx": 33,
       "cell_type": "code",
-      "source": "# cell 33\ndh1.update({'application/x-notebook-state': {'debug': False, 'id': next(counter)}, 'update':'opts'}, raw=True, \n        metadata={'bridge': {'cell': 33}})",
+      "source": "# cell 33\ndh1.update({'application/x-notebook-state+json': {'debug': False, 'id': next(counter)}, 'update':'opts'}, raw=True, \n        metadata={'bridge': {'cell': 33}})",
       "id": "X45sZmlsZQ==",
       "metadata": {
         "brd": {
@@ -808,7 +808,7 @@
     {
       "idx": 34,
       "cell_type": "code",
-      "source": "# cell 34\ndh1.update({'application/x-notebook-state': {'debug': True, 'id': next(counter)}, 'update':'opts'}, raw=True, \n        metadata={'bridge': {'cell': 34}})",
+      "source": "# cell 34\ndh1.update({'application/x-notebook-state+json': {'debug': True, 'id': next(counter)}, 'update':'opts'}, raw=True, \n        metadata={'bridge': {'cell': 34}})",
       "id": "X46sZmlsZQ==",
       "metadata": {
         "brd": {
@@ -821,7 +821,7 @@
     {
       "idx": 35,
       "cell_type": "code",
-      "source": "# cell 35\ndh2 = displaydh({'application/x-notebook-state': {'feedback': True, 'debug': True, 'id': next(counter)}}, \n        raw=True, metadata={'bridge': {'cell': 35}})\n# clear_output()",
+      "source": "# cell 35\ndh2 = displaydh({'application/x-notebook-state+json': {'feedback': True, 'debug': True, 'id': next(counter)}}, \n        raw=True, metadata={'bridge': {'cell': 35}})\n# clear_output()",
       "id": "X50sZmlsZQ==",
       "metadata": {
         "brd": {
@@ -833,7 +833,7 @@
         {
           "output_type": "display_data",
           "data": {
-            "application/x-notebook-state": "{\"id\":11}"
+            "application/x-notebook-state+json": "{\"id\":11}"
           },
           "metadata": {
             "transient": {
@@ -851,7 +851,7 @@
     {
       "idx": 36,
       "cell_type": "code",
-      "source": "# cell 36\ndh2.update({'application/x-notebook-state': {'id': next(counter)}}, raw=True, \n        metadata={'bridge': {'cell': 36, 'update': True}})",
+      "source": "# cell 36\ndh2.update({'application/x-notebook-state+json': {'id': next(counter)}}, raw=True, \n        metadata={'bridge': {'cell': 36, 'update': True}})",
       "id": "X51sZmlsZQ==",
       "metadata": {
         "brd": {
@@ -864,7 +864,7 @@
     {
       "idx": 37,
       "cell_type": "code",
-      "source": "from itertools import count\nimport anywidget, time\nfrom IPython.display import DisplayHandle\nfrom bridget.helpers import displaydh\n# from bridget.helpers import skip\nimport ipywidgets as W\n\ncounter = count()\n\nclass TestWidget(anywidget.AnyWidget):\n    _esm = '''debugger;\nexport default { \n    async initialize({ model }) {\n        function on_msg(msg) {\n            console.log(`++++ Received message:`, msg);\n            if (window.$Ren) {\n                msg.origin = document.location.href;\n                window.$Ren.update(msg);\n                return;\n            }\n            return model.send({ id: msg.id, response: 'no response' });\n        }\n        model.on(\"msg:custom\", on_msg);\n        function on_stateChange(chg) {\n            console.log('++++ on_state', chg.reqId, chg);\n            model.send({ changes: chg });\n        }\n        let cleanup;\n        if (window.$Ren) {\n            cleanup = window.$Ren.addStateObserver(on_stateChange);\n        }\n        if (cleanup) return cleanup;\n    }\n};\n    '''\n    dh: DisplayHandle\n    def __init__(self, *args, **kwargs):\n        super().__init__(*args, **kwargs)\n        self.on_msg(self._handle_message)\n        self.out = W.Output()\n        display(self.out)\n        with self.out:\n            print('Test widget, cell 35')\n\n    def _handle_message(self, w, msg, buffers):\n        # self.dh.update(f'Received {msg=}, {buffers=}', metadata=skip(cell=35))\n        self.msg = msg\n        with self.out:\n            print(f'Received {msg=}, {buffers=}')\n\nw = TestWidget()",
+      "source": "from itertools import count\nimport anywidget, time\nfrom IPython.display import DisplayHandle\nfrom bridget.helpers import displaydh\n# from bridget.helpers import skip\nimport ipywidgets as W\n\ncounter = count()\n\nclass TestWidget(anywidget.AnyWidget):\n    _esm = '''debugger;\nexport default { \n    async initialize({ model }) {\n        function on_msg(msg) {\n            console.log(`++++ Received message:`, msg);\n            if (window.$Nb) {\n                msg.origin = document.location.href;\n                window.$Nb.update(msg);\n                return;\n            }\n            return model.send({ id: msg.id, response: 'no response' });\n        }\n        model.on(\"msg:custom\", on_msg);\n        function on_stateChange(chg) {\n            console.log('++++ on_state', chg.reqId, chg);\n            model.send({ changes: chg });\n        }\n        let cleanup;\n        if (window.$Nb) {\n            cleanup = window.$Nb.addStateObserver(on_stateChange);\n        }\n        if (cleanup) return cleanup;\n    }\n};\n    '''\n    dh: DisplayHandle\n    def __init__(self, *args, **kwargs):\n        super().__init__(*args, **kwargs)\n        self.on_msg(self._handle_message)\n        self.out = W.Output()\n        display(self.out)\n        with self.out:\n            print('Test widget, cell 35')\n\n    def _handle_message(self, w, msg, buffers):\n        # self.dh.update(f'Received {msg=}, {buffers=}', metadata=skip(cell=35))\n        self.msg = msg\n        with self.out:\n            print(f'Received {msg=}, {buffers=}')\n\nw = TestWidget()",
       "id": "X52sZmlsZQ==",
       "metadata": {
         "brd": {

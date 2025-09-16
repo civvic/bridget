@@ -8,7 +8,7 @@
         {
           "idx": 24,
           "cell_type": "code",
-          "source": "# cell 24\nfrom itertools import count\nfrom bridget.helpers import displaydh\nfrom IPython.display import HTML, Javascript, clear_output\ncounter = count()\ndh0 = displaydh(HTML('cell 24.0'), metadata={'bridge': {'cell': 24.0}})\ndh1 = displaydh(\n    {'application/x-notebook-state': {'feedback': True, 'hide': False, 'debug': True, 'id': next(counter)}}, \n    raw=True, metadata={'bridge': {'cell': 24.1}})",
+          "source": "# cell 24\nfrom itertools import count\nfrom bridget.helpers import displaydh\nfrom IPython.display import HTML, Javascript, clear_output\ncounter = count()\ndh0 = displaydh(HTML('cell 24.0'), metadata={'bridge': {'cell': 24.0}})\ndh1 = displaydh(\n    {'application/x-notebook-state+json': {'feedback': True, 'hide': False, 'debug': True, 'id': next(counter)}}, \n    raw=True, metadata={'bridge': {'cell': 24.1}})",
           "id": "X33sZmlsZQ==",
           "metadata": {
             "brd": {
@@ -35,7 +35,7 @@
             {
               "output_type": "display_data",
               "data": {
-                "application/x-notebook-state": "{\"id\":0,\"update\":\"diff\"}"
+                "application/x-notebook-state+json": {"id":0,"update":"diff"}
               },
               "metadata": {
                 "transient": {
@@ -52,7 +52,7 @@
         {
           "idx": 25,
           "cell_type": "code",
-          "source": "# cell 25\ndh1.update({'application/x-notebook-state': {'id': next(counter), 'update': 'diff'}}, raw=True, \n        metadata={'bridge': {'cell': 25}})",
+          "source": "# cell 25\ndh1.update({'application/x-notebook-state+json': {'id': next(counter), 'update': 'diff'}}, raw=True, \n        metadata={'bridge': {'cell': 25}})",
           "id": "X34sZmlsZQ==",
           "metadata": {
             "brd": {

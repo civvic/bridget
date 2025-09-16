@@ -4,7 +4,7 @@
 
 ## How It Works
 
-The extension runs a monitoring process in the VSCode extension host that listens for all notebook events (cell changes, execution, etc.). It intelligently batches these events and sends them to a custom notebook renderer. This renderer, running in a sandboxed webview, creates a `window.$Ren` object that acts as a bridge, allowing Bridget's `anywidget` components to access the live notebook state.
+The extension runs a monitoring process in the VSCode extension host that listens for all notebook events (cell changes, execution, etc.). It intelligently batches these events and sends them to a custom notebook renderer. This renderer, running in a sandboxed webview, creates a `window.$Nb` object that acts as a bridge, allowing Bridget's `anywidget` components to access the live notebook state.
 
 ## Installation
 

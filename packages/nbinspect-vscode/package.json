@@ -38,7 +38,7 @@
         "id": "nbinspect-renderer",
         "displayName": "Notebook state renderer",
         "mimeTypes": [
-          "application/x-notebook-state"
+          "application/x-notebook-state+json"
         ],
         "entrypoint": "./dist/renderer.js",
         "requiresMessaging": "optional"

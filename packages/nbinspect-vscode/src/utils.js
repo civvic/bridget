@@ -1,4 +1,4 @@
-export const MIME = 'application/x-notebook-state';  // Renderer MIME type
+export const MIME = 'application/x-notebook-state+json';  // Renderer MIME type
 
 export const defaultNotebookFormat = { major: 4, minor: 2 };
 

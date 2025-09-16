@@ -80,12 +80,12 @@
     },
     {
       "cell_type": "code",
-      "source": "# cell 7\ndef show_notebook_state(data):\n    \"\"\"Display notebook state with our custom mime type\"\"\"\n    display({\n        'application/x-notebook-state': data\n    }, raw=True)\n\n# Test it\nshow_notebook_state({\"test\": \"Hello from notebook state!\"})",
+      "source": "# cell 7\ndef show_notebook_state(data):\n    \"\"\"Display notebook state with our custom mime type\"\"\"\n    display({\n        'application/x-notebook-state+json': data\n    }, raw=True)\n\n# Test it\nshow_notebook_state({\"test\": \"Hello from notebook state!\"})",
       "outputs": [
         {
           "output_type": "display_data",
           "data": {
-            "application/x-notebook-state": "{\"test\":\"Hello from notebook state!\"}"
+            "application/x-notebook-state+json": {"test":"Hello from notebook state!"}
           },
           "metadata": {
             "transient": {}
@@ -95,7 +95,7 @@
     },
     {
       "cell_type": "code",
-      "source": "# cell 8\ndef show_notebook_state(state):\n    \"\"\"Display notebook state with our custom mime type\"\"\"\n    display({\n        'application/x-notebook-state': state\n    }, raw=True)\n\n# Test it\nshow_notebook_state({\"test\": \"Hello from notebook state2!\"})"
+      "source": "# cell 8\ndef show_notebook_state(state):\n    \"\"\"Display notebook state with our custom mime type\"\"\"\n    display({\n        'application/x-notebook-state+json': state\n    }, raw=True)\n\n# Test it\nshow_notebook_state({\"test\": \"Hello from notebook state2!\"})"
     },
     {
       "cell_type": "code",

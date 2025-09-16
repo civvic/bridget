@@ -78,7 +78,13 @@ class NBStateRenderer {
     // General listener for messages from the extension
     this.listener = context.onDidReceiveMessage(this.onMessage.bind(this));
     // Global variable for easy access to the renderer by others in the webview, i.e., widgets
-    globalThis.$Ren = this;
+    // globalThis.window.$Nb = {
+    //   addStateObserver: (callback) => this.addStateObserver(callback),
+    //   getNBState: () => this.getNBState(),
+    //   update: (message) => this.update(message),
+    //   aupdate: (message) => this.aupdate(message)
+    // };
+    globalThis.$Nb = this;
   }
   
   /** Get active output
@@ -170,10 +176,9 @@ class NBStateRenderer {
       update = `${this.message.timestamp}` !== ts;
     }
     if (DEBUG) {
-      logGroup(`set NBState:${message.type}`);
-      log(`script: ${JSON.stringify(d)}`, ' - update:', update);
+      logGroup(`set NBState:${message.type} - update:${update}`);
       if (message.type === 'diffs') {
-        log(`message reqId/ts: ${reqId} ${ts} changes: ${message.changes.length}, nbData: ${message.nbData}`);
+        log(`message ts: ${ts} changes: ${message.changes.length}`);
         message.changes.forEach((c, i) => {
           const added = c.added && c.added.length ? `added: ${c.added.map(c => c.idx).join(', ')}` : '';
           const removed = c.removed && c.removed.length ? `removed: ${c.removed.join(', ')}` : '';
@@ -238,7 +243,7 @@ class NBStateRenderer {
     this.context.postMessage(msg);
     if (DEBUG) logAll(
         [`${Date.now()} render`],
-        [`output:`, itemId, mime],
+        // [`output:`, itemId, mime],
         [`opts: ${JSON.stringify(opts)}`]
       );
   }

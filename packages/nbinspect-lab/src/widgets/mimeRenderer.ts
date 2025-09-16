@@ -6,10 +6,10 @@ import { renderNBStateFeedback } from '../../../common/feedbackRenderer.js';
 import { debug } from '../../../common/debug.js';
 import type { DiffsMessage, StateMessage, MIMEMessage } from '../types';
 
-export const MIME_TYPE = 'application/x-notebook-state';
+export const MIME_TYPE = 'application/x-notebook-state+json';
 
 /**
- * A custom renderer for the 'application/x-notebook-state' MIME type.
+ * A custom renderer for the 'application/x-notebook-state+json' MIME type.
  * It handles configuration messages from Python and displays rich feedback.
  */
 export class NotebookStateMimeRenderer

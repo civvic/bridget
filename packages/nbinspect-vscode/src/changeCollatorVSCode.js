@@ -13,7 +13,7 @@ const logError = debug(`${DEBUG_NAMESPACE}:error`, 'red');
 export class ChangeCollatorVSCode extends ChangeCollator {
   /** @type {import('vscode').NotebookDocument} The VSCode notebook document */
   notebook;
-  /** @type {[import('./common/changeCollator.js').TimeStamp, NotebookDocumentChangeEvent][]} Debug log of raw events */
+  /** @type {[import('../../common/changeCollator.js').TimeStamp, NotebookDocumentChangeEvent][]} Debug log of raw events */
   events;
 
   /**
