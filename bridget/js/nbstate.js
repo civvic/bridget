@@ -28,7 +28,7 @@ export function initializeNBState(bridge) {
   }
 
   let cleanupRenderer;
-  let renderer = globalThis.$Ren;
+  let renderer = globalThis.$Nb;
 
   if (renderer) {
     cleanupRenderer = renderer.addStateObserver(stateChanged);

@@ -143,11 +143,11 @@ def _generate_dynamic_import(import_data, fn):
 
 def _find_all_imports(node, code, fn, comment_marker):
     static_imports, dynamic_imports = [], []
-    comments = _extract_comments(node, code, comment_marker)  # NEW: Extract comments first
+    comments = _extract_comments(node, code, comment_marker)  # Extract comments first
     
     def walk(node):
         if node.type == 'import_statement':
-            if _should_ignore_import(node, comments):  # NEW: Check ignore
+            if _should_ignore_import(node, comments):  # Check ignore
                 return  # Skip this import
             _validate_import_statement(node, code)
             import_data = _parse_import_statement(node)
@@ -156,7 +156,7 @@ def _find_all_imports(node, code, fn, comment_marker):
         elif node.type == 'call_expression':
             func = node.child_by_field_name('function')
             if func and func.type == 'import':
-                if _should_ignore_import(node, comments):  # NEW: Check ignore
+                if _should_ignore_import(node, comments):  # Check ignore
                     return  # Skip this import
                 dynamic_imports.append({'start': func.start_byte, 'end': func.end_byte, 'replace': fn})
         for child in node.children: 

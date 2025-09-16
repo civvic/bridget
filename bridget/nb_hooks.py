@@ -21,7 +21,7 @@ from fasthtml.core import unqid
 from IPython.core.error import InputRejected
 from IPython.core.getipython import get_ipython
 from IPython.display import display
-from IPython.display import DisplayHandle
+from IPython.core.display import DisplayHandle
 from olio.basic import bundle_path
 from olio.basic import val_at as at
 from olio.common import AD
@@ -29,7 +29,7 @@ from olio.common import update_
 
 
 # %% ../nbs/15_nb_hooks.ipynb
-from .bridge import Brd_Mark
+from .helpers import Brd_Mark
 from .helpers import bridge_cfg
 from .helpers import DEBUG
 from .helpers import id_gen
@@ -296,6 +296,12 @@ def _ast_process_result(result):
                 display(result, metadata={'bridge': {'captured': True}})
             displayhook.update_user_ns(result)
             displayhook.fill_exec_result(result)
+
+# %% ../nbs/15_nb_hooks.ipynb
+def stop_hooks():
+    get_csi().stop()
+    get_bridged().stop()
+    get_capturer().stop()
 
 # %% ../nbs/15_nb_hooks.ipynb
 def get_nb_from_hooks() -> NB:

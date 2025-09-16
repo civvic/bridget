@@ -337,8 +337,12 @@ function getModel() {
 
 function closeModel() {
   if (_model) {
-    cleanup();
-    _model.off("msg:custom", handleMsg); 
+    try {
+      cleanup();
+      _model.off("msg:custom", handleMsg);
+    } catch (err) {
+      bridge.logger.error(`Error cleaning up bridge: ${err.message}`);
+    }
     // model probably closed in python-land
     // _model.send({ ctx: _model.get('ctx_name'), kind: 'info', info: 'model-unset' });
     _model = null;

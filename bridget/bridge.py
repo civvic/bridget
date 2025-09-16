@@ -4,9 +4,9 @@
 from __future__ import annotations
 
 # %% auto 0
-__all__ = ['defaultLogConfig', 'observer_js', 'Brd_Mark', 'brdmark_js', 'bridge_default_plugins', 'debug', 'notdebug', 'to_js',
-           'ScriptsDetails', 'bridge_scripts', 'show_scripts', 'get_bcanvas', 'BLogger', 'Links', 'load_links',
-           'BridgePlugin', 'HTMXPlugin', 'show_summary', 'get_bridge']
+__all__ = ['defaultLogConfig', 'observer_js', 'bridge_default_plugins', 'debug', 'notdebug', 'to_js', 'ScriptsDetails',
+           'bridge_scripts', 'show_scripts', 'get_bcanvas', 'BLogger', 'Links', 'load_links', 'BridgePlugin',
+           'HTMXPlugin', 'show_summary', 'get_bridge']
 
 # %% ../nbs/14_bridge.ipynb
 from collections.abc import Sequence
@@ -41,6 +41,8 @@ from .bridge_widget import blocks
 from .bridge_widget import BridgeWidget
 from .bridge_widget import bundled
 from .bridge_widget import resolve_ESM
+from .helpers import Brd_Mark
+from .helpers import brdmark_js
 from .helpers import bridge_cfg
 from .helpers import DEBUG
 from .helpers import HTML
@@ -150,6 +152,8 @@ defaultLogConfig = {
 
 # %% ../nbs/14_bridge.ipynb
 __brd__ = None
+
+def _get_bridge(): return __brd__
 
 def _set_bridge(value):
     global __brd__
@@ -436,18 +440,31 @@ class HTMXPlugin(BridgePlugin):
 observer_js = BUNDLE_PATH / 'js/observer.js'
 
 # %% ../nbs/14_bridge.ipynb
+# @FC.patch
+# async def brdimport(self: Loader, source: str|Path, name:str|None=None, base:str|Path|None=None):
+#     src = resolve_ESM(source, base) if isinstance(source, str) else source
+#     if src is None: raise ValueError(f"Invalid module specifier: {src}")
+#     d = {}
+#     if isinstance(src, ParseResult):
+#         url = src.geturl()
+#         d[name or source] = Script(type='module', src=url, id=name)
+#         await self.aload_links(d)
+#     else:
+#         d[name or str(source)] = src
+#         await self.aload(d)@FC.patch
+
 @FC.patch
-async def brdimport(self: Loader, source: str|Path, name:str|None=None, base:str|Path|None=None):
+def brdimport(self: Loader, source: str|Path, name:str|None=None, base:str|Path|None=None):
     src = resolve_ESM(source, base) if isinstance(source, str) else source
     if src is None: raise ValueError(f"Invalid module specifier: {src}")
     d = {}
     if isinstance(src, ParseResult):
         url = src.geturl()
         d[name or source] = Script(type='module', src=url, id=name)
-        await self.aload_links(d)
+        self.load_links(d)
     else:
         d[name or str(source)] = src
-        await self.aload(d)
+        self.load(d)
 
 # %% ../nbs/14_bridge.ipynb
 observer_plugin = bundled('''
@@ -456,10 +473,6 @@ export default function initializeObserverPlugin(bridge) {
     return [null, { getObserverManager }]
 }
 ''')()
-
-# %% ../nbs/14_bridge.ipynb
-Brd_Mark = FT('brd-mark', (), {})
-brdmark_js = BUNDLE_PATH / 'js/brdmark.js'
 
 # %% ../nbs/14_bridge.ipynb
 def show_summary(brd:Bridge):

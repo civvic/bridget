@@ -10,7 +10,6 @@ __all__ = ['read_vfile', 'ScriptV', 'StyleV', 'SourceProvider', 'anysource', 'Bu
            'exp_backoff', 'blocks', 'ablocks', 'blocking', 'BlockingMixin', 'BridgeWidget', 'get_brdimport']
 
 # %% ../nbs/10_bridge_widget.ipynb
-import asyncio
 import shutil
 import time
 from contextlib import contextmanager
@@ -24,6 +23,7 @@ from typing import Self
 from urllib.parse import ParseResult
 from urllib.parse import urlparse
 
+import anyio
 import anywidget
 import fastcore.all as FC
 import ipywidgets as W
@@ -43,9 +43,7 @@ from .helpers import bridge_cfg
 from .helpers import DEBUG
 from .helpers import id_gen
 from .helpers import kounter
-from .helpers import ms2str
 from .helpers import run_command
-from .helpers import ts
 from .js_transform import JSImportTransform
 
 
@@ -166,7 +164,7 @@ def _resolve_local(spec, bases) -> Path | None:
 
 def resolve_ESM(spec: str, base:str|Path|None=None) -> Path | ParseResult | None:
     "Resolve a JavaScript module specifier relative to `base` or `bundle_cfg.out_dir`."
-    bases = [Path(base)] if base else [*bridge_cfg.bundle_cfg.out_dir, Path.cwd()]
+    bases = [Path(base)] if base else [*bridge_cfg.bundle_cfg.out_dir, Path.cwd(), Path.cwd()/'js']
     if spec.startswith(('/', './', '../')): return _resolve_local(spec, bases)  # Relative specifier
     parsed = urlparse(spec)
     if (scheme := parsed.scheme) in _valid_schemes:
@@ -203,7 +201,7 @@ def _show(finish: bool=False):
 # %% ../nbs/10_bridge_widget.ipynb
 def blocks(
     pred:Callable[..., bool],
-    timeout:float=1, sleep:float=0.0, n:int=10,
+    timeout:float=1, sleep:float=0.2, n:int=10,
     show:Callable[[bool], None]|None=None,
 ):
     "Block until `pred` is True, or at least `timeout` seconds have passed. Return `False` if timeout."
@@ -225,7 +223,7 @@ def blocks(
 
 async def ablocks(
     pred:Callable[..., bool],
-    timeout:float=1, sleep:float=0.0, n:int=10,
+    timeout:float=1, sleep:float=0.2, n:int=10,
     show:Callable[[bool], None]|None=None,
 ):
     "Return True when `pred` returns True, or False when at least `timeout` seconds have passed."
@@ -239,13 +237,13 @@ async def ablocks(
             if (time.time() - start_time) > timeout:
                 timeout, start_time = next(boff), time.time()
                 if not timeout: break
-            if sleep: await asyncio.sleep(sleep)
+            if sleep: await anyio.sleep(sleep)
     if show: show(True)
     return done
 
 @contextmanager
 def blocking(
-    timeout:float=1, sleep:float=0.0, n:int=10,
+    timeout:float=1, sleep:float=0.2, n:int=10,
     show:Callable[[bool], None]|None=None,
 ):
     def _f(pred:Callable[..., bool]):
@@ -272,7 +270,7 @@ class BlockingMixin(W.Widget):
     @classmethod
     def create(cls, *args, 
         factory:Callable[..., Any]|None=None,
-        timeout:float=10, sleep:float=0.0, n:int=10, show:Callable[[bool], None]|None=None,
+        timeout:float=10, sleep:float=0.2, n:int=10, show:Callable[[bool], None]|None=None,
         **kwargs
     ) -> Self:
         self: Self = (factory or cls)(*args, **kwargs)
@@ -282,7 +280,7 @@ class BlockingMixin(W.Widget):
     @classmethod
     async def acreate(cls, *args, 
         factory:Callable[..., Any]|None=None,
-        timeout:float=10, sleep:float=0.0, n:int=10, show:Callable[[bool], None]|None=None,
+        timeout:float=10, sleep:float=0.2, n:int=10, show:Callable[[bool], None]|None=None,
         **kwargs
     ) -> Self:
         self: Self = (factory or cls)(*args, **kwargs)
@@ -316,7 +314,7 @@ class BlockingMixin(W.Widget):
         return await self._asend_msg(msg, buffers, timeout, sleep, n, show)
 
     def _send_msg(self, msg, buffers=None, timeout: float = 5.0, 
-            sleep: float = 0, n: int = 10, show: Callable[[bool], None]|None = None
+            sleep: float = 1/15, n: int = 10, show: Callable[[bool], None]|None = None
     ) -> tuple[Any|Empty, Any|Empty]:
         "Send blocking `msg`. Return response tuple (content, buffers), or (empty, empty) if `timeout`."
         result, idx = None, msg.get('msg_id')
@@ -339,7 +337,7 @@ class BlockingMixin(W.Widget):
             super().on_msg(_on_msg, True)
 
     async def _asend_msg(self, msg, buffers=None, timeout: float = 5.0, 
-            sleep: float = 0, n: int = 10, show: Callable[[bool], None]|None = None
+            sleep: float = 1/15, n: int = 10, show: Callable[[bool], None]|None = None
     ) -> tuple[Any|Empty, Any|Empty]:
         "Send async `msg`. Return response tuple (content, buffers), or (empty, empty) if `timeout`."
         result, idx = None, msg.get('msg_id')
@@ -374,6 +372,12 @@ brdimport_esm = bundled(brdimport_js)()
 # %% ../nbs/10_bridge_widget.ipynb
 __brdimport__ = None
 
+def _get_brdimport(): return __brdimport__
+
+def _set_brdimport(value):
+    global __brdimport__
+    __brdimport__ = value
+
 class BridgeImport(anywidget.AnyWidget):
     _esm = anysource(brdimport_esm, '''
 export default { async initialize({ model, experimental }) {
@@ -382,6 +386,7 @@ export default { async initialize({ model, experimental }) {
 ''')
 
     _loaded = T.Bool(False).tag(sync=True)
+    _modules = T.List([]).tag(sync=True)
 
     def __init__(self, getter: Callable[[str], str|None]|None=None, **kwargs):
         self._get_module = getter or get_ESM
@@ -389,8 +394,7 @@ export default { async initialize({ model, experimental }) {
 
     @T.observe('_loaded')
     def _on_loaded(self, change):
-        global __brdimport__
-        __brdimport__ = self if change['new'] else None
+        _set_brdimport(self if change['new'] else None)
         print(f"'brdimport' {'loaded' if __brdimport__ else 'unloaded'}")
 
     @anywidget.experimental.command  # type: ignore
@@ -400,7 +404,7 @@ export default { async initialize({ model, experimental }) {
 
 # %% ../nbs/10_bridge_widget.ipynb
 def get_brdimport():
-    if not __brdimport__:
+    if not __brdimport__ or __brdimport__.comm is None:
         brdimport = BridgeImport()
         blocks(lambda: brdimport._loaded, 3, sleep=0.2)  # needed when running all above/below cells
         assert __brdimport__ is not None

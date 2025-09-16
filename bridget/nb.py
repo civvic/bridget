@@ -17,7 +17,6 @@ import collections
 import inspect
 import operator as op
 from copy import deepcopy
-from datetime import datetime
 from functools import cache
 from functools import partial
 from typing import Callable
@@ -39,7 +38,6 @@ from nbdev.process import extract_directives
 from nbdev.showdoc import add_docs
 from olio.basic import empty
 from olio.basic import gets
-from olio.basic import pops_values_
 from olio.callback import Callback
 from olio.callback import CollBack
 from olio.callback import FuncCB
@@ -52,12 +50,10 @@ from rich.pretty import pretty_repr
 
 # %% ../nbs/07_nb.ipynb
 import bridget.fasthtml_patching
-from .helpers import bridge_cfg
 from .helpers import cached_property
 from .helpers import compose_first
 from .helpers import DetailsJSON
 from .helpers import emptyd
-from .helpers import ts
 
 
 # %% ../nbs/07_nb.ipynb
@@ -143,12 +139,10 @@ def has_directive(c: NBCell, directive: str, *args):
     return directive in c.directives_ and c.directives_[directive] == list(args)
 
 # %% ../nbs/07_nb.ipynb
-def did(o:NBOutput) -> str|None: 
-    return (
-        ((md := o.metadata) and 
-        (md.get('brd_did') or val_atpath(md, 'transient', 'display_id', default=None)))
-        if o and o['output_type'] == 'display_data'
-        else None)  # type: ignore
+def did(o:NBOutput) -> str|None:
+    if not (o and o['output_type'] == 'display_data'): return None
+    md = o.metadata
+    return md.get('brd_did') or val_atpath(md, 'transient', 'display_id', default=None) or None
 
 FC.patch(did, as_prop=True)
 

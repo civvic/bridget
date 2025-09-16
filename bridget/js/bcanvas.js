@@ -17,16 +17,17 @@ class BCanvas extends FCanvas {
   }
   
   setup(model) {
-    super.setup(model);
-    if (model) {
-      this.setupLoggers();
-    } else {
+    if (!model) {
       this.logger.log('Bridge canvas cleanup.');
       if (this.connected) {
         this.logger.close();
         this.blogger.close();
         bridge.logging.resetLogger();  // revert to default logger
       }
+      super.setup(null);
+    } else {
+      super.setup(model);
+      this.setupLoggers();
     }
   }
   

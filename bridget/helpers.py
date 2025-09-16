@@ -7,10 +7,12 @@ from __future__ import annotations
 
 
 # %% auto 0
-__all__ = ['emptyd', 'emptyl', 'emptyt', 'bridge_cfg', 'kounter', 'SESSION_TS', 'IN_VSCODE', 'DEBUG', 'BundleCfg', 'BridgeCfg',
-           'arun_command', 'run_command', 'ts', 'ms2str', 'Kounter', 'simple_id', 'id_gen', 'patch_cached',
-           'patch_cached_property', 'cached_property', 'bridge_metadata', 'skip', 'compose_first', 'nb_app', 'CLog',
-           'displaydh', 'Val', 'NameVal', 'DetailsJSON', 'HTML', 'in_vscode', 'in_vscode_notebook']
+__all__ = ['emptyd', 'emptyl', 'emptyt', 'bridge_cfg', 'kounter', 'SESSION_TS', 'Brd_Mark', 'brdmark_js', 'IN_VSCODE',
+           'IN_VSCODE_NOTEBOOK', 'DEBUG', 'BundleCfg', 'BridgeCfg', 'arun_command', 'run_command', 'ts', 'ms2str',
+           'Kounter', 'simple_id', 'id_gen', 'patch_cached', 'patch_cached_property', 'cached_property',
+           'bridge_metadata', 'skip', 'compose_first', 'nb_app', 'CLog', 'displaydh', 'Val', 'NameVal', 'DetailsJSON',
+           'HTML', 'in_vscode', 'in_vscode_notebook', 'find_active_widgets', 'get_kernel_widgets_comms',
+           'get_active_widgets_comms', 'cleanupbridget']
 
 # %% ../nbs/01_helpers.ipynb
 import functools
@@ -50,6 +52,9 @@ from olio.common import update_
 from fasthtml.components import Span, Summary, Ul, Details, Li
 
 # %% ../nbs/01_helpers.ipynb
+BUNDLE_PATH = bundle_path(__name__)
+
+# %% ../nbs/01_helpers.ipynb
 emptyd, emptyl, emptyt = {}, [], ()
 _n = '\n'
 
@@ -60,7 +65,9 @@ def DEBUG(iftrue:Any=True, iffalse:Any=False, k='DEBUG_BRIDGET'):
 
 # %% ../nbs/01_helpers.ipynb
 class BundleCfg(Config):
-    out_dir: list[Path] = [nbdev.config.get_config().lib_path/'js']  # directories to search for js modules
+    out_dir: list[Path] = [
+        nbdev.config.get_config().lib_path/'js', 
+        nbdev.config.get_config().lib_path]  # directories to search for js modules
     rewrite_imports: bool = True  # rewrite imports to use dynamic import
     import_name: str = 'brdimport'  # name of the dynamic import function
 
@@ -83,8 +90,9 @@ class BridgeCfg(Config):
     current_did: str|None = None
 
     def for_module(self, module: str|ModuleType, dir='js') -> BridgeCfg:
-        "Set up BridgeCfg for a specific module by adding its js directory to bundle search paths"
-        if (p := bundle_path(module).resolve())/dir not in self.bundle_cfg.out_dir: self.bundle_cfg.out_dir.insert(0, p/dir)
+        "Set up BridgeCfg for a specific module by adding its folder and `dir` folder to bundle search paths"
+        if (p := bundle_path(module).resolve()) not in self.bundle_cfg.out_dir: self.bundle_cfg.out_dir.insert(0, p)
+        if (jsdir := p/dir) not in self.bundle_cfg.out_dir and jsdir.exists(): self.bundle_cfg.out_dir.insert(0, jsdir)
         return self
 
 bridge_cfg = BridgeCfg()
@@ -287,7 +295,7 @@ class DetailsJSON(dict):
     )
 
 # %% ../nbs/01_helpers.ipynb
-class HTML(IPython.display.HTML):
+class HTML(IPython.display.HTML):  # type: ignore
     def __init__(self, data=None, url=None, filename=None, metadata=None, **kwargs):
         if kwargs:
             if not metadata: metadata = kwargs
@@ -297,11 +305,67 @@ class HTML(IPython.display.HTML):
         super().__init__(data, url, filename, metadata)
 
 # %% ../nbs/01_helpers.ipynb
+Brd_Mark = FT('brd-mark', (), {})
+brdmark_js = BUNDLE_PATH / 'js/brdmark.js'
+
+# %% ../nbs/01_helpers.ipynb
 def in_vscode():
     "Check if the code is running in VSCode"
     return 'vscode' in sys.modules
-def in_vscode_notebook(glbs):
+def in_vscode_notebook():
     "Check if the code is running in VSCode"
-    return '__vsc_ipynb_file__' in glbs
+    from IPython.core.getipython import get_ipython
+    if shell := get_ipython(): return '__vsc_ipynb_file__' in shell.user_ns
+    return False
 
-IN_VSCODE = in_vscode()
+
+IN_VSCODE, IN_VSCODE_NOTEBOOK = in_vscode(), in_vscode_notebook()
+
+# %% ../nbs/01_helpers.ipynb
+def find_active_widgets():
+    "Find all active widget instances in memory"
+    import gc
+    import ipywidgets as W
+    active_widgets = []
+    for obj in gc.get_objects():
+        if isinstance(obj, W.Widget):
+            if not obj._model_id:  continue
+            active_widgets.append({
+                'type': type(obj).__name__,
+                'model_id': obj._model_id,
+                'comm': obj.comm is not None
+            })
+    return active_widgets
+
+# %% ../nbs/01_helpers.ipynb
+def get_kernel_widgets_comms():
+    "Get all widget comms from the kernel."
+    from IPython.core.getipython import get_ipython
+    ip = get_ipython(); kernel = ip.kernel  # type: ignore
+    if kernel:
+        for k,c in kernel.comm_manager.comms.items():
+            if c.target_name == 'jupyter.widget':
+                yield c
+
+# %% ../nbs/01_helpers.ipynb
+def get_active_widgets_comms():
+    """Get "official" list of widget comms"""
+    import ipywidgets as W
+    from IPython.core.getipython import get_ipython
+    ip = get_ipython(); kernel = ip.kernel  # type: ignore
+    if kernel:
+        ks = W.Widget.get_manager_state()['state'].keys()
+        for k,c in kernel.comm_manager.comms.items():
+            if c.comm_id in ks:
+                yield c
+
+# %% ../nbs/01_helpers.ipynb
+def cleanupbridget(glbs):
+    "Cleanup bridget environment"
+    if in_vscode_notebook():
+        import ipywidgets as W
+        from bridget.bridge_widget import _set_brdimport, _get_brdimport
+        from bridget.bridge import _set_bridge, _get_bridge
+        _set_brdimport(None)
+        _set_bridge(None)
+        W.Widget.close_all()  # we don't want stale widgets around when developing

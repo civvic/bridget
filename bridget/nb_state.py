@@ -24,7 +24,7 @@ import fastcore.all as FC
 from fastcore.foundation import L
 from IPython.core.getipython import get_ipython
 from IPython.display import display
-from IPython.display import HTML
+from IPython.core.display import HTML
 from olio.basic import AD
 from olio.basic import bundle_path
 from olio.basic import update_
@@ -37,6 +37,7 @@ from .bridge import get_bridge
 from .bridge_plugins import NBHooksPlugin
 from .bridge_widget import blocks
 from .bridge_widget import bundled
+from .bridge_widget import get_brdimport
 from .helpers import bridge_cfg
 from .helpers import id_gen
 from .helpers import kounter
@@ -52,7 +53,7 @@ EmptyT = type[_EMPTY]
 new_id = id_gen()
 
 # %% ../nbs/21_nb_state.ipynb
-NBSTATE_MIME = 'application/x-notebook-state'
+NBSTATE_MIME = 'application/x-notebook-state+json'
 
 class _NBStateFeedback:
     def __init__(self, **options):
@@ -165,7 +166,7 @@ class NBState(FC.GetAttr):
     def state(self) -> NB:
         return self.source.state if self._state is None else self._state  # type: ignore
 
-    def this(self: NBState, idx:int|None=None) -> NBCell:...
+    def this(self, idx:int|None=None) -> NBCell:...
 
 # %% ../nbs/21_nb_state.ipynb
 FIRST = -sys.maxsize
