@@ -127,37 +127,67 @@ const plugin: JupyterFrontEndPlugin<void> = {
         new NotebookStateMimeRenderer({ ...options })
     });
 
+    async function createMonitorForPanel(panel: NotebookPanel) {
+      const contextPath = panel.context.path;
+      if (!monitors.has(contextPath)) {
+        log(`=== SESSION: Creating monitor for new document: ${contextPath} ===`);
+        // const kernelId = await waitForKernelReady(panel);
+        // if (!kernelId) {
+        //   log(`=== SESSION: No kernel found for document: ${contextPath} ===`);
+        // }
+        const monitor = new NotebookMonitor(panel.context, sessionManager);
+        monitors.set(contextPath, monitor);
+        log(`Monitor attached to document "${contextPath}" (session: "${monitor.sessionId}")`);
+        panel.context.disposed.connect(() => {
+          log(`=== SESSION: Document context disposed: ${contextPath} ===`);
+          if (currentActiveMonitor === monitor) {
+            handleActiveNotebookChanged(null);
+          }
+          monitor.dispose();
+          if (monitors.get(contextPath) === monitor) {
+            monitors.delete(contextPath);
+          }
+          log(`=== SESSION: Monitor disposed and removed for: ${contextPath} ===`);
+        });
+        log(`=== SESSION: Monitor created and registered for: ${contextPath} ===`);
+      } else {
+        log(`Document ${contextPath} already has monitor - multiple views detected`);
+      }
+      // Handle activation if this is current widget
+      if (notebookTracker.currentWidget === panel) {
+        handleActiveNotebookChanged(panel);
+      }
+    }
+
     // Listen for notebook panel creation to detect new contexts
     notebookTracker.widgetAdded.connect((sender, panel) => {
-      void panel.context.ready.then(async () => {
-        const contextPath = panel.context.path;
-        if (!monitors.has(contextPath)) {
-          log(`=== SESSION: Creating monitor for new document: ${contextPath} ===`);
-          const kernelId = await waitForKernelReady(panel);
-          if (!kernelId) {
-            log(`=== SESSION: No kernel found for document: ${contextPath} ===`);
-          }
-          const monitor = new NotebookMonitor(panel.context, sessionManager);
-          monitors.set(contextPath, monitor);
-          log(`Monitor attached to document "${contextPath}" (session: "${monitor.sessionId}")`);
-          panel.context.disposed.connect(() => {
-            log(`=== SESSION: Document context disposed: ${contextPath} ===`);
-            if (currentActiveMonitor === monitor) {
-              handleActiveNotebookChanged(null);
-            }
-            monitor.dispose();
-            monitors.delete(contextPath);
-            log(`=== SESSION: Monitor disposed and removed for: ${contextPath} ===`);
-          });
-          log(`=== SESSION: Monitor created and registered for: ${contextPath} ===`);
-        } else {
-          log(`Document ${contextPath} already has monitor - multiple views detected`);
+      const contextPath = panel.context.path;
+      log(`Widget added for: ${contextPath}`);
+
+      void panel.context.ready.then(() => {
+        if (panel.isDisposed || panel.context.isDisposed || !panel.context.isReady) {
+          log(`Skip monitor creation (disposed/not ready): ${contextPath}`);
+          return;
         }
-        if (notebookTracker.currentWidget === panel) {
-          handleActiveNotebookChanged(panel);
-        }
+        createMonitorForPanel(panel);
+      }).catch(error => {
+        logError(`Context ready rejected for: ${contextPath}`, error);
+        // Do not create a monitor on reject; Notebook may be routing to a stable panel next.
       });
     });
+    
+    // void app.restored.then(() => {
+    //   log('App restored; scanning existing notebook panels');
+    //   notebookTracker.forEach(panel => {
+    //     if (!panel.isDisposed) {
+    //       if (panel.context.isReady) createMonitorForPanel(panel);
+    //       else void panel.context.ready.then(() => {
+    //         if (!panel.isDisposed && !panel.context.isDisposed) createMonitorForPanel(panel);
+    //       });
+    //     }
+    //   });
+    //   handleActiveNotebookChanged(notebookTracker.currentWidget);
+    // });
 
     notebookTracker.currentChanged.connect((sender, panel) => {
       handleActiveNotebookChanged(panel);

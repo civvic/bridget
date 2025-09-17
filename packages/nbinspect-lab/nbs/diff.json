@@ -1,0 +1,35 @@
+{
+  "type": "diffs",
+  "origin": "packages/nbinspect-lab/nbs/outputs.ipynb",
+  "timestamp": 1757242793160,
+  "changes": [
+    {
+      "cells": [
+        {
+          "idx": 2,
+          "id": "5cd5a203-37a7-457e-9dc0-2b64d00a71ef",
+          "cell_type": "code",
+          "source": "# cell 2\nprint(1)",
+          "metadata": {
+            "trusted": true
+          },
+          "outputs": [
+            {
+              "name": "stdout",
+              "output_type": "stream",
+              "text": "1\n"
+            }
+          ],
+          "execution_count": 3
+        }
+      ],
+      "added": [],
+      "removed": [],
+      "cellCount": 42
+    }
+  ],
+  "nbData": {
+    "cellCount": 42,
+    "notebookUri": "packages/nbinspect-lab/nbs/outputs.ipynb"
+  }
+}
