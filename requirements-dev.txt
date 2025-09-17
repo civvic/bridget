@@ -1,3 +1,4 @@
 # Development requirements for Bridget
 -e .[dev]
+git+https://github.com/civvic/olio.git
 -e packages/nbinspect-lab
