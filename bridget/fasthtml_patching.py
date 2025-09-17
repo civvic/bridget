@@ -16,7 +16,7 @@ from fasthtml.core import FT
 from fasthtml.jupyter import JupyUvi
 from fasthtml.xtend import Script
 from IPython.display import display
-from IPython.display import HTML
+from IPython.core.display import HTML
 
 
 # %% ../nbs/03_fasthtml_patching.ipynb
