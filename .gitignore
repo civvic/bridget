@@ -161,15 +161,9 @@ _testbed/**
 nbs/js/htmx-attribute-swap/**
 requirements.txt
 !requirements-dev.txt
-packages/ipynb/**
-packages/nbdev-vscode/**
 packages/nbinspect-vscode/src/_old/**
-packages/nbinspect-lab/nbs/**
-packages/nbinspect-vscode/src/common
-packages/nbinspect-lab/src/common
 .specstory
 _chats/**
-nbs/bridget
 .cursorrules
 _notes.md
 SYSTEM.md
