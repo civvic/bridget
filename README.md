@@ -1,23 +1,27 @@
 # Bridget
 > FastHTML + HTMX in Jupyter, no server required.  
 
-Bridget enables rich, server-free interactive HTML components in Jupyter notebooks using FastHTML and HTMX. It provides dynamic access to the notebook's state and aims to replicate ipywidgets' functionality with simpler, HTML-based components.
+Bridget brings rich, server-free interactive HTML components to Jupyter notebooks using **FastHTML** and **HTMX**. It provides dynamic access to the notebook’s state and aims to replicate much of `ipywidgets`’ functionality with simpler, HTML-based components.
 
-The notebook's state includes its structure, cell content, outputs, and metadata, all captured dynamically as you work, without needing to save the file. This enables powerful introspection and allows for tools that can read and react to the notebook's contents in real-time.
+The notebook state includes its structure, cell content, outputs, and metadata, all captured live as you work—without needing to save the file. This enables powerful introspection and allows tools to read and react to notebook contents in real time.
 
 
 ## Key Features
 
-Bridget's core strength is its ability to bring the full power of FastHTML and HTMX into any Jupyter environment, no HTTP server required. It offers real-time notebook introspection, a powerful widget system for creating UIs with minimal JavaScript, and an extended routing system that works seamlessly with Python methods. The framework is designed to be environment-agnostic, supporting VSCode, JupyterLab, and other notebook interfaces.
+- **Serverless HTMX + FastHTML**: full FastHTML + HTMX functionality in Jupyter environments, with no HTTP server required.  
+- **Extended FastHTML routing system**: integrates seamlessly with Python methods.  
+- **Widget system (WIP)**: build UI components with minimal JavaScript.  
+- **Real-time notebook introspection**: capture the full notebook structure dynamically, without `.ipynb` files.  
+- **Environment-agnostic**: supports VSCode, JupyterLab, and other interfaces.  
 
-To enable this, Bridget includes companion extensions for both JupyterLab/Notebook and VSCode/Cursor. These extensions are responsible for capturing the live notebook state within their respective environments, feeding that information directly to Bridget's Python kernel.
+Bridget relies on companion extensions for JupyterLab/Notebook and VSCode/Cursor. These capture the live notebook state and feed it directly to Bridget’s Python kernel.
 
 
 ## Installation
 
 As Bridget is in early development, it is not yet on PyPI. A development installation requires NodeJS and the pnpm package manager.
 
-To install, first clone the repository. Then, from the project's root directory, install the JavaScript dependencies using pnpm. Finally, perform an editable Python installation. This last step builds the necessary JavaScript components and automatically installs the nbinspect-lab Jupyter extension.
+Clone the repository, install JS dependencies with `pnpm`, then perform an editable Python install. This builds the JS components and installs the `nbinspect-lab` Jupyter extension automatically.
 
 ```bash
 # 1. Clone the repository
@@ -31,16 +35,21 @@ pnpm install
 pip install -r requirements-dev.txt
 ```
 
-Note: step 2 is only necessary if you are going to use Jupyter Lab/Notebook. For VSCode, simply install the extension. See below.
+> Note: step 2 is only necessary if you are going to use Jupyter Lab/Notebook. For VSCode, simply install the extension. See below.
 
 ## VSCode Extension Installation
 
-For VSCode and Cursor users, the `nbinspect-vscode` extension must be installed manually. You can find the `.vsix` installation file inside the `packages/nbinspect-vscode` directory. To install, run command `Extensions: install from VSIX...` or open the Extensions view, click the "..." menu, and select "Install from VSIX...".
+For VSCode and Cursor, install the nbinspect-vscode extension manually.
+The .vsix file is inside packages/nbinspect-vscode.
+
+To install:
+	•	Run the command Extensions: Install from VSIX…
+	•	Or open the Extensions view, click the “…” menu, and select Install from VSIX….
 
 
 ## Quick Start
 
-Here is a simple example of a stateful counter component (could also use class instances).
+A minimal stateful counter component (could also use class instances):
 
 ```python
 from bridget.common import get_app
@@ -57,16 +66,22 @@ def counter(n=0):
 counter()
 ```
 
-For more detailed examples, review the notebooks in the `nbs/` directory, especially `14_bridge.ipynb`, `32_bridget.ipynb`, `50_widget.ipynb`, and the contents of the `nbs/examples/` folder.
+For more detailed examples, review the notebooks in the `nbs/` directory, especially `10_bridge_widget.ipynb` `14_bridge.ipynb`, `32_bridget.ipynb`, `50_widget.ipynb`, and the contents of the `nbs/examples/` folder.
 
 
 ## Compatibility and Development
 
-Bridget is developed with [nbdev](https://nbdev.fast.ai/) and requires Python 3.12+. Core dependencies like `fasthtml` and `anywidget` are installed automatically. It is regularly tested on macOS with VSCode, Jupyter Notebook, and JupyterLab, and is expected to function in any environment where `anywidget` is supported. Please note that while most features work in NBClassic, notebook state introspection is not yet implemented for that environment.
+Bridget is developed with [nbdev](https://nbdev.fast.ai/) and requires Python 3.12+. Core dependencies like `fasthtml` and `anywidget` are installed automatically. It is regularly tested on macOS with VSCode, Jupyter Notebook, and Jupyter Lab, and is expected to function in any environment where `anywidget`/`ipywidgets` is supported. Please note that while most features will work in NBClassic, currently is untested, and notebook state introspection is not yet implemented there.
 
+## Main External dependencies
+
+- [xhook](https://github.com/jpillora/xhook): for HTMLX AJAX request interception. It's lightweight and stable; may be internalized later.
+- [jupyter-ui-poll](https://github.com/Kirill888/jupyter-ui-poll): for blocking widgets. Lightweight and stable; may be internalized later.
+- [tree-sitter](https://github.com/tree-sitter/tree-sitter): for `brdimport` ESM import functionality. Well maintained.
+- [AnyWidget](https://github.com/manzt/anywidget): initially used to simplify ipywidget creation. With `brdimport`, Bridget now offers a more flexible alternative, so AnyWidget may eventually be removed.
 
 ## Exploring the Codebase
-The project is developed entirely in Jupyter Notebooks using `nbdev`. It follows a literate programming approach, meaning the notebooks in `nbs/` are the primary source of truth from which the Python library is generated.
+The project is developed entirely in Jupyter Notebooks using `nbdev`. It follows a literate programming approach, the notebooks in `nbs/` are the primary source of truth from which the Python library is generated.
 
 ### FastHTML Foundation
 Bridget's core depends on adapting FastHTML for a serverless environment. **`03_fasthtml_patching.ipynb`** details the minimal modifications made to enable this, while **`04_route_provider.ipynb`** explains the modified routing system allows Bridget to use methods as route endpoints.
@@ -85,12 +100,13 @@ While optional, Bridget's most powerful features will come from its ability to i
 The high-level API for interacting with this state is defined in **`07_nb.ipynb`**. **`21_nb_state.ipynb`** also defines the `Bridge` plugin.
 
 ### Companion Extensions
-The state introspection functionality is powered by two companion extensions located in the `packages/` directory. `nbinspect-lab` serves JupyterLab and Notebook environments, while `nbinspect-vscode` supports VSCode and derivations. These extensions act as the front-end agents, capturing notebook events and sending them to the Python kernel for processing.
+The state introspection functionality is powered by two companion extensions located in the `packages/` directory. `nbinspect-lab` serves JupyterLab and Notebook environments, while `nbinspect-vscode` supports VSCode and derivations. These extensions act as the front-end monitors, capturing notebook events and sending them to the Python kernel for processing.
 
 ## Project Status
-This is an experimental project that integrates Jupyter, FastHTML, and HTMX.  
+Bridget is experimental and integrates Jupyter, FastHTML, and HTMX.  
 
-Its primary goal, inspired by Donald Knuth's concept of Literate Programming, is to create truly dynamic documents where any content (including cell outputs) can be directly edited and interacted with. The project aims to provide a simple and lightweight editor-like experience within the notebook itself. This enables a wide range of applications, from authoring programs and libraries in the style of `nbdev` to creating sophisticated live context editors for generative models.
+Its primary goal, inspired by Donald Knuth's concept of Literate Programming, is to create truly dynamic documents where any content (including cell outputs) can be directly edited and interacted with in place. The project aims to provide a simple and lightweight editor-like experience within the notebook itself. This enables workflows from nbdev-style literate programming to live context editors for generative models.
+
 
 Current status:
 - ✅ Core architecture for serverless HTMX and notebook introspection is functional.
