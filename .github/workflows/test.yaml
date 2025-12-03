@@ -1,0 +1,37 @@
+name: CI
+on: [workflow_dispatch, pull_request, push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          
+      - name: Install dependencies
+        run: |
+          pip install -U nbdev
+          pip install -e '.[dev]'
+          
+      - name: Check notebook exports are up to date
+        run: |
+          nbdev_export
+          if ! git diff --exit-code; then
+            echo "❌ Notebooks are not in sync with Python modules"
+            echo "Run 'nbdev_export' locally and commit the changes"
+            exit 1
+          fi
+          
+      - name: Check README is up to date
+        run: |
+          nbdev_readme
+          if ! git diff --exit-code README.md; then
+            echo "❌ README is not in sync with index.ipynb"
+            echo "Run 'nbdev_readme' locally and commit the changes"
+            exit 1
+          fi
