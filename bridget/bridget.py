@@ -30,7 +30,7 @@ from httpx import codes
 from httpx import Request
 from httpx import Response
 from IPython.display import display
-from IPython.core.display import DisplayHandle
+from IPython.display import DisplayHandle
 from IPython.core.display import HTML
 from pote.basic import bundle_path
 
