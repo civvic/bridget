@@ -5,14 +5,63 @@
 # %% ../nbs/95_nbdev_rt.ipynb 1
 from __future__ import annotations
 
-
 # %% auto 0
-__all__ = []
+__all__ = ['NBDev_rt', 'nb_export']
 
 # %% ../nbs/95_nbdev_rt.ipynb
-#| export
+import copy
+import json
+from typing import cast
+
+import nbformat
+from nbdev.process import extract_directives
+from nbdev.process import NBProcessor
 
 
 # %% ../nbs/95_nbdev_rt.ipynb
-from .nb_state import NBState
+from .bridge import BridgePlugin
+from .bridge import get_bridge
+from .bridge_widget import bundled
+from .nb import IpynbConvertCB
+from .nb_state import get_nb
+from .nb_state import NB
+from .nb_state import this
 
+
+# %% ../nbs/95_nbdev_rt.ipynb
+class NBDev_rt(BridgePlugin):
+    ctx_name = 'nbdev_rt'
+    ctx_names = {'fetcher'}
+
+    def on_state_update(self, *args, state:dict|str, **kwargs):
+        # called after nbstate plugin has updated the state
+        self.log(f"State update: {shorten(json.dumps(state), 'r', 100)}")
+
+# %% ../nbs/95_nbdev_rt.ipynb
+@FC.patch
+def nb_export(self:NBDev_rt,
+            nbname:str,        # Filename of notebook 
+            nb:NB,
+            lib_path:str=None, # Path to destination library.  If not in a nbdev project, defaults to current directory.
+            procs=None,        # Processors to use
+            name:str=None,     # Name of python script {name}.py to create.
+            mod_maker=ModuleMaker,
+            debug:bool=False,  # Debug mode
+            solo_nb:bool=False # Export single notebook outside of an nbdev project.
+            ):
+    "Create module(s) from notebook state"
+    if lib_path is None: lib_path = get_config().lib_path if is_nbdev() else '.'
+    exp = ExportModuleProc()
+    nb = NBProcessor(nbname, [exp]+L(procs), debug=debug)
+    nb.process()
+    for mod,cells in exp.modules.items():
+        if FC.first(1 for o in cells if o.cell_type=='code'):
+            all_cells = exp.in_all[mod]
+            nm = FC.ifnone(name, getattr(exp, 'default_exp', None) if mod=='#' else mod)
+            if not nm:
+                warn(f"Notebook '{nbname}' uses `#|export` without `#|default_exp` cell.\n"
+                     "Note nbdev2 no longer supports nbdev1 syntax. Run `nbdev_migrate` to upgrade.\n"
+                     "See https://nbdev.fast.ai/getting_started.html for more information.")
+                return
+            mm = mod_maker(dest=lib_path, name=nm, nb_path=nbname, is_new=bool(name) or mod=='#', solo_nb=solo_nb)
+            mm.make(cells, all_cells, lib_path=lib_path)

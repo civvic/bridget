@@ -30,7 +30,7 @@ import traitlets as T
 from fastcore.xml import FT
 from fastcore.xml import to_xml
 from fasthtml.core import FastHTML
-from olio.common import val_at
+from pote.common import val_at
 from psygnal import Signal
 
 
