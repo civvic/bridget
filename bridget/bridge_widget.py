@@ -10,6 +10,7 @@ __all__ = ['read_vfile', 'ScriptV', 'StyleV', 'SourceProvider', 'anysource', 'Bu
            'exp_backoff', 'blocks', 'ablocks', 'blocking', 'BlockingMixin', 'BridgeWidget', 'get_brdimport']
 
 # %% ../nbs/10_bridge_widget.ipynb
+import os
 import shutil
 import time
 from contextlib import contextmanager
@@ -33,9 +34,9 @@ from fastcore.xml import FT
 from fastcore.xml import NotStr
 from fasthtml.basics import ft_html
 from jupyter_ui_poll import ui_events
-from olio.basic import bundle_path
-from olio.basic import Empty
-from olio.basic import empty
+from pote.basic import bundle_path
+from pote.basic import Empty
+from pote.basic import empty
 
 
 # %% ../nbs/10_bridge_widget.ipynb
@@ -78,6 +79,7 @@ def StyleV(*c, **kwargs)-> FT:
 
 # %% ../nbs/10_bridge_widget.ipynb
 class SourceProvider(Protocol):
+    "Object with a .source attribute (string or callable returning string)"
     @property
     def source(self) -> str | cached_property[str]: ...
 
@@ -366,8 +368,10 @@ class BridgeWidget(anywidget.AnyWidget, BlockingMixin):
         super().__init__(*args, **kwargs)
 
 # %% ../nbs/10_bridge_widget.ipynb
-brdimport_js = BUNDLE_PATH / 'js/brdimport.js'
-brdimport_esm = bundled(brdimport_js)()
+brdimport_esm = ''
+if FC.IN_NOTEBOOK:
+    brdimport_js = BUNDLE_PATH / 'js/brdimport.js'
+    brdimport_esm = bundled(brdimport_js)()
 
 # %% ../nbs/10_bridge_widget.ipynb
 __brdimport__ = None
@@ -404,11 +408,13 @@ export default { async initialize({ model, experimental }) {
 
 # %% ../nbs/10_bridge_widget.ipynb
 def get_brdimport():
-    if not __brdimport__ or __brdimport__.comm is None:
-        brdimport = BridgeImport()
-        blocks(lambda: brdimport._loaded, 3, sleep=0.2)  # needed when running all above/below cells
-        assert __brdimport__ is not None
+    if FC.IN_NOTEBOOK:
+        if not __brdimport__ or __brdimport__.comm is None:
+            brdimport = BridgeImport()
+            blocks(lambda: brdimport._loaded, 3, sleep=0.2)  # needed when running all above/below cells
+            assert __brdimport__ is not None
     return __brdimport__
 
 # %% ../nbs/10_bridge_widget.ipynb
-get_brdimport()
+#| eval: false
+if FC.IN_NOTEBOOK and not os.environ.get('IN_TEST'): get_brdimport()

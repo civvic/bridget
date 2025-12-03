@@ -26,10 +26,10 @@ from fasthtml.core import FT
 from fasthtml.xtend import Script
 from IPython.display import clear_output
 from IPython.display import display
-from olio.basic import bundle_path
-from olio.common import shorten
-from olio.common import shortens
-from olio.common import update_
+from pote.basic import bundle_path
+from pote.common import shorten
+from pote.common import shortens
+from pote.common import update_
 
 
 # %% ../nbs/14_bridge.ipynb
@@ -215,14 +215,16 @@ def handle_message(
         *args: Any, 
         ctx:str, kind:str, 
         prefix:str='on_', forward:bool=True, forward_name:str='_msg_fwrdr', 
-        **kwargs: Any):
+        **kwargs: Any) -> bool:
     """if `o` has an attr named `ctx`, look for a handler with the form `on_{kind}` 
     passing the rest of `msg` and `args` to it. 
-    If `forward`and `o` has an attr named `forward_name`, call it with `o`, `msg` and `args`."""
+    If `forward`and `o` has an attr named with `forward_name`, call it with `o`, `msg` and `args`."""
     # print(f"handle_message: {o=} {args=} {ctx=}, {kind=} {kwargs=}")
+    handled = False
     if o:
-        if ctx in getattr(o, 'ctx_names', ()) and (fn := getattr(o, f"{prefix}{kind}", None)): fn(*args, **kwargs)
-        if forward and (fn := getattr(o, forward_name, None)): fn(*args, ctx=ctx, kind=kind, **kwargs)
+        if ctx in getattr(o, 'ctx_names', ()) and (fn := getattr(o, f"{prefix}{kind}", None)): fn(*args, **kwargs); handled = True
+        if forward and (fn := getattr(o, forward_name, None)): fn(*args, ctx=ctx, kind=kind, **kwargs); handled = True
+    return handled
 
 # %% ../nbs/14_bridge.ipynb
 @FC.delegates(BridgeBoot, keep=True)  # type: ignore
@@ -289,11 +291,12 @@ def load_links(*fts: FT, feedback: str=''):
 # %% ../nbs/14_bridge.ipynb
 class BridgePlugin(FC.GetAttr):
     _default = 'bridge'; _xtra = ['send', 'asend', 'msg', '_pending']
+    ctx_name: str
     bridge:Bridge  # type: ignore
     def __init__(self, ctx:str='', src:str|Path='', bridge=None):
         self.is_initialized = None
-        self.ctx_name, self.src = ctx or self.ctx_name, src or getattr(self, 'src', '')
-        self.ctx_names = {self.ctx_name} | set(L(type(self).mro()).attrgot('ctx_name').filter())
+        self.ctx_name, self.src = ctx or getattr(self, 'ctx_name', ''), src or getattr(self, 'src', '')
+        self.ctx_names = {self.ctx_name} | set(L(type(self).mro()).attrgot('ctx_name').filter()) | getattr(self, 'ctx_names', set())
         if bridge: self.bridge = bridge
     def on_init(self, *args, info:str, **kwargs):
         if info == 'initialized':
@@ -319,10 +322,15 @@ class Bridge(BridgeMessenger):
         super().__init__(**kwargs)
 
     def _msg_fwrdr(self, *args, ctx:str, kind:str, **kwargs):
+        handled = False
         if ctx in self.plugins:
-            handle_message(self.plugins[ctx], *args, ctx=ctx, kind=kind, **kwargs)
-        elif ctx not in self.ctx_names:
-            self.warn(f"Unknown forward ctx '{ctx}' {kind=} {kwargs=}")
+            handle_message(self.plugins[ctx], *args, ctx=ctx, kind=kind, **kwargs); handled = True
+        # elif ctx not in self.ctx_names:
+        #     self.warn(f"Unknown forward ctx '{ctx}' {kind=} {kwargs=}")
+        for k,p in self.plugins.items():
+            if k != ctx and ctx in p.ctx_names:
+                handle_message(p, *args, ctx=k, kind=kind, **kwargs); handled = True
+        if not handled: self.warn(f"Unknown forward ctx '{ctx}' {kind=} {kwargs=}")
 
     @property
     def loader(self) -> Loader: return self.plugins['loader']  # type: ignore

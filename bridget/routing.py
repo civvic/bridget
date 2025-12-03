@@ -48,10 +48,12 @@ def _patched(o, nm, f):
 _AR_MARK = '__routes__'
 
 class RouteProviderP(Protocol): 
+    "A provider of routes"
     __routes__: Sequence  # of (func, path, methods, name, include_in_schema, body_wrap) like `APIRouter`'s routes attr.
     ar: APIRouter
 
 class RouteProvider:  # noop class, only to alliviate the stupid wiggly reds
+    "Base class for objects that provide routes via an APIRouter"
     __routes__: Sequence
     ar: APIRouter
 

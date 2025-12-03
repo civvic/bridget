@@ -25,9 +25,9 @@ from fastcore.foundation import L
 from IPython.core.getipython import get_ipython
 from IPython.display import display
 from IPython.core.display import HTML
-from olio.basic import AD
-from olio.basic import bundle_path
-from olio.basic import update_
+from pote.basic import AD
+from pote.basic import bundle_path
+from pote.basic import update_
 
 
 # %% ../nbs/21_nb_state.ipynb
@@ -76,6 +76,7 @@ nbstate_js = BUNDLE_PATH / 'js/nbstate.js'
 
 # %% ../nbs/21_nb_state.ipynb
 class NBStateFetcher(BridgePlugin):
+    "Bridge plugin that retrieves notebook state from the front-end"
     src = bundled('''
 import { initializeNBState } from './nbstate.js';
 export default async function initializeFetcher(bridge) {
@@ -196,7 +197,7 @@ def this(idx:int|None=None) -> NBCell:
 # %% ../nbs/21_nb_state.ipynb
 __nbstate__ = None
 
-@FC.delegates(get_bridge)  # type: ignore
+@FC.delegates(get_bridge)
 def get_nb(*args, show_feedback:bool=False, **kwargs):
     global __nbstate__
     if __nbstate__ is None:

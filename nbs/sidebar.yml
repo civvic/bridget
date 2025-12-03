@@ -1,0 +1,44 @@
+website:
+  sidebar:
+    contents:
+      - index.ipynb
+      - section: Core Components
+        contents:
+          - 01_helpers.ipynb
+          - 02_JStransform.ipynb
+          - 03_fasthtml_patching.ipynb
+          - 04_route_provider.ipynb
+      - section: Bridge
+        contents:
+          - 10_bridge_widget.ipynb
+          - 11_logger.ipynb
+          - 14_bridge.ipynb
+          - 16_bridge_plugins.ipynb
+      - section: Notebook State
+        contents:
+          - 07_nb.ipynb
+          - 15_nb_hooks.ipynb
+          - 21_nb_state.ipynb
+      - section: Bridget
+        contents:
+          - 32_bridget.ipynb
+      - section: Components
+        contents:
+          - 40_details_json.ipynb
+      - section: JavaScript & Extensions
+        contents:
+          - 60_javascript_extensions.ipynb
+      - section: Examples
+        contents:
+          - examples/quickstart.ipynb
+          - examples/htmx_examples.ipynb
+      - section: (very) WIP
+        contents:
+          - 50_widget.ipynb
+          - 90_nb_outline.ipynb
+          # - 08_ws_kernel.ipynb
+          - 91_output_edit.ipynb
+          - 92_anydoc.ipynb
+          - 93_prompt.ipynb
+          - 94_nb_mcp.ipynb
+          - 95_nbdev_rt.ipynb

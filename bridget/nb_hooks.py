@@ -21,11 +21,11 @@ from fasthtml.core import unqid
 from IPython.core.error import InputRejected
 from IPython.core.getipython import get_ipython
 from IPython.display import display
-from IPython.core.display import DisplayHandle
-from olio.basic import bundle_path
-from olio.basic import val_at as at
-from olio.common import AD
-from olio.common import update_
+from IPython.display import DisplayHandle
+from pote.basic import bundle_path
+from pote.basic import val_at as at
+from pote.common import AD
+from pote.common import update_
 
 
 # %% ../nbs/15_nb_hooks.ipynb

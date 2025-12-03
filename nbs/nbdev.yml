@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "bridget"
+  site-url: "https://civvic.github.io/bridget"
+  description: "Jupyter Notebook + FastHTML - Server"
+  repo-branch: main
+  repo-url: "https://github.com/civvic/bridget"

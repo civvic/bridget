@@ -36,15 +36,15 @@ from fastcore.xml import to_xml
 from fasttransform import Transform
 from nbdev.process import extract_directives
 from nbdev.showdoc import add_docs
-from olio.basic import empty
-from olio.basic import gets
-from olio.callback import Callback
-from olio.callback import CollBack
-from olio.callback import FuncCB
-from olio.common import AD
-from olio.common import update_
-from olio.common import val_atpath
-from olio.common import vals_at
+from pote.basic import empty
+from pote.basic import gets
+from pote.callback import Callback
+from pote.callback import CollBack
+from pote.callback import FuncCB
+from pote.common import AD
+from pote.common import update_
+from pote.common import val_atpath
+from pote.common import vals_at
 from rich.pretty import pretty_repr
 
 
@@ -189,11 +189,13 @@ JSONVal: TypeAlias = str | int | float | bool | None | dict[str, 'JSONVal'] | li
 
 @runtime_checkable
 class NBProvider(Protocol):
+    "Objects that provide access to a notebook (NB) instance"
     @property
     def nb(self) -> NB: ...
 
 @runtime_checkable
 class NBProcessor(Protocol):
+    "Callable that transforms a notebook and returns the result"
     def __call__(self, nb:NB, *args, **kwargs) -> NB: ...
 
 

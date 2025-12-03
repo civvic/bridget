@@ -32,7 +32,7 @@ from httpx import Response
 from IPython.display import display
 from IPython.core.display import DisplayHandle
 from IPython.core.display import HTML
-from olio.basic import bundle_path
+from pote.basic import bundle_path
 
 
 # %% ../nbs/32_bridget.ipynb
@@ -66,6 +66,7 @@ _n = '\n'
 # %% ../nbs/32_bridget.ipynb
 # if typing.TYPE_CHECKING:
 class ClientP(Protocol):
+    "HTTP client interface supporting REST operations (get, post, delete)"
     def get(self, url: str, **kwargs) -> Response: ...
     def post(self, url: str, **kwargs) -> Response: ...
     def delete(self, url: str, **kwargs) -> Response: ...
@@ -75,6 +76,7 @@ class ClientP(Protocol):
 
 # %% ../nbs/32_bridget.ipynb
 def request2httpx_request(cli:AsyncClient, http_request: dict[str, Any]) -> Request:
+    "Convert bridget request dict to httpx Request object"
     r = http_request
     return cli.build_request(r['method'], r['url'], 
         headers=r['headers'] if 'headers' in r else {}, 
@@ -83,14 +85,17 @@ def request2httpx_request(cli:AsyncClient, http_request: dict[str, Any]) -> Requ
 
 # %% ../nbs/32_bridget.ipynb
 class HasFT(Protocol): 
+    "Objects that can convert themselves to FastHTML FT components"
     def __ft__(self) -> Any: ...
 class HasHTML(Protocol):
+    "Objects that can render themselves as HTML strings"
     def __html__(self) -> str: ...
 
 Bridgeable: TypeAlias = str|Mapping|FT|HasFT|HasHTML
 
 
 def request2response(cli:AsyncClient, http_request) -> Response:
+    "Execute bridget request and return httpx Response"
     httpx_request = request2httpx_request(cli, http_request)
     with from_thread.start_blocking_portal() as portal: 
         response = portal.call(cli.send, httpx_request)
@@ -98,6 +103,7 @@ def request2response(cli:AsyncClient, http_request) -> Response:
 
 
 def httpx_response_to_json(response: Response) -> dict[str, Any]:
+    "Convert httpx Response to JSON dict with headers and content"
     hdrs = {**response.headers, 
         'last-modified': time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime()),
         'cache-control': 'no-store, no-cache, must-revalidate',
