@@ -1,0 +1,622 @@
+# bridget Module Documentation
+
+## bridget.bridge
+
+- `class ScriptsDetails`
+    - `def __init__(self, scs, title, open)`
+    - `def __ft__(self)`
+
+- `class BCanvas`
+
+- `class BLogger`
+    - `def close_canvas(self)`
+    - `def msg(self, msg, clear, ctx, **kwargs)`
+
+- `class BridgeBoot`
+    - `def __init__(self, logger, show_logger, **kwargs)`
+    - `def close(self)`
+    - `def update_logger_config(self, **kwargs)`
+    - `def log(self, msg, clear)`
+    - `def error(self, msg, clear)`
+    - `def warn(self, msg, clear)`
+
+- `def handle_message(o, *args, **kwargs)`
+    if `o` has an attr named `ctx`, look for a handler with the form `on_{kind}` 
+    passing the rest of `msg` and `args` to it. 
+    If `forward`and `o` has an attr named with `forward_name`, call it with `o`, `msg` and `args`.
+
+- `@FC.delegates(BridgeBoot, keep=True) class BridgeMessenger`
+    - `def __init__(self, **kwargs)`
+    - `def on_info(self, *args, **kwargs)`
+        Handle 'info' messages from the front-end.
+
+    - `def on_error(self, *args, **kwargs)`
+        Handle 'error' messages from the front-end.
+
+    - `def debug_enabled(self, ctx, enabled, **kwargs)`
+        Switch debug logs.
+
+    - `def msg(self, tracker, **kwargs)`
+        Compose a message with tracking.
+
+
+- `class BridgePlugin`
+    - `def __init__(self, ctx, src, bridge)`
+    - `def on_init(self, *args, **kwargs)`
+    - `def log(self, msg, clear)`
+    - `def error(self, msg, clear)`
+    - `def warn(self, msg, clear)`
+
+- `@FC.delegates(BridgeMessenger, keep=True) class Bridge`
+    - `def __init__(self, *plugins, **kwargs)`
+    - `@property def loader`
+    - `def __getattr__(self, name)`
+    - `def add_plugins(self, *plugins)`
+    - `def on_info(self, *args, **kwargs)`
+    - `@anywidget.experimental.command def get_prop(self, spec, buffers)`
+
+- `class Loader`
+    - `def __init__(self, lnks, esms)`
+    - `def on_init(self, *args, **kwargs)`
+    - `@property def loading`
+    - `@overload def loaded(self, name)`
+    - `def load(self, esms, reload, cache)`
+    - `def load_links(self, lnks)`
+    - `def aload(self, esms, reload, cache)`
+    - `def aload_links(self, lnks)`
+    - `def on_load(self, *args, **kwargs)`
+    - `def on_loadLinks(self, *args, **kwargs)`
+
+- `class HTMXPlugin`
+    - `def setup(self)`
+    - `def on_info(self, *args, **kwargs)`
+
+## bridget.bridge_plugins
+
+> Example Bridge plugins and their usage
+
+- `class HTMXCommander`
+    - `def swap(self, target, content)`
+
+- `class HTMXCommanderPlugin`
+    - `def on_inspect(self, *args, **kwargs)`
+    - `def swap(self, target, content)`
+
+- `class NBHooksPlugin`
+    - `def __init__(self, *args, **kwargs)`
+    - `def on_init(self, *args, **kwargs)`
+    - `@property def dh`
+
+## bridget.bridge_widget
+
+> Basis of the bridge: bundling, blocking operations, and AnyWidget.
+
+- `@FC.delegates(ft_html, keep=True) def ScriptV(code, **kwargs)`
+    A Script w/ code or `vfile:` contents that doesn't escape its code
+
+- `@FC.delegates(ft_html, keep=True) def StyleV(*c, **kwargs)`
+    A Style w/ code or `vfile:` contents that doesn't escape its code
+
+- `class SourceProvider`
+    Object with a .source attribute (string or callable returning string)
+
+    - `@property def source`
+
+- `def anysource(*args)`
+    Read and join text from files, vfiles or strings
+
+- `class Bundle`
+    Basic JS bundler class.
+
+    - `def __init__(self, *sources, **cmd_kw)`
+    - `@classmethod def default_outdir(cls)`
+    - `@classmethod def transform(cls, src)`
+    - `def __str__(self)`
+    - `def __call__(self, *args, **kwargs)`
+        Concatenate sources. This is the only point where the source is transformed
+
+    - `@cached_property def bundled_sources(self)`
+        Bundle the sources using `esbuild` or `copy`. Return sources and paths to the bundled files.
+
+    - `def bundle_path_of(self, source)`
+    - `@cached_property def source(self)`
+    - `def join(self, *sources)`
+
+- `def resolve_ESM(spec, base)`
+    Resolve a JavaScript module specifier relative to `base` or `bundle_cfg.out_dir`.
+
+- `def get_ESM(module_spec)`
+    Contents of a JS module
+
+- `def exp_backoff(base, max_value)`
+    Exponential backoff generator of values until cumulative value is max_value, then yields 0 and stops.
+
+- `def blocks(pred, timeout, sleep, n, show)`
+    Block until `pred` is True, or at least `timeout` seconds have passed. Return `False` if timeout.
+
+- `def ablocks(pred, timeout, sleep, n, show)`
+    Return True when `pred` returns True, or False when at least `timeout` seconds have passed.
+
+- `class BlockingMixin`
+    Mixin for widgets that supports blocking custom messages with the front-end.
+
+    - `def loaded(self)`
+    - `def setup_init_on_msg(self, callback)`
+        Helper to setup the blocking mechanism. Call it before super().__init__(...)
+
+    - `@classmethod def create(cls, *args, **kwargs)`
+    - `@classmethod def acreate(cls, *args, **kwargs)`
+    - `@overload def send(self, msg, buffers)`
+    - `def asend(self, msg, buffers)`
+        Send `msg` to the front-end. Call will end after `timeout` seconds.
+        NOTE: front-end can yet send back a result even if python timeout was triggered.
+
+
+- `class BridgeWidget`
+    - `def __init__(self, *args, **kwargs)`
+
+- `class BridgeImport`
+    - `def __init__(self, getter, **kwargs)`
+    - `@anywidget.experimental.command def get_module(self, moduleName, buffers)`
+
+## bridget.bridget
+
+> HTMX + FastHTML - Server for Jupyter Notebooks
+
+- `class ClientP`
+    HTTP client interface supporting REST operations (get, post, delete)
+
+    - `def get(self, url, **kwargs)`
+    - `def post(self, url, **kwargs)`
+    - `def delete(self, url, **kwargs)`
+    - `def put(self, url, **kwargs)`
+    - `def patch(self, url, **kwargs)`
+    - `def options(self, url, **kwargs)`
+
+- `def request2httpx_request(cli, http_request)`
+    Convert bridget request dict to httpx Request object
+
+- `class HasFT`
+    Objects that can convert themselves to FastHTML FT components
+
+    - `def __ft__(self)`
+
+- `class HasHTML`
+    Objects that can render themselves as HTML strings
+
+    - `def __html__(self)`
+
+- `def request2response(cli, http_request)`
+    Execute bridget request and return httpx Response
+
+- `def httpx_response_to_json(response)`
+    Convert httpx Response to JSON dict with headers and content
+
+- `class BridgetClient`
+    A simple wrapper around `FastHTML` and `Client`.
+
+    - `def setup(self, app)`
+    - `def __call__(self, rt, method, req, **kwargs)`
+        Display FastHTML components, routes or requests in notebook cells.
+
+    - `def mount(self, prov, path, name, index, show)`
+
+- `class Bridget`
+    - `def __init__(self, app, *args, **kwargs)`
+    - `def on_request(self, *args, **kwargs)`
+        Handle incoming HTMX requests
+
+
+## bridget.fasthtml_patching
+
+> Patches and utilities for FastHTML notebook integration
+
+- `class JupyUviB`
+    Start and stop a Jupyter compatible uvicorn server with ASGI `app` on `port` with `log_level`
+
+    - `def __init__(self, app, log_level, host, port, start, **kwargs)`
+
+## bridget.helpers
+
+> General utilities.
+
+- `def DEBUG(iftrue, iffalse, k)`
+    Returns `iftrue` if debug environment variable is set, otherwise `iffalse`
+
+- `class BundleCfg`
+
+- `class BridgeCfg`
+    Core Bridget behavior settings. if `True`:  
+    - `auto_show` (false): FastHTML objects display as HTML instead of markdown.  
+    - `auto_mount` (false): components with routes are automatically mounted.  
+    - `auto_id` (false): display elements get auto-generated IDs.  
+    - `bundle_cfg` (BundleCfg): configuration for dynamic import of Bridget modules.  
+    - `bootstrap` (false): load bridget.js on import.  
+    - `current_did` (None): the ID of the current display cell.
+
+    - `def for_module(self, module, dir)`
+        Set up BridgeCfg for a specific module by adding its folder and `dir` folder to bundle search paths
+
+
+- `def arun_command(command, cwd, **kwargs)`
+    Async version of run_command using anyio
+
+- `def run_command(command, cwd, **kwargs)`
+    Execute shell command synchronously, returns (stdout, stderr)
+
+- `def ms2str(ts)`
+    format timestamp as in milliseconds to readable time hours:minutes:seconds:milliseconds
+
+- `class Kounter`
+    Counter that tracks occurrences of keys and returns incremented count
+
+    - `def __init__(self)`
+    - `def __call__(self, k)`
+
+- `def simple_id()`
+    Generate simple hex ID using random bytes
+
+- `def id_gen()`
+    Create ID generator function that produces unique session-based IDs
+
+- `def patch_cached(cls, f, name)`
+    Add cached method to class using functools.cache
+
+- `def patch_cached_property(cls, f, name)`
+    `cached_property` with `partial` support
+
+- `class cached_property`
+    Enhanced cached_property that preserves function attributes
+
+    - `def __init__(self, func)`
+
+- `def bridge_metadata(metadata, **kwargs)`
+    Add or update 'bridge' key in metadata dict with kwargs
+
+- `def skip(metadata, **kwargs)`
+    Convenience function to add skip=True to bridge metadata
+
+- `def compose_first(*funcs)`
+    Create a function that composes all functions in `funcs`, passing remaining `*args` and 
+    `**kwargs` to first function only. `order`: key function to sort funcs before composing
+
+- `@FC.delegates(display, keep=True) def displaydh(*objs, **kwargs)`
+    `display` with `display_id`
+
+- `def Val(v)`
+    Render value with appropriate CSS class based on type
+
+- `def NameVal(k, v)`
+    Render key-value pair with name and value styling
+
+- `class DetailsJSON`
+    Interactive collapsible JSON viewer with HTML details/summary structure
+
+    - `def __init__(self, *args, **kwargs)`
+    - `def __ft__(self, d, summary, lvl, open)`
+
+- `class HTML`
+    - `def __init__(self, data, url, filename, metadata, **kwargs)`
+
+- `def in_vscode()`
+    Check if the code is running in VSCode
+
+- `def in_vscode_notebook()`
+    Check if the code is running in VSCode
+
+- `def find_active_widgets()`
+    Find all active widget instances in memory
+
+- `def get_kernel_widgets_comms()`
+    Get all widget comms from the kernel.
+
+- `def get_active_widgets_comms()`
+    Get "official" list of widget comms
+
+- `def cleanupbridget(glbs)`
+    Cleanup bridget environment
+
+## bridget.js_transform
+
+> Transform ES6 imports to dynamic imports for browser ESM compatibility
+
+- `class JSImportTransform`
+    - `def __init__(self, import_name, comment_marker)`
+    - `def __call__(self, code)`
+        Transform JS code, converting imports to dynamic and renaming import function.
+
+
+## bridget.logger
+
+> Logging and message display components for notebooks
+
+- `class Canvas`
+    Base class for output display areas in notebooks
+
+    - `def show(self, content, **kwargs)`
+    - `def hide(self)`
+    - `def add(self, content, **kwargs)`
+    - `def clear(self, history)`
+
+- `class DhCanvas`
+    Canvas using IPython DisplayHandle for dynamic updates
+
+    - `def __init__(self, height)`
+    - `@property def dh`
+    - `def show(self, content, **kwargs)`
+    - `def hide(self)`
+    - `def add(self, content, **kwargs)`
+    - `def clear(self)`
+
+- `class FCanvas`
+    - `def __init__(self, height, elid, **kwargs)`
+    - `@classmethod def new_elid(cls)`
+    - `@classmethod def tmpl(cls, elid, height, content)`
+    - `def displayed(self)`
+    - `def show(self, content, **kwargs)`
+    - `def hide(self)`
+    - `def add(self, content, **kwargs)`
+    - `def clear(self)`
+    - `def close(self, msg)`
+
+- `class NBLogger`
+    Notebook loggers with show/hide/log capabilities
+
+    - `@property def canvas`
+    - `def close_canvas(self)`
+    - `def show(self, msg, clear, **kwargs)`
+    - `def msg(self, msg, clear, **kwargs)`
+    - `def clear_log(self)`
+    - `def active(self, flag, msg)`
+    - `def log(self, msg, clear, **kwargs)`
+    - `def error(self, msg, clear, **kwargs)`
+    - `def warn(self, msg, clear, **kwargs)`
+    - `def __init_subclass__(cls)`
+
+- `class NoopLogger`
+    Logger that discards all messages
+
+    - `def __getattr__(self, name)`
+
+- `class BasicLogger`
+    Simple logger that displays messages in a scrollable div
+
+    - `def __init__(self, msg, canvas, height, show, history, **kwargs)`
+    - `@property def canvas`
+    - `def close_canvas(self)`
+    - `def show(self, msg, clear, **kwargs)`
+    - `def msg(self, msg, clear, format, fmt, truncate, sep, **kwargs)`
+    - `def clear_log(self)`
+    - `def active(self, flag, msg)`
+    - `def history(self)`
+
+- `class FLogger`
+
+## bridget.nb
+
+> Notebook cells and outputs and helpers.
+
+- `class NBCell`
+    - `def __new__(cls, cell)`
+    - `def __init__(self, cell)`
+    - `def __ft__(self)`
+    - `def copy(self)`
+    - `@cached_property def directives_(self)`
+    - `def has_directive(self, directive, *args)`
+    - `@cached_property def hidden(self)`
+
+- `class NBCellRaw`
+
+- `class NBCellMarkdown`
+
+- `class NBCellCode`
+    - `def __init__(self, cell)`
+
+- `class NBOutput`
+    - `def __new__(cls, out)`
+    - `def __init__(self, out)`
+
+- `class NBOutputStream`
+
+- `class NBOutputDisplayData`
+
+- `class NBOutputExecuteResult`
+
+- `class NBOutputError`
+
+- `def by_type(cells, cell_type)`
+    Return 'L' of indices of cells of type `cell_type`
+
+- `def idx2cell(cells, cell_type)`
+    Return mapping of indices to cells of type `cell_type`
+
+- `def withOutputs(cells)`
+    Return indices of cells with outputs
+
+- `def idx2outputs(cells)`
+    Return dict of indices to cells with outputs
+
+- `def idx2dids(cells)`
+    Return dict of indices to cells with transient outputs
+
+- `@runtime_checkable class NBProvider`
+    Objects that provide access to a notebook (NB) instance
+
+    - `@property def nb`
+
+- `@runtime_checkable class NBProcessor`
+    Callable that transforms a notebook and returns the result
+
+    - `def __call__(self, nb, *args, **kwargs)`
+
+- `class NB`
+    Bridget representation of notebook state
+
+    - `def __init__(self, cells, **kwargs)`
+    - `def setup(self, cells, **kwargs)`
+    - `@classmethod def fromStateMessage(cls, message)`
+    - `@classmethod def from_NB(cls, nb, cells, **kwargs)`
+    - `def as_dict(self)`
+    - `def __iter__(self)`
+    - `@overload def __getitem__()`
+    - `def by_type(self, cell_type)`
+    - `@cached_property def codes(self)`
+    - `@cached_property def mds(self)`
+    - `def idx2cell(self, cell_type)`
+    - `@cached_property def idx2code(self)`
+    - `@cached_property def idx2md(self)`
+    - `@cached_property def withOutputs(self)`
+    - `@cached_property def idx2outputs(self)`
+    - `@cached_property def idx2dids(self)`
+    - `def by_directive(self, directive, *args)`
+    - `@cached_property def hiddens(self)`
+    - `@cache def cell_by_did(self, did)`
+    - `@cache def select(self, k)`
+    - `def process(cbs, slc, pred, **kwargs)`
+        Process a subset `slc` of cells filtered by `pred` with `cbs` and `FuncCB` callbacks.
+
+    - `def pipe(self, funcs, *args, **kwargs)`
+    - `def apply_diffsMessage(self, diffs)`
+    - `def find(self, what, where, op)`
+    - `def found(self, what, where, op, cbs)`
+    - `@property def source`
+    - `@property def metadata`
+    - `@property def outputs`
+
+- `class IpynbOutput`
+
+- `class IpynbCell`
+
+- `class St2Ipynb`
+    - `def __init__(self, in_vscode)`
+    - `def encodes(self, x)`
+    - `def decodes(self, x)`
+
+- `class IpynbConvertCB`
+    - `def __init__(self, in_vscode)`
+    - `def before_iter(self, istat)`
+    - `def on_iter(self, _, cell)`
+
+- `@FC.patch def find(self, what, where, op)`
+    Find cells matching `what` in `where` using `op`
+
+## bridget.nb_hooks
+
+> Pure IPython facilities to help us inspect, control, and modify cell outputs.
+
+- `class CellExecInfo`
+    - `def __init__(self, start)`
+    - `@property def active`
+    - `def start(self)`
+    - `def stop(self)`
+    - `def __del__(self)`
+    - `def pre_run_cell(self, info)`
+    - `def post_run_cell(self, result)`
+
+- `class Bridged`
+    Augment display messages with bridge stuff.
+
+    - `def __init__(self, start)`
+    - `@property def active`
+    - `def start(self)`
+    - `def stop(self)`
+    - `def __del__(self)`
+    - `@property def dh`
+    - `def bridged(self, msg)`
+
+- `class CaptureTransformer`
+    - `def __init__(self, mode)`
+    - `@property def active`
+    - `def start(self)`
+    - `def stop(self)`
+    - `def __del__(self)`
+    - `def visit_Module(self, node)`
+
+## bridget.nb_state
+
+> Programmatic access to notebook cells and outputs.
+
+- `class NBStateFetcher`
+    Bridge plugin that retrieves notebook state from the front-end
+
+    - `def __init__(self)`
+    - `@property def opts`
+    - `def update(self, timeout, **kwargs)`
+    - `def aupdate(self, timeout, **kwargs)`
+    - `def on_init(self, *args, **kwargs)`
+    - `def on_state_update(self, *args, **kwargs)`
+
+- `@runtime_checkable class StateProvider`
+    - `@property def state`
+
+- `class NBState`
+    - `def __init__(self, source, *bridge_args, **bridge_kw)`
+    - `@overload def __getitem__()`
+    - `@property def state`
+    - `def this(self, idx)`
+
+- `def this(idx)`
+    Current cell if `idx` is None, or cell at `idx` from current cell upwards. Raises if not found.
+
+## bridget.nbdev_rt
+
+> Real time [nbdev](https://nbdev.fast.ai/).
+
+- `class NBDev_rt`
+    - `def on_state_update(self, *args, **kwargs)`
+
+- `@FC.patch def nb_export(self, nbname, nb, lib_path, procs, name, mod_maker, debug, solo_nb)`
+    Create module(s) from notebook state
+
+## bridget.prompt
+
+> Notebooks as prompts.
+
+- `class Prompt`
+    - `@staticmethod def export(*args, **kwargs)`
+
+## bridget.routing
+
+> Enables method-based routing in fasthtml by extending `APIRouter` capabilities.
+
+- `class RouteProviderP`
+    A provider of routes
+
+
+- `class RouteProvider`
+    Base class for objects that provide routes via an APIRouter
+
+
+- `class MountPoint`
+    Path and name of a mount point where a group of routes can be added
+
+    - `def mount(self, path, name)`
+
+- `def nested_name(f)`
+    Get name of function `f` using '_' to join nested function names
+
+- `class APIRouterC`
+    - `def to_app(self, app)`
+        Add routes to `app`
+
+    - `def to(**kw)`
+    - `def name(self, fn)`
+
+- `class APIRouterD`
+    - `def __init__(self, *args, **kwargs)`
+    - `@overload def __call__(self, *args, **kwargs)`
+    - `def __set_name__(self, owner, name)`
+    - `def __get__(self, instance, owner)`
+    - `def to_app(self, app)`
+    - `def to(**kw)`
+    - `def name(self, fn)`
+
+- `class APIRoute`
+    - `def __init__(self, path, methods, name, include_in_schema, body_wrap)`
+    - `def __call__(self, func)`
+    - `def __getattr__(self, name)`
+    - `def __set_name__(self, owner, name)`
+
+- `def add_routes(self, prov, mount, path, name, appcls)`
+    Register provider routes
+

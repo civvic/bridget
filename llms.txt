@@ -1,0 +1,40 @@
+# Bridget
+
+> Notebook state + FastHTML + HTMX in Jupyter, no server required.
+
+Bridget enables server-free interactive HTML components in Jupyter using FastHTML and HTMX. It replaces the HTTP transport layer with an anywidget-based bridge and provides real-time notebook introspection without saving .ipynb files.
+
+**Core features:**
+- HTMX/FastHTML work via widget communication instead of HTTP
+- Live notebook state access (cells, outputs, metadata) without file I/O
+- Extension-based architecture (VSCode/JupyterLab) feeds state to Python kernel
+
+**Status:** Experimental, Python 3.12+, API unstable
+
+**Installation:** `git clone + pnpm install + pip install -e .[dev]`
+
+**Quick Start:** `from bridget.bridget import get_app; app, bridget, rt = get_app()`
+
+## Docs
+
+- [README](https://raw.githubusercontent.com/civvic/bridget/main/README.md): Project overview
+
+## API
+
+- [API Reference](https://civvic.github.io/bridget/apilist.txt): Complete API list
+
+## Examples
+
+- [Examples](https://civvic.github.io/bridget/examples/quickstart.html.md): Usage patterns
+
+## Optional
+
+- [Bridget](https://civvic.github.io/bridget/bridget.html.md): Main API and `get_app()` entry point
+- [Bridge](https://civvic.github.io/bridget/bridge.html.md): Low-level transport layer
+- [BridgeWidget](https://civvic.github.io/bridget/bridge_widget.html.md): AnyWidget communication infrastructure
+- [Route Provider](https://civvic.github.io/bridget/route_provider.html.md): Extended routing for Python methods
+- [Notebook State](https://civvic.github.io/bridget/nb_state.html.md): Live state capture
+- [FastHTML](https://raw.githubusercontent.com/AnswerDotAI/fasthtml/main/nbs/llms.txt): FastHTML framework
+- [HTMX reference](https://raw.githubusercontent.com/bigskysoftware/htmx/master/www/content/reference.md): HTMX library
+- [nbdev llms.txt](https://raw.githubusercontent.com/fastai/nbdev/master/nbs/llms.txt): Literate programming framework
+- [AnyWidget README](https://raw.githubusercontent.com/manzt/anywidget/main/README.md): Jupyter widget infrastructure

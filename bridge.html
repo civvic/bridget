@@ -1,0 +1,2046 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.26">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Bridge helpers – bridget</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-000f0825b9c55ed21d14970d810c14a9.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="Bridge helpers – bridget">
+<meta property="og:description" content="Jupyter Notebook + FastHTML - Server">
+<meta property="og:site_name" content="bridget">
+<meta name="twitter:title" content="Bridge helpers – bridget">
+<meta name="twitter:description" content="Jupyter Notebook + FastHTML - Server">
+<meta name="twitter:card" content="summary">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">bridget</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./bridge_widget.html">Bridge</a></li><li class="breadcrumb-item"><a href="./bridge.html">Bridge helpers</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Bridget</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Core Components</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./helpers.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Helpers</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./jstransform.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Javascript import transform</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./fasthtml_patching.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">FastHTML patching</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./route_provider.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Routes provider</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Bridge</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./bridge_widget.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Bridge widget helpers</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./logger.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Loggers</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./bridge.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Bridge helpers</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./bridge_plugins.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Bridge plugins</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Notebook State</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./nb.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Notebook objects</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./nb_hooks.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Notebook/IPython hooks</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./nb_state.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Notebook state</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">Bridget</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./bridget.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Bridget</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true">
+ <span class="menu-text">Components</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./details_json.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">DetailsJSON</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true">
+ <span class="menu-text">JavaScript &amp; Extensions</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./javascript_extensions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">JavaScript &amp; Extensions</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true">
+ <span class="menu-text">Examples</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-7" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./examples/quickstart.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">quickstart.html</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./examples/htmx_examples.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">HTMX Examples</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true">
+ <span class="menu-text">(very) WIP</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./widget.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Widget (very WIP)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./nb_outline.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">TBD</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./output_edit.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Editable Outputs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./anydoc.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">AnyDoc</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./prompt.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Prompt</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./nb_mcp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">TBD</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./nbdev_rt.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">nbdev_rt</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#helpers" id="toc-helpers" class="nav-link active" data-scroll-target="#helpers">Helpers</a>
+  <ul class="collapse">
+  <li><a href="#notdebug" id="toc-notdebug" class="nav-link" data-scroll-target="#notdebug">notdebug</a></li>
+  <li><a href="#debug" id="toc-debug" class="nav-link" data-scroll-target="#debug">debug</a></li>
+  <li><a href="#to_js" id="toc-to_js" class="nav-link" data-scroll-target="#to_js">to_js</a></li>
+  <li><a href="#scriptsdetails" id="toc-scriptsdetails" class="nav-link" data-scroll-target="#scriptsdetails">ScriptsDetails</a></li>
+  </ul></li>
+  <li><a href="#bridge-scripts" id="toc-bridge-scripts" class="nav-link" data-scroll-target="#bridge-scripts">Bridge scripts</a>
+  <ul class="collapse">
+  <li><a href="#show_scripts" id="toc-show_scripts" class="nav-link" data-scroll-target="#show_scripts">show_scripts</a></li>
+  <li><a href="#bridge_scripts" id="toc-bridge_scripts" class="nav-link" data-scroll-target="#bridge_scripts">bridge_scripts</a></li>
+  </ul></li>
+  <li><a href="#bcanvas" id="toc-bcanvas" class="nav-link" data-scroll-target="#bcanvas">BCanvas</a>
+  <ul class="collapse">
+  <li><a href="#get_bcanvas" id="toc-get_bcanvas" class="nav-link" data-scroll-target="#get_bcanvas">get_bcanvas</a></li>
+  </ul></li>
+  <li><a href="#blogger" id="toc-blogger" class="nav-link" data-scroll-target="#blogger">BLogger</a>
+  <ul class="collapse">
+  <li><a href="#blogger-1" id="toc-blogger-1" class="nav-link" data-scroll-target="#blogger-1">BLogger</a></li>
+  </ul></li>
+  <li><a href="#bridge-bootstrap" id="toc-bridge-bootstrap" class="nav-link" data-scroll-target="#bridge-bootstrap">Bridge bootstrap</a>
+  <ul class="collapse">
+  <li><a href="#bridgeboot" id="toc-bridgeboot" class="nav-link" data-scroll-target="#bridgeboot">BridgeBoot</a></li>
+  </ul></li>
+  <li><a href="#messages-from-the-beyond" id="toc-messages-from-the-beyond" class="nav-link" data-scroll-target="#messages-from-the-beyond">Messages from the beyond</a>
+  <ul class="collapse">
+  <li><a href="#handle_message" id="toc-handle_message" class="nav-link" data-scroll-target="#handle_message">handle_message</a></li>
+  <li><a href="#bridgemessenger" id="toc-bridgemessenger" class="nav-link" data-scroll-target="#bridgemessenger">BridgeMessenger</a></li>
+  </ul></li>
+  <li><a href="#linking-elements-loader" id="toc-linking-elements-loader" class="nav-link" data-scroll-target="#linking-elements-loader">Linking elements loader</a>
+  <ul class="collapse">
+  <li><a href="#links" id="toc-links" class="nav-link" data-scroll-target="#links">Links</a></li>
+  <li><a href="#load_links" id="toc-load_links" class="nav-link" data-scroll-target="#load_links">load_links</a></li>
+  </ul></li>
+  <li><a href="#bridgeplugin" id="toc-bridgeplugin" class="nav-link" data-scroll-target="#bridgeplugin">BridgePlugin</a>
+  <ul class="collapse">
+  <li><a href="#bridgeplugin-1" id="toc-bridgeplugin-1" class="nav-link" data-scroll-target="#bridgeplugin-1">BridgePlugin</a></li>
+  </ul></li>
+  <li><a href="#bridge" id="toc-bridge" class="nav-link" data-scroll-target="#bridge">Bridge</a></li>
+  <li><a href="#inspectplugin" id="toc-inspectplugin" class="nav-link" data-scroll-target="#inspectplugin">InspectPlugin</a></li>
+  <li><a href="#loader" id="toc-loader" class="nav-link" data-scroll-target="#loader">Loader</a></li>
+  <li><a href="#htmx-plugin" id="toc-htmx-plugin" class="nav-link" data-scroll-target="#htmx-plugin">HTMX plugin</a>
+  <ul class="collapse">
+  <li><a href="#htmxplugin" id="toc-htmxplugin" class="nav-link" data-scroll-target="#htmxplugin">HTMXPlugin</a></li>
+  </ul></li>
+  <li><a href="#observermanager" id="toc-observermanager" class="nav-link" data-scroll-target="#observermanager">ObserverManager</a></li>
+  <li><a href="#brd-mark" id="toc-brd-mark" class="nav-link" data-scroll-target="#brd-mark">brd-mark</a></li>
+  <li><a href="#get_bridge" id="toc-get_bridge" class="nav-link" data-scroll-target="#get_bridge">get_bridge</a>
+  <ul class="collapse">
+  <li><a href="#show_summary" id="toc-show_summary" class="nav-link" data-scroll-target="#show_summary">show_summary</a></li>
+  <li><a href="#get_bridge-1" id="toc-get_bridge-1" class="nav-link" data-scroll-target="#get_bridge-1">get_bridge</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/civvic/bridget/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="bridge.html.md"><i class="bi bi-file-code"></i>CommonMark</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./bridge_widget.html">Bridge</a></li><li class="breadcrumb-item"><a href="./bridge.html">Bridge helpers</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">Bridge helpers</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<!-- WARNING: this notebook has many blocking calls to the frontend. Commands running all/above/below cells can be slow or fail (see [BlockingMixin](./10_bridge_widget.ipynb)). Simply run again the offending cell. -->
+<!-- # Prologue -->
+<hr>
+<hr>
+<section id="helpers" class="level1">
+<h1>Helpers</h1>
+<blockquote class="blockquote">
+<p>Internal utilities for JS/Python interop. Most users won’t need these directly.</p>
+</blockquote>
+<hr>
+<p><a href="https://github.com/civvic/bridget/blob/main/bridget/bridge.py#L65" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="notdebug" class="level3">
+<h3 class="anchored" data-anchor-id="notdebug">notdebug</h3>
+<blockquote class="blockquote">
+<pre><code> notdebug (jsstr:str)</code></pre>
+</blockquote>
+<hr>
+<p><a href="https://github.com/civvic/bridget/blob/main/bridget/bridge.py#L64" target="_blank" style="float:right; font-size:smaller">source</a></p>
+</section>
+<section id="debug" class="level3">
+<h3 class="anchored" data-anchor-id="debug">debug</h3>
+<blockquote class="blockquote">
+<pre><code> debug (jsstr:str)</code></pre>
+</blockquote>
+<hr>
+<p><a href="https://github.com/civvic/bridget/blob/main/bridget/bridge.py#L73" target="_blank" style="float:right; font-size:smaller">source</a></p>
+</section>
+<section id="to_js" class="level3">
+<h3 class="anchored" data-anchor-id="to_js">to_js</h3>
+<blockquote class="blockquote">
+<pre><code> to_js (*fts:fastcore.xml.FT|str)</code></pre>
+</blockquote>
+<div id="cell-10" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>a <span class="op">=</span> Div(P(<span class="st">'a'</span>), P(<span class="st">'aa'</span>), <span class="bu">id</span><span class="op">=</span><span class="st">'a11'</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>b <span class="op">=</span> P(<span class="st">'b'</span>, Span(<span class="st">'bb'</span>))</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>test_eq(_to_js(a), [<span class="st">'div'</span>, [[<span class="st">'p'</span>, [<span class="st">'a'</span>], {}], [<span class="st">'p'</span>, [<span class="st">'aa'</span>], {}]], {<span class="st">'id'</span>: <span class="st">'a11'</span>}])</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>test_eq(_to_js(b), [<span class="st">'p'</span>, [<span class="st">'b'</span>, [<span class="st">'span'</span>, [<span class="st">'bb'</span>], {}]], {}])</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>test_eq(to_js(a, <span class="st">'const a=`${"a"}`; console.log(a)'</span>, b), <span class="st">"""[</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="st">  ['div', [['p', ['a'], </span><span class="sc">{}</span><span class="st">], ['p', ['aa'], </span><span class="sc">{}</span><span class="st">]], {'id': 'a11'}],</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="st">  'const a=`${"a"}`; console.log(a)',</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="st">  ['p', ['b', ['span', ['bb'], </span><span class="sc">{}</span><span class="st">]], </span><span class="sc">{}</span><span class="st">]</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="st">]"""</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-11" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>a <span class="op">=</span> Script(<span class="st">'const a=`${"a"}`; console.log(a)'</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>b <span class="op">=</span> Script(src<span class="op">=</span><span class="st">'https://unpkg.com/htmx.org@next/dist/htmx.js'</span>, <span class="bu">type</span><span class="op">=</span><span class="st">'module'</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="bu">repr</span>(_to_js(a)), <span class="st">"['script', ['const a=`${</span><span class="ch">\"</span><span class="st">a</span><span class="ch">\"</span><span class="st">}`; console.log(a)'], </span><span class="sc">{}</span><span class="st">]"</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>test_eq(to_js(a, b), <span class="st">"""[</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="st">  ['script', ['const a=`${"a"}`; console.log(a)'], </span><span class="sc">{}</span><span class="st">],</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="st">  ['script', [''], {'src': 'https://unpkg.com/htmx.org@next/dist/htmx.js', 'type': 'module'}]</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="st">]"""</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Quick &amp; dirty way to convert <code>FT</code> to HTML elements int the front-end using <code>fasthtml-js</code> <code>$E</code>.<br>
+Intended only for “linking”/head elements (with void or text content): script, style, link, meta, etc. It’ll surely fail with other elements.</p>
+<hr>
+<p><a href="https://github.com/civvic/bridget/blob/main/bridget/bridge.py#L80" target="_blank" style="float:right; font-size:smaller">source</a></p>
+</section>
+<section id="scriptsdetails" class="level3">
+<h3 class="anchored" data-anchor-id="scriptsdetails">ScriptsDetails</h3>
+<blockquote class="blockquote">
+<pre><code> ScriptsDetails (scs, title='Loaded scripts', open=True)</code></pre>
+</blockquote>
+<p><em>Initialize self. See help(type(self)) for accurate signature.</em></p>
+</section>
+</section>
+<section id="bridge-scripts" class="level1">
+<h1>Bridge scripts</h1>
+<p><code>HTMX</code> and other useful JS libraries.</p>
+<hr>
+<p><a href="https://github.com/civvic/bridget/blob/main/bridget/bridge.py#L100" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="show_scripts" class="level3">
+<h3 class="anchored" data-anchor-id="show_scripts">show_scripts</h3>
+<blockquote class="blockquote">
+<pre><code> show_scripts (**scs:fastcore.xml.FT)</code></pre>
+</blockquote>
+<hr>
+<p><a href="https://github.com/civvic/bridget/blob/main/bridget/bridge.py#L94" target="_blank" style="float:right; font-size:smaller">source</a></p>
+</section>
+<section id="bridge_scripts" class="level3">
+<h3 class="anchored" data-anchor-id="bridge_scripts">bridge_scripts</h3>
+<blockquote class="blockquote">
+<pre><code> bridge_scripts (htmx=True)</code></pre>
+</blockquote>
+<div id="cell-17" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>bridge_scripts()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'htmx': script(('',),{'src': 'https://unpkg.com/htmx.org@next/dist/htmx.js'}),
+ 'fasthtml_js': script((),{'src': 'https://cdn.jsdelivr.net/gh/answerdotai/fasthtml-js@1.0.12/fasthtml.js'}),
+ 'surreal': script((),{'src': 'https://cdn.jsdelivr.net/gh/answerdotai/surreal@main/surreal.js'}),
+ 'css_scope_inline': script((),{'src': 'https://cdn.jsdelivr.net/gh/gnat/css-scope-inline@main/script.js'})}</code></pre>
+</div>
+</div>
+<div id="cell-18" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>show_scripts(<span class="op">**</span>bridge_scripts())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<details open=""><summary><b>Loaded scripts</b></summary><pre>&lt;script src="https://unpkg.com/htmx.org@next/dist/htmx.js"&gt;&lt;/script&gt;
+&lt;script src="https://cdn.jsdelivr.net/gh/answerdotai/fasthtml-js@1.0.12/fasthtml.js"&gt;&lt;/script&gt;
+&lt;script src="https://cdn.jsdelivr.net/gh/answerdotai/surreal@main/surreal.js"&gt;&lt;/script&gt;
+&lt;script src="https://cdn.jsdelivr.net/gh/gnat/css-scope-inline@main/script.js"&gt;&lt;/script&gt;</pre></details>
+</div>
+</div>
+</section>
+</section>
+<section id="bcanvas" class="level1">
+<h1>BCanvas</h1>
+<blockquote class="blockquote">
+<p><a href="https://civvic.github.io/bridget/logger.html#fcanvas"><code>FCanvas</code></a> associated with a bridge.</p>
+</blockquote>
+<p>Configure the bridge logging system to display log traces here in the notebook, a convenience that alleviates the need to open the browser console.</p>
+<p>NOTE: BCanvas could be a <a href="https://civvic.github.io/bridget/bridge.html#bridge"><code>Bridge</code></a> plugin, but it’s a separate widget instead in order to use another comm channels. (must check if we gain something by having different Comm channels, in the end ZMQD <a href="https://jupyter-server.readthedocs.io/en/latest/developers/websocket-protocols.html">uses</a> one websocket under the hood, I think)</p>
+<hr>
+<p><a href="https://github.com/civvic/bridget/blob/main/bridget/bridge.py#L122" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="get_bcanvas" class="level3">
+<h3 class="anchored" data-anchor-id="get_bcanvas">get_bcanvas</h3>
+<blockquote class="blockquote">
+<pre><code> get_bcanvas (height:int=200, elid:str='', **kwargs)</code></pre>
+</blockquote>
+<div id="cell-21" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>cleanupwidgets(<span class="st">'cnv'</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>__bcanvas__ <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>cnv <span class="op">=</span> get_bcanvas(timeout<span class="op">=</span>DEBUG(<span class="dv">2</span>, <span class="dv">2</span>))                </span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="co"># test_eq(cnv.loaded(), True)  # in Lab something weird is happening here</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-22" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>cnv.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="brd-logger_1-1764771240" class="brd-logger" style="width: 100%; max-height: 200px;"></div>
+</div>
+</div>
+<div id="cell-23" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>cnv.add(<span class="st">'Why Universe, why?&lt;br&gt;'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+</section>
+<section id="blogger" class="level1">
+<h1>BLogger</h1>
+<blockquote class="blockquote">
+<p><a href="https://civvic.github.io/bridget/logger.html#flogger"><code>FLogger</code></a> subclass used by Bridge.</p>
+</blockquote>
+<hr>
+<p><a href="https://github.com/civvic/bridget/blob/main/bridget/bridge.py#L130" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="blogger-1" class="level3">
+<h3 class="anchored" data-anchor-id="blogger-1">BLogger</h3>
+<blockquote class="blockquote">
+<pre><code> BLogger (msg=None, canvas:bridget.logger.Canvas|None=None,
+          height:int=200, show:bool=True, history:bool=True, **kwargs)</code></pre>
+</blockquote>
+<p><em>Simple logger that displays messages in a scrollable div</em></p>
+<div id="cell-26" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>lgr <span class="op">=</span> BLogger(<span class="st">'BLogger initialized'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="brd-logger_2-1764771240" class="brd-logger" style="width: 100%; max-height: 200px;"></div>
+</div>
+</div>
+<div id="cell-27" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>lgr.log(<span class="st">'test'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-28" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>lgr.error(<span class="st">'test'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-29" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>lgr.warn(<span class="st">'test'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-30" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>lgr.log(<span class="st">'bbbb'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-31" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>lgr.log(<span class="st">'cccccc'</span>, <span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-32" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>lgr.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="brd-logger_3-1764771240" class="brd-logger" style="width: 100%; max-height: 200px;"></div>
+</div>
+</div>
+<div id="cell-33" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>lgr.log(<span class="st">'ddddddddd'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Log directly.</p>
+</section>
+</section>
+<section id="bridge-bootstrap" class="level1">
+<h1>Bridge bootstrap</h1>
+<p>Progressive bridge construction: Boot → Messenger → Bridge (with plugins). Each layer adds functionality. Use <a href="https://civvic.github.io/bridget/bridge.html#get_bridge"><code>get_bridge()</code></a> to get the full-featured bridge.</p>
+<section id="bridgeboot" class="level2">
+<h2 class="anchored" data-anchor-id="bridgeboot">BridgeBoot</h2>
+<blockquote class="blockquote">
+<p>Simply setup the bridge and connect logging.</p>
+</blockquote>
+<div id="cell-37" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>cleanupwidgets(<span class="st">'brd'</span>)</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>brd <span class="op">=</span> BridgeBoot.create(show_logger<span class="op">=</span><span class="va">True</span>, timeout<span class="op">=</span>DEBUG(<span class="dv">2</span>, <span class="dv">2</span>), sleep<span class="op">=</span><span class="fl">0.2</span>)</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>test_eq(brd.loaded(), <span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="brd-logger_4-1764771240" class="brd-logger" style="width: 100%; max-height: 200px;"></div>
+</div>
+</div>
+<p>Note <code>create</code> blocks, it waits for the widget to be loaded (or the default timeout, see <a href="https://civvic.github.io/bridget/bridge_widget.html#blockingmixin"><code>BlockingMixin</code></a>).</p>
+<div id="cell-39" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>brd.error(<span class="st">'Erred!'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-40" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>brd.update_logger_config(color<span class="op">=</span><span class="st">'darkgoldenrod'</span>)  <span class="co"># type: ignore</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-41" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>brd.log(<span class="st">'my trea~~sssure'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>lgr</code> now that the bridge is opened reflects both frontend and kernel log messages and uses the JS bridge logging functionality.</p>
+<div id="cell-43" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>scr <span class="op">=</span> Script(<span class="st">'''</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="st">const { bridge } = await brdimport('./bridge.js');</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="st">bridge.logger.log('Hi from JS land');</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span>, <span class="bu">type</span><span class="op">=</span><span class="st">'module'</span>)</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>display(HTML(scr))</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>time.sleep(<span class="fl">0.1</span>)</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>clear_output()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Log from JS land.</p>
+<div id="cell-45" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="at">@FC.delegates</span>(BridgeBoot, keep<span class="op">=</span><span class="va">True</span>)  <span class="co"># type: ignore</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_bridge(logger:NBLogger<span class="op">|</span><span class="va">None</span><span class="op">=</span><span class="va">None</span>, show_logger:<span class="bu">bool</span><span class="op">=</span><span class="va">False</span>, <span class="op">**</span>kwargs) <span class="op">-&gt;</span> BridgeBoot:</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> __brd__:</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>        timeout, sleep <span class="op">=</span> kwargs.pop(<span class="st">'timeout'</span>, <span class="dv">2</span>), kwargs.pop(<span class="st">'sleep'</span>, <span class="fl">0.2</span>)</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>        brd <span class="op">=</span> BridgeBoot.create(logger<span class="op">=</span>logger, show_logger<span class="op">=</span>show_logger, timeout<span class="op">=</span>timeout, sleep<span class="op">=</span>sleep, <span class="op">**</span>kwargs)</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> brd</span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> __brd__ <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span></span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>    brd:BridgeBoot <span class="op">=</span> __brd__</span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> logger: brd.logger <span class="op">=</span> logger</span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> show_logger: brd.logger.show()</span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> brd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-46" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>brd <span class="op">=</span> get_bridge(show_logger<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>test_is(get_bridge(), brd)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="brd-logger_5-1764771240" class="brd-logger" style="width: 100%; max-height: 200px;"></div>
+</div>
+</div>
+<div id="cell-47" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>brd.close()</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>test_is(__brd__ <span class="kw">is</span> <span class="va">None</span>, <span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>close()</code> disconnect the widget and remove the widget model from the JS bridge, so it can no longer communicate with the Python side. Besides that, it has no effect on <code>bcanvas</code>, or the modules imported with <a href="https://civvic.github.io/bridget/bridge.html#brdimport"><code>brdimport</code></a>. Create a new bridge to reconnect.</p>
+<p>We need to use AnyWidget to setup the JS bridge, a class. The python side of the bridge should be created once per notebook, no sense to have several bridges around.</p>
+<p>Given the nearly impossibility of creating class singletons in Python even with metaclasses, in previous refactorizations, I’ve used <code>SingletonConfigurable</code> a-la-<code>getipython</code>. It works very well but it uglify the code.</p>
+<p>Anyway, given we’re-all-adults-here, you should always use <a href="https://civvic.github.io/bridget/bridge.html#get_bridge"><code>get_bridge</code></a> to access the bridge instance.</p>
+<div id="cell-49" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>brd <span class="op">=</span> get_bridge(show_logger<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="brd-logger_6-1764771240" class="brd-logger" style="width: 100%; max-height: 200px;"></div>
+</div>
+</div>
+</section>
+</section>
+<section id="messages-from-the-beyond" class="level1">
+<h1>Messages from the beyond</h1>
+<section id="handle_message" class="level2">
+<h2 class="anchored" data-anchor-id="handle_message">handle_message</h2>
+<div id="cell-52" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> _A:</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    ctx_names<span class="op">=</span>{<span class="st">'A'</span>}</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>): <span class="va">self</span>.forward <span class="op">=</span> _B()</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> on_info(<span class="va">self</span>, <span class="op">*</span>args, <span class="op">**</span>kwargs): </span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">'A'</span>, <span class="st">'info'</span>, <span class="ss">f"</span><span class="sc">{</span>args<span class="op">=</span><span class="sc">}</span><span class="ss">"</span>, <span class="ss">f"</span><span class="sc">{</span>kwargs<span class="op">=</span><span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> _msg_fwrdr(<span class="va">self</span>, <span class="op">*</span>args, ctx:<span class="bu">str</span>, kind:<span class="bu">str</span>, <span class="op">**</span>kwargs):</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> ctx <span class="op">==</span> <span class="st">'B'</span>:</span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>            handle_message(<span class="va">self</span>.forward, <span class="op">*</span>args, ctx<span class="op">=</span>ctx, kind<span class="op">=</span>kind, <span class="op">**</span>kwargs)</span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>ctx<span class="op">=</span><span class="sc">}</span><span class="ss"> Not forwarded"</span>)</span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> _B:</span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>    ctx_names<span class="op">=</span>{<span class="st">'B'</span>}</span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> on_info(<span class="va">self</span>, <span class="op">*</span>args, <span class="op">**</span>kwargs):</span>
+<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">'B'</span>, <span class="st">'info'</span>, <span class="ss">f"</span><span class="sc">{</span>args<span class="op">=</span><span class="sc">}</span><span class="ss">"</span>, <span class="ss">f"</span><span class="sc">{</span>kwargs<span class="op">=</span><span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a>a <span class="op">=</span> _A()</span>
+<span id="cb34-18"><a href="#cb34-18" aria-hidden="true" tabindex="-1"></a>test_stdout(</span>
+<span id="cb34-19"><a href="#cb34-19" aria-hidden="true" tabindex="-1"></a>    <span class="kw">lambda</span>: handle_message(a, <span class="st">'hello'</span>, ctx<span class="op">=</span><span class="st">'A'</span>, kind<span class="op">=</span><span class="st">'info'</span>, info<span class="op">=</span><span class="st">'initialized'</span>), </span>
+<span id="cb34-20"><a href="#cb34-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">"A info args=('hello',) kwargs={'info': 'initialized'}</span><span class="ch">\n</span><span class="st">ctx='A' Not forwarded"</span>)</span>
+<span id="cb34-21"><a href="#cb34-21" aria-hidden="true" tabindex="-1"></a>test_stdout(</span>
+<span id="cb34-22"><a href="#cb34-22" aria-hidden="true" tabindex="-1"></a>    <span class="kw">lambda</span>: handle_message(a, <span class="st">'other'</span>, ctx<span class="op">=</span><span class="st">'B'</span>, kind<span class="op">=</span><span class="st">'info'</span>, info<span class="op">=</span><span class="st">'forwarded'</span>), </span>
+<span id="cb34-23"><a href="#cb34-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">"B info args=('other',) kwargs={'info': 'forwarded'}"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="bridgemessenger" class="level2">
+<h2 class="anchored" data-anchor-id="bridgemessenger">BridgeMessenger</h2>
+<blockquote class="blockquote">
+<p>A bridge that can receive messages from JS land.</p>
+</blockquote>
+<p>BridgeBoot just loads the JS bridge and setup logging. Here we set the basis for more powerful messaging to and fro JS.</p>
+<div id="cell-54" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="at">@FC.delegates</span>(BridgeMessenger, keep<span class="op">=</span><span class="va">True</span>)  <span class="co"># type: ignore</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_bridge(logger:NBLogger<span class="op">|</span><span class="va">None</span><span class="op">=</span><span class="va">None</span>, show_logger:<span class="bu">bool</span><span class="op">=</span><span class="va">False</span>, <span class="op">**</span>kwargs):</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> __brd__: </span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>        timeout, sleep <span class="op">=</span> kwargs.pop(<span class="st">'timeout'</span>, <span class="dv">3</span>), kwargs.pop(<span class="st">'sleep'</span>, <span class="fl">0.2</span>)</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>        brd <span class="op">=</span> BridgeMessenger.create(logger<span class="op">=</span>logger, show_logger<span class="op">=</span>show_logger, timeout<span class="op">=</span>timeout, sleep<span class="op">=</span>sleep, <span class="op">**</span>kwargs)</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> brd</span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> __brd__ <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span></span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>    brd <span class="op">=</span> __brd__</span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> logger: brd.logger <span class="op">=</span> logger</span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> logger <span class="kw">and</span> show_logger: brd.logger.show()</span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> brd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-55" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>cleanupwidgets(<span class="st">'brd'</span>)</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>brd <span class="op">=</span> get_bridge(show_logger<span class="op">=</span><span class="va">True</span>, timeout<span class="op">=</span>DEBUG(<span class="dv">2</span>, <span class="dv">2</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="brd-logger_7-1764771240" class="brd-logger" style="width: 100%; max-height: 200px;"></div>
+</div>
+</div>
+<div id="cell-56" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>brd.debug_enabled(<span class="st">'loader'</span>, enabled<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-57" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>brd.send(brd.msg(ctx<span class="op">=</span><span class="st">'brd'</span>, cmd<span class="op">=</span><span class="st">'echo'</span>, args<span class="op">=</span><span class="st">'test'</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-58" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>msg <span class="op">=</span> <span class="bu">dict</span>(ctx<span class="op">=</span><span class="st">'loader'</span>, cmd<span class="op">=</span><span class="st">'load'</span>, args<span class="op">=</span>{<span class="st">'confetti'</span>: <span class="st">'https://esm.sh/canvas-confetti@1.6'</span>}, timeout<span class="op">=</span>DEBUG(<span class="dv">1</span>))</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>brd.send(msg)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-59" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>observer_loader <span class="op">=</span> anysource(<span class="st">'''</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="st">const { getObserverManager } = await brdimport('./observer.js');</span></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a><span class="st">console.log(getObserverManager)</span></span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span>)</span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>brd.send(<span class="bu">dict</span>(ctx<span class="op">=</span><span class="st">'loader'</span>, cmd<span class="op">=</span><span class="st">'load'</span>, args<span class="op">=</span>{<span class="st">'get_observer'</span>: observer_loader}, <span class="bu">reload</span><span class="op">=</span><span class="va">True</span>), timeout<span class="op">=</span>DEBUG(<span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>({'ctx': 'loader',
+  'kind': 'load',
+  'success': ['get_observer'],
+  'failed': [],
+  'msg_id': 'msg-8'},
+ [])</code></pre>
+</div>
+</div>
+<div id="cell-60" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>src <span class="op">=</span> <span class="st">'''</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="st">const res = await brdimport('https://a.com/b/c.js');</span></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a><span class="st">console.log(res)</span></span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span></span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>brd.send(<span class="bu">dict</span>(ctx<span class="op">=</span><span class="st">'loader'</span>, cmd<span class="op">=</span><span class="st">'load'</span>, args<span class="op">=</span>{<span class="st">'willfail'</span>: src}, <span class="bu">reload</span><span class="op">=</span><span class="va">True</span>), timeout<span class="op">=</span>DEBUG(<span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>({'ctx': 'loader',
+  'kind': 'load',
+  'success': [],
+  'failed': [{'name': 'willfail',
+    'error': 'Failed to fetch dynamically imported module: https://a.com/b/c.js'}],
+  'msg_id': 'msg-9'},
+ [])</code></pre>
+</div>
+</div>
+<p><a href="https://civvic.github.io/bridget/bridge_widget.html#anysource"><code>anysource</code></a> doesn’t transform its arguments. Use <a href="https://civvic.github.io/bridget/bridge_widget.html#bundled"><code>bundled</code></a> (i.e., <code>Bundle.__call__(..., transform=True)</code>, the default), instead.</p>
+<p>You can disabled JS transform completely with <code>bridge.cfg.bundle_cfg.rewrite_imports</code>.</p>
+<div id="cell-62" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>src <span class="op">=</span> bundled(<span class="st">'''</span></span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="st">import confetti from 'https://esm.sh/canvas-confetti@1.6';</span></span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a><span class="st">console.log(confetti)</span></span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span>)(transform<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a>brd.send(<span class="bu">dict</span>(ctx<span class="op">=</span><span class="st">'loader'</span>, cmd<span class="op">=</span><span class="st">'load'</span>, args<span class="op">=</span>{<span class="st">'load_confetti'</span>: src}), timeout<span class="op">=</span>DEBUG(<span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>({'ctx': 'loader',
+  'kind': 'load',
+  'success': ['load_confetti'],
+  'failed': [],
+  'msg_id': 'msg-10'},
+ [])</code></pre>
+</div>
+</div>
+<p>Check the JS console network tab, we imported the <code>confetti</code> module previously.</p>
+<div id="cell-64" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>src <span class="op">=</span> anysource(<span class="st">'''</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="st">const { confetti } = await brdimport('https://esm.sh/canvas-confetti@1.6');</span></span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a><span class="st">console.log(confetti)</span></span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span>)</span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>brd.send(<span class="bu">dict</span>(ctx<span class="op">=</span><span class="st">'loader'</span>, cmd<span class="op">=</span><span class="st">'load'</span>, args<span class="op">=</span>{<span class="st">'load_confetti'</span>: src}, <span class="bu">reload</span><span class="op">=</span><span class="va">True</span>), timeout<span class="op">=</span>DEBUG(<span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>({'ctx': 'loader',
+  'kind': 'load',
+  'success': ['load_confetti'],
+  'failed': [],
+  'msg_id': 'msg-11'},
+ [])</code></pre>
+</div>
+</div>
+<p><a href="https://civvic.github.io/bridget/bridge.html#brdimport"><code>brdimport</code></a> doesn’t re-import <code>confetti</code> too.</p>
+<p>Note the <code>reload</code> argument of the <code>send</code> method. <code>bridge</code> caches the modules by name and URL, and we’re reusing <code>load_confetti</code> name.</p>
+<p>Use <code>cache=False</code> if you don’t want <code>bridge</code> caching the module.</p>
+</section>
+</section>
+<section id="linking-elements-loader" class="level1">
+<h1>Linking elements loader</h1>
+<blockquote class="blockquote">
+<p><code>script</code> (and other links) loader for notebooks.</p>
+</blockquote>
+<p><code>FastHTML</code> way of loading <code>head</code> elements is fine with standard web apps, <code>head</code> links are evaluated in order (unless they have <code>async</code> or <code>defer</code> attributes) if present in the HTML source.</p>
+<p>In notebooks, we need to load those <code>head</code> elements dinamically in order (in <code>head</code>, <code>body</code> or anywhere of the front-end page). And we want to load <code>fasthtml.js</code> (and <code>htmx.js</code> because why not) as soon as possible, so we can use them in the same cell to define our JS extensions.</p>
+<p>Assuming we’ve already loaded <code>fasthtml.js</code>, this is a possible solution:</p>
+<hr>
+<p><a href="https://github.com/civvic/bridget/blob/main/bridget/bridge.py#L280" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="links" class="level3">
+<h3 class="anchored" data-anchor-id="links">Links</h3>
+<blockquote class="blockquote">
+<pre><code> Links (*fts:fastcore.xml.FT)</code></pre>
+</blockquote>
+<hr>
+<p><a href="https://github.com/civvic/bridget/blob/main/bridget/bridge.py#L286" target="_blank" style="float:right; font-size:smaller">source</a></p>
+</section>
+<section id="load_links" class="level3">
+<h3 class="anchored" data-anchor-id="load_links">load_links</h3>
+<blockquote class="blockquote">
+<pre><code> load_links (*fts:fastcore.xml.FT, feedback:str='')</code></pre>
+</blockquote>
+<div id="cell-69" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>brd.logger.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="brd-logger_8-1764771240" class="brd-logger" style="width: 100%; max-height: 200px;"></div>
+</div>
+</div>
+<div id="cell-70" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>scr <span class="op">=</span> Script(notdebug(<span class="st">'''</span></span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a><span class="st">const { bridge } = await brdimport('./bridge.js');</span></span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a><span class="st">bridge.logger.log('silly script');</span></span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span>), <span class="bu">id</span><span class="op">=</span><span class="st">'silly-script'</span>, <span class="bu">type</span><span class="op">=</span><span class="st">'module'</span>)</span>
+<span id="cb51-5"><a href="#cb51-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-6"><a href="#cb51-6" aria-hidden="true" tabindex="-1"></a>load_links(scr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-71" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb52"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>load_links(scr)  <span class="co"># see console, script was not loaded twice</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><a href="https://civvic.github.io/bridget/bridge.html#load_links"><code>load_links</code></a> can be used to load any link element in the front-end in order (if bridge is active). It will auto delete the script after links are loaded if <code>feedback</code> is None so the link won’t be reflected in the <code>.ipynb</code> file and loaded automatically on page open.</p>
+<p>Unfortunately, in some Jupyter environments like VSCode, this only works if the cell is visible in the screen and is run interactively, not with <code>all below</code> or <code>all above</code>. VSCode only renders outputs that are visible. For an alternative, see <a href="https://civvic.github.io/bridget/bridge.html#loader"><code>Loader</code></a> below.</p>
+<div id="cell-73" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>B(<span class="st">'a'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb54"><pre class="sourceCode html code-with-copy"><code class="sourceCode html"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">b</span><span class="dt">&gt;</span>a<span class="dt">&lt;/</span><span class="kw">b</span><span class="dt">&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</section>
+</section>
+<section id="bridgeplugin" class="level1">
+<h1>BridgePlugin</h1>
+<hr>
+<p><a href="https://github.com/civvic/bridget/blob/main/bridget/bridge.py#L292" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="bridgeplugin-1" class="level3">
+<h3 class="anchored" data-anchor-id="bridgeplugin-1">BridgePlugin</h3>
+<blockquote class="blockquote">
+<pre><code> BridgePlugin (ctx:str='', src:str|pathlib.Path='', bridge=None)</code></pre>
+</blockquote>
+<p><em>Inherit from this to have all attr accesses in <code>self._xtra</code> passed down to <code>self.default</code></em></p>
+<div id="cell-76" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb56"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>plg <span class="op">=</span> BridgePlugin(<span class="st">'test'</span>, <span class="st">'a=10'</span>)</span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>test_eq(plg.ctx_name, <span class="st">'test'</span>)</span>
+<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>test_eq(plg.ctx_names, {<span class="st">'test'</span>})</span>
+<span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a>test_eq(plg.src, <span class="st">'a=10'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+</section>
+<section id="bridge" class="level1">
+<h1>Bridge</h1>
+<blockquote class="blockquote">
+<p>BridgeWidget + plugins to extend Bridge functionality in Python and/or JavaScript.</p>
+</blockquote>
+<p><a href="https://civvic.github.io/bridget/bridge_widget.html#bridgewidget"><code>BridgeWidget</code></a> contains the core functionality, logging and JS loading. All other stuff in this project will be developed with plugins.</p>
+<div id="cell-78" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb57"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_bridge(<span class="op">*</span>plugins:BridgePlugin, kwplugins:<span class="bu">dict</span>[<span class="bu">str</span>, <span class="bu">str</span>]<span class="op">|</span><span class="va">None</span><span class="op">=</span><span class="va">None</span>, </span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>    logger:NBLogger<span class="op">|</span><span class="va">None</span><span class="op">=</span><span class="va">None</span>, show_logger:<span class="bu">bool</span><span class="op">=</span><span class="va">False</span>, <span class="op">**</span>kwargs):</span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">"Get the bridge, creating it if not found."</span></span>
+<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> __brd__: </span>
+<span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a>        timeout, sleep <span class="op">=</span> kwargs.pop(<span class="st">'timeout'</span>, <span class="dv">2</span>), kwargs.pop(<span class="st">'sleep'</span>, <span class="fl">0.2</span>)</span>
+<span id="cb57-6"><a href="#cb57-6" aria-hidden="true" tabindex="-1"></a>        brd <span class="op">=</span> Bridge.create(<span class="op">*</span>plugins, kwplugins<span class="op">=</span>kwplugins, logger<span class="op">=</span>logger, show_logger<span class="op">=</span>show_logger, </span>
+<span id="cb57-7"><a href="#cb57-7" aria-hidden="true" tabindex="-1"></a>                            timeout<span class="op">=</span>timeout, sleep<span class="op">=</span>sleep, <span class="op">**</span>kwargs)</span>
+<span id="cb57-8"><a href="#cb57-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> brd</span>
+<span id="cb57-9"><a href="#cb57-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> __brd__ <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span></span>
+<span id="cb57-10"><a href="#cb57-10" aria-hidden="true" tabindex="-1"></a>    brd <span class="op">=</span> __brd__</span>
+<span id="cb57-11"><a href="#cb57-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> logger: brd.logger <span class="op">=</span> logger</span>
+<span id="cb57-12"><a href="#cb57-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> logger <span class="kw">and</span> show_logger: brd.logger.show()</span>
+<span id="cb57-13"><a href="#cb57-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> brd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-79" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb58"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>cleanupwidgets(<span class="st">'brd'</span>)</span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>brd <span class="op">=</span> get_bridge(show_logger<span class="op">=</span><span class="va">True</span>, timeout<span class="op">=</span>DEBUG(<span class="dv">2</span>, <span class="dv">2</span>))</span>
+<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a>test_eq(brd.plugins.keys(), <span class="bu">set</span>((<span class="st">'loader'</span>, <span class="st">'htmx'</span>, <span class="st">'fasthtmljs'</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="brd-logger_9-1764771240" class="brd-logger" style="width: 100%; max-height: 200px;"></div>
+</div>
+</div>
+<div id="cell-80" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb59"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>brd.add_plugins(badp <span class="op">:=</span> BridgePlugin(<span class="st">'badp'</span>, <span class="st">'''export default function badp(bridge) { a = 1/0 }'''</span>))</span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a>blocks(<span class="kw">lambda</span>: badp.is_initialized <span class="op">!=</span> <span class="va">None</span>, <span class="dv">1</span>)</span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>test_is(brd.badp.is_initialized, <span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="inspectplugin" class="level1">
+<h1>InspectPlugin</h1>
+<div id="cell-82" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb60"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> InspectPlugin(BridgePlugin):</span>
+<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>    src <span class="op">=</span> <span class="st">'''</span></span>
+<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a><span class="st">function inspect(msg) {</span></span>
+<span id="cb60-4"><a href="#cb60-4" aria-hidden="true" tabindex="-1"></a><span class="st">    const {ctx, kind} = msg;</span></span>
+<span id="cb60-5"><a href="#cb60-5" aria-hidden="true" tabindex="-1"></a><span class="st">    if (kind === 'echo') {</span></span>
+<span id="cb60-6"><a href="#cb60-6" aria-hidden="true" tabindex="-1"></a><span class="st">        bridge.logger.log('echo', msg);</span></span>
+<span id="cb60-7"><a href="#cb60-7" aria-hidden="true" tabindex="-1"></a><span class="st">        setTimeout(() =&gt; {</span></span>
+<span id="cb60-8"><a href="#cb60-8" aria-hidden="true" tabindex="-1"></a><span class="st">            bridge.model.send({ ctx: ctx, kind: 'echo', msg: msg, msg_id: msg?.msg_id })</span></span>
+<span id="cb60-9"><a href="#cb60-9" aria-hidden="true" tabindex="-1"></a><span class="st">        }, 100);</span></span>
+<span id="cb60-10"><a href="#cb60-10" aria-hidden="true" tabindex="-1"></a><span class="st">        return;</span></span>
+<span id="cb60-11"><a href="#cb60-11" aria-hidden="true" tabindex="-1"></a><span class="st">    }</span></span>
+<span id="cb60-12"><a href="#cb60-12" aria-hidden="true" tabindex="-1"></a><span class="st">    bridge.model.send({ ctx: 'inspect', kind: 'inspect', msg: msg, msg_id: msg?.msg_id })</span></span>
+<span id="cb60-13"><a href="#cb60-13" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
+<span id="cb60-14"><a href="#cb60-14" aria-hidden="true" tabindex="-1"></a><span class="st">export default function initializeInspect(bridge) {</span></span>
+<span id="cb60-15"><a href="#cb60-15" aria-hidden="true" tabindex="-1"></a><span class="st">    bridge.on('inspect', inspect);</span></span>
+<span id="cb60-16"><a href="#cb60-16" aria-hidden="true" tabindex="-1"></a><span class="st">    return () =&gt; bridge.off('inspect');</span></span>
+<span id="cb60-17"><a href="#cb60-17" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
+<span id="cb60-18"><a href="#cb60-18" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span></span>
+<span id="cb60-19"><a href="#cb60-19" aria-hidden="true" tabindex="-1"></a>    ctx_name <span class="op">=</span> <span class="st">'inspect'</span></span>
+<span id="cb60-20"><a href="#cb60-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb60-21"><a href="#cb60-21" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> on_inspect(<span class="va">self</span>, <span class="op">*</span>args, msg:Any, tracker:Any, <span class="op">**</span>kwargs):</span>
+<span id="cb60-22"><a href="#cb60-22" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.log(<span class="ss">f"</span><span class="sc">{</span><span class="va">self</span><span class="sc">.</span><span class="va">__class__</span><span class="sc">.</span><span class="va">__name__</span><span class="sc">}</span><span class="ss"> inspect: </span><span class="sc">{</span>msg<span class="op">=</span><span class="sc">}</span><span class="ss"> </span><span class="sc">{</span>tracker<span class="op">=</span><span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-83" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb61"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a>brd.logger.show(clear<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="brd-logger_10-1764771240" class="brd-logger" style="width: 100%; max-height: 200px;"></div>
+</div>
+</div>
+<div id="cell-84" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb62"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>brd.add_plugins(insp <span class="op">:=</span> InspectPlugin())</span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>blocks(<span class="kw">lambda</span>: insp.is_initialized <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>, <span class="dv">3</span>)</span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a>test_is(<span class="st">'inspect'</span> <span class="kw">in</span> brd.plugins, <span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>add_plugin</code> does not blocks. If needed, use <a href="https://civvic.github.io/bridget/bridge_widget.html#blocks"><code>blocks</code></a> or <a href="https://civvic.github.io/bridget/bridge_widget.html#blocking"><code>blocking</code></a> to ensure the plugin is loaded.</p>
+<div id="cell-86" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb63"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="co"># content, _ = await insp.asend(msg := insp.msg(ctx='inspect', kind='echo', data={'a': 1}))  # asend not working in Lab</span></span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a>content, _ <span class="op">=</span> insp.send(msg <span class="op">:=</span> insp.msg(ctx<span class="op">=</span><span class="st">'inspect'</span>, kind<span class="op">=</span><span class="st">'echo'</span>, data<span class="op">=</span>{<span class="st">'a'</span>: <span class="dv">1</span>}), timeout<span class="op">=</span>DEBUG(<span class="dv">1</span>))</span>
+<span id="cb63-3"><a href="#cb63-3" aria-hidden="true" tabindex="-1"></a>test_eq(content, {<span class="st">'ctx'</span>: <span class="st">'inspect'</span>, <span class="st">'kind'</span>: <span class="st">'echo'</span>, <span class="st">'msg'</span>: msg, <span class="st">'msg_id'</span>: msg[<span class="st">'msg_id'</span>]})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-87" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb64"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>content, _ <span class="op">=</span> insp.send(msg <span class="op">:=</span> insp.msg({<span class="st">'tracker'</span>: <span class="st">'test'</span>}, ctx<span class="op">=</span><span class="st">'inspect'</span>, kind<span class="op">=</span><span class="st">'echo'</span>, data<span class="op">=</span>{<span class="st">'b'</span>: <span class="dv">2</span>}), timeout<span class="op">=</span>DEBUG(<span class="dv">1</span>))</span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a>test_eq(content, {<span class="st">'ctx'</span>: <span class="st">'inspect'</span>, <span class="st">'kind'</span>: <span class="st">'echo'</span>, <span class="st">'msg'</span>: msg, <span class="st">'msg_id'</span>: msg[<span class="st">'msg_id'</span>]})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-88" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb65"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a>insp.src <span class="op">=</span> <span class="st">'''</span></span>
+<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a><span class="st">const logger = bridge.logger.create({ ns: 'inspect', color: 'green' });</span></span>
+<span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a><span class="st">function inspect(msg) {</span></span>
+<span id="cb65-4"><a href="#cb65-4" aria-hidden="true" tabindex="-1"></a><span class="st">    const {ctx, kind} = msg;</span></span>
+<span id="cb65-5"><a href="#cb65-5" aria-hidden="true" tabindex="-1"></a><span class="st">    if (kind === 'echo') {</span></span>
+<span id="cb65-6"><a href="#cb65-6" aria-hidden="true" tabindex="-1"></a><span class="st">        logger.log('echo', msg);</span></span>
+<span id="cb65-7"><a href="#cb65-7" aria-hidden="true" tabindex="-1"></a><span class="st">        setTimeout(() =&gt; {</span></span>
+<span id="cb65-8"><a href="#cb65-8" aria-hidden="true" tabindex="-1"></a><span class="st">            bridge.model.send({ ctx: ctx, kind: 'echo', msg: msg, msg_id: msg?.msg_id })</span></span>
+<span id="cb65-9"><a href="#cb65-9" aria-hidden="true" tabindex="-1"></a><span class="st">        }, 100);</span></span>
+<span id="cb65-10"><a href="#cb65-10" aria-hidden="true" tabindex="-1"></a><span class="st">        return;</span></span>
+<span id="cb65-11"><a href="#cb65-11" aria-hidden="true" tabindex="-1"></a><span class="st">    }</span></span>
+<span id="cb65-12"><a href="#cb65-12" aria-hidden="true" tabindex="-1"></a><span class="st">    bridge.model.send({ ctx: 'inspect', kind: 'inspect', msg: msg, msg_id: msg?.msg_id })</span></span>
+<span id="cb65-13"><a href="#cb65-13" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
+<span id="cb65-14"><a href="#cb65-14" aria-hidden="true" tabindex="-1"></a><span class="st">export default async function initializeInspect(bridge) {</span></span>
+<span id="cb65-15"><a href="#cb65-15" aria-hidden="true" tabindex="-1"></a><span class="st">    bridge.on('inspect', inspect);</span></span>
+<span id="cb65-16"><a href="#cb65-16" aria-hidden="true" tabindex="-1"></a><span class="st">    return () =&gt; { bridge.off('inspect'); logger.close(); }</span></span>
+<span id="cb65-17"><a href="#cb65-17" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
+<span id="cb65-18"><a href="#cb65-18" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-89" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb66"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>brd.logger.show(clear<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="brd-logger_11-1764771240" class="brd-logger" style="width: 100%; max-height: 200px;"></div>
+</div>
+</div>
+<div id="cell-90" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb67"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>brd.add_plugins(insp)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-91" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb68"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a>insp.log(<span class="st">"Look Ma', now greeny!"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-92" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb69"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a>content, _ <span class="op">=</span> insp.send(msg <span class="op">:=</span> insp.msg(ctx<span class="op">=</span><span class="st">'inspect'</span>, kind<span class="op">=</span><span class="st">'echo'</span>, data<span class="op">=</span>{<span class="st">'a'</span>: <span class="dv">1</span>}), timeout<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a>test_eq(content, {<span class="st">'ctx'</span>: <span class="st">'inspect'</span>, <span class="st">'kind'</span>: <span class="st">'echo'</span>, <span class="st">'msg'</span>: msg, <span class="st">'msg_id'</span>: msg[<span class="st">'msg_id'</span>]})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We can re-load any plugin by calling <code>addPlugins</code> again. See above <code>insp</code> now uses a new logger.</p>
+<p>In the examples folder, there’s an <a href="./examples/inspect_plugin.html">inspect</a> plugin more fully developed.</p>
+</section>
+<section id="loader" class="level1">
+<h1>Loader</h1>
+<blockquote class="blockquote">
+<p>Convenience python-side plugin for loading scripts and ESMs.</p>
+</blockquote>
+<div id="cell-95" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb70"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a>brd.logger.show(clear<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="brd-logger_12-1764771240" class="brd-logger" style="width: 100%; max-height: 200px;"></div>
+</div>
+</div>
+<div id="cell-96" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb71"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a>loader <span class="op">=</span> Loader(<span class="bu">dict</span>(</span>
+<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a>    test<span class="op">=</span>Script(<span class="st">'// debugger;</span><span class="ch">\n</span><span class="st">console.log("test")'</span>, <span class="bu">id</span><span class="op">=</span><span class="st">'test-script'</span>),</span>
+<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a>    test2<span class="op">=</span>Script(<span class="st">'// debugger;</span><span class="ch">\n</span><span class="st">console.log(a)'</span>, <span class="bu">id</span><span class="op">=</span><span class="st">'test-script2'</span>)</span>
+<span id="cb71-4"><a href="#cb71-4" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb71-5"><a href="#cb71-5" aria-hidden="true" tabindex="-1"></a>brd.add_plugins(loader)</span>
+<span id="cb71-6"><a href="#cb71-6" aria-hidden="true" tabindex="-1"></a>test_is(brd.loader.loading, <span class="va">True</span>)</span>
+<span id="cb71-7"><a href="#cb71-7" aria-hidden="true" tabindex="-1"></a>test_is(brd.loader, loader)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-97" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb72"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a>loader.load_links({</span>
+<span id="cb72-2"><a href="#cb72-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">'test3'</span>: Script(<span class="st">'// debugger;</span><span class="ch">\n</span><span class="st">bridge.logger.log("test3")'</span>, <span class="bu">id</span><span class="op">=</span><span class="st">'test-script3'</span>),</span>
+<span id="cb72-3"><a href="#cb72-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">'test4'</span>: Script(<span class="st">'// debugger;</span><span class="ch">\n</span><span class="st">bridge.logger.log(a)'</span>, <span class="bu">id</span><span class="op">=</span><span class="st">'test-script4'</span>)</span>
+<span id="cb72-4"><a href="#cb72-4" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-98" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb73"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a>loader.load({<span class="st">'htmx1'</span>: <span class="st">'''</span></span>
+<span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a><span class="st">// debugger;</span></span>
+<span id="cb73-3"><a href="#cb73-3" aria-hidden="true" tabindex="-1"></a><span class="st">import htmx from "https://unpkg.com/htmx.org@next/dist/htmx.esm.js";</span></span>
+<span id="cb73-4"><a href="#cb73-4" aria-hidden="true" tabindex="-1"></a><span class="st">console.log(htmx);</span></span>
+<span id="cb73-5"><a href="#cb73-5" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span>,</span>
+<span id="cb73-6"><a href="#cb73-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">'htmx2'</span>: <span class="st">'''</span></span>
+<span id="cb73-7"><a href="#cb73-7" aria-hidden="true" tabindex="-1"></a><span class="st">// debugger;</span></span>
+<span id="cb73-8"><a href="#cb73-8" aria-hidden="true" tabindex="-1"></a><span class="st">import htmx from "https://unpkg.com/htmx.org@next/dist/XXXX.esm.js";</span></span>
+<span id="cb73-9"><a href="#cb73-9" aria-hidden="true" tabindex="-1"></a><span class="st">console.log(htmx);</span></span>
+<span id="cb73-10"><a href="#cb73-10" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-99" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb74"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a>blocks(<span class="kw">lambda</span>: loader.loaded(<span class="st">'htmx1'</span>), <span class="dv">2</span>, show<span class="op">=</span>_show)  <span class="co"># needed when running all above/below cells</span></span>
+<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb74-3"><a href="#cb74-3" aria-hidden="true" tabindex="-1"></a>test_eq(loader.loaded().keys(), <span class="bu">set</span>((<span class="st">'test'</span>, <span class="st">'test3'</span>, <span class="st">'htmx1'</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>._.</code></pre>
+</div>
+</div>
+<div id="cell-100" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb76"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a>test_eq(brd.loader.loaded(<span class="st">'htmx1'</span>), <span class="va">True</span>)</span>
+<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a>test_eq(brd.loader.loaded(<span class="st">'nah'</span>), <span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><a href="https://civvic.github.io/bridget/bridge.html#loader"><code>Loader</code></a> can be used to execute any JS code (as an EcmaScript module). Note that unlike IPython <code>Javacript</code>, there’s no output, the code won’t run on opening the notebook until explicitly running the cell.</p>
+<div id="cell-102" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb77"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a>brd.logger.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="brd-logger_13-1764771240" class="brd-logger" style="width: 100%; max-height: 200px;"></div>
+</div>
+</div>
+<div id="cell-103" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb78"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a>display(HTML(</span>
+<span id="cb78-2"><a href="#cb78-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">'&lt;button type="button" onclick="const canvas=document.getElementById(</span><span class="ch">\'</span><span class="st">my-canvas</span><span class="ch">\'</span><span class="st">);</span><span class="ch">\n</span><span class="st">canvas.confetti({spread:70, particleCount:100, origin: { y: 1 </span><span class="sc">}}</span><span class="st">)"&gt;Fire!&lt;/button&gt;&lt;br&gt;'</span></span>
+<span id="cb78-3"><a href="#cb78-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">'&lt;canvas id="my-canvas" width="1000px" height="200px"&gt;&lt;/canvas&gt;'</span></span>
+<span id="cb78-4"><a href="#cb78-4" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb78-5"><a href="#cb78-5" aria-hidden="true" tabindex="-1"></a>time.sleep(<span class="fl">0.5</span>)</span>
+<span id="cb78-6"><a href="#cb78-6" aria-hidden="true" tabindex="-1"></a>loader.load({<span class="st">'confetti'</span>: <span class="st">'''</span></span>
+<span id="cb78-7"><a href="#cb78-7" aria-hidden="true" tabindex="-1"></a><span class="st">import confetti from "https://esm.sh/canvas-confetti@1.6";</span></span>
+<span id="cb78-8"><a href="#cb78-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb78-9"><a href="#cb78-9" aria-hidden="true" tabindex="-1"></a><span class="st">function randomInRange(min, max) {</span></span>
+<span id="cb78-10"><a href="#cb78-10" aria-hidden="true" tabindex="-1"></a><span class="st">  return Math.random() * (max - min) + min;</span></span>
+<span id="cb78-11"><a href="#cb78-11" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
+<span id="cb78-12"><a href="#cb78-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb78-13"><a href="#cb78-13" aria-hidden="true" tabindex="-1"></a><span class="st">const canvas = document.getElementById('my-canvas');</span></span>
+<span id="cb78-14"><a href="#cb78-14" aria-hidden="true" tabindex="-1"></a><span class="st">canvas.confetti = canvas.confetti || confetti.create(canvas, { resize: true });</span></span>
+<span id="cb78-15"><a href="#cb78-15" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span>}, <span class="bu">reload</span><span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<button type="button" onclick="const canvas=document.getElementById('my-canvas');
+canvas.confetti({spread:70, particleCount:100, origin: { y: 1 }})">Fire!</button><br><canvas id="my-canvas" width="1000px" height="200px"></canvas>
+</div>
+</div>
+<div id="cell-104" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb79"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a>loader.load({<span class="st">'beep'</span>: <span class="st">'''</span></span>
+<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a><span class="st">// debugger;</span></span>
+<span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a><span class="st">export function beep() {</span></span>
+<span id="cb79-4"><a href="#cb79-4" aria-hidden="true" tabindex="-1"></a><span class="st">    var snd = new Audio("data:audio/wav;base64,//uQRAAAAWMSLwUIYAAsYkXgoQwAEaYLWfkWgAI0wWs/ItAAAGDgYtAgAyN+QWaAAihwMWm4G8QQRDiMcCBcH3Cc+CDv/7xA4Tvh9Rz/y8QADBwMWgQAZG/ILNAARQ4GLTcDeIIIhxGOBAuD7hOfBB3/94gcJ3w+o5/5eIAIAAAVwWgQAVQ2ORaIQwEMAJiDg95G4nQL7mQVWI6GwRcfsZAcsKkJvxgxEjzFUgfHoSQ9Qq7KNwqHwuB13MA4a1q/DmBrHgPcmjiGoh//EwC5nGPEmS4RcfkVKOhJf+WOgoxJclFz3kgn//dBA+ya1GhurNn8zb//9NNutNuhz31f////9vt///z+IdAEAAAK4LQIAKobHItEIYCGAExBwe8jcToF9zIKrEdDYIuP2MgOWFSE34wYiR5iqQPj0JIeoVdlG4VD4XA67mAcNa1fhzA1jwHuTRxDUQ//iYBczjHiTJcIuPyKlHQkv/LHQUYkuSi57yQT//uggfZNajQ3Vmz+Zt//+mm3Wm3Q576v////+32///5/EOgAAADVghQAAAAA//uQZAUAB1WI0PZugAAAAAoQwAAAEk3nRd2qAAAAACiDgAAAAAAABCqEEQRLCgwpBGMlJkIz8jKhGvj4k6jzRnqasNKIeoh5gI7BJaC1A1AoNBjJgbyApVS4IDlZgDU5WUAxEKDNmmALHzZp0Fkz1FMTmGFl1FMEyodIavcCAUHDWrKAIA4aa2oCgILEBupZgHvAhEBcZ6joQBxS76AgccrFlczBvKLC0QI2cBoCFvfTDAo7eoOQInqDPBtvrDEZBNYN5xwNwxQRfw8ZQ5wQVLvO8OYU+mHvFLlDh05Mdg7BT6YrRPpCBznMB2r//xKJjyyOh+cImr2/4doscwD6neZjuZR4AgAABYAAAABy1xcdQtxYBYYZdifkUDgzzXaXn98Z0oi9ILU5mBjFANmRwlVJ3/6jYDAmxaiDG3/6xjQQCCKkRb/6kg/wW+kSJ5//rLobkLSiKmqP/0ikJuDaSaSf/6JiLYLEYnW/+kXg1WRVJL/9EmQ1YZIsv/6Qzwy5qk7/+tEU0nkls3/zIUMPKNX/6yZLf+kFgAfgGyLFAUwY//uQZAUABcd5UiNPVXAAAApAAAAAE0VZQKw9ISAAACgAAAAAVQIygIElVrFkBS+Jhi+EAuu+lKAkYUEIsmEAEoMeDmCETMvfSHTGkF5RWH7kz/ESHWPAq/kcCRhqBtMdokPdM7vil7RG98A2sc7zO6ZvTdM7pmOUAZTnJW+NXxqmd41dqJ6mLTXxrPpnV8avaIf5SvL7pndPvPpndJR9Kuu8fePvuiuhorgWjp7Mf/PRjxcFCPDkW31srioCExivv9lcwKEaHsf/7ow2Fl1T/9RkXgEhYElAoCLFtMArxwivDJJ+bR1HTKJdlEoTELCIqgEwVGSQ+hIm0NbK8WXcTEI0UPoa2NbG4y2K00JEWbZavJXkYaqo9CRHS55FcZTjKEk3NKoCYUnSQ0rWxrZbFKbKIhOKPZe1cJKzZSaQrIyULHDZmV5K4xySsDRKWOruanGtjLJXFEmwaIbDLX0hIPBUQPVFVkQkDoUNfSoDgQGKPekoxeGzA4DUvnn4bxzcZrtJyipKfPNy5w+9lnXwgqsiyHNeSVpemw4bWb9psYeq//uQZBoABQt4yMVxYAIAAAkQoAAAHvYpL5m6AAgAACXDAAAAD59jblTirQe9upFsmZbpMudy7Lz1X1DYsxOOSWpfPqNX2WqktK0DMvuGwlbNj44TleLPQ+Gsfb+GOWOKJoIrWb3cIMeeON6lz2umTqMXV8Mj30yWPpjoSa9ujK8SyeJP5y5mOW1D6hvLepeveEAEDo0mgCRClOEgANv3B9a6fikgUSu/DmAMATrGx7nng5p5iimPNZsfQLYB2sDLIkzRKZOHGAaUyDcpFBSLG9MCQALgAIgQs2YunOszLSAyQYPVC2YdGGeHD2dTdJk1pAHGAWDjnkcLKFymS3RQZTInzySoBwMG0QueC3gMsCEYxUqlrcxK6k1LQQcsmyYeQPdC2YfuGPASCBkcVMQQqpVJshui1tkXQJQV0OXGAZMXSOEEBRirXbVRQW7ugq7IM7rPWSZyDlM3IuNEkxzCOJ0ny2ThNkyRai1b6ev//3dzNGzNb//4uAvHT5sURcZCFcuKLhOFs8mLAAEAt4UWAAIABAAAAAB4qbHo0tIjVkUU//uQZAwABfSFz3ZqQAAAAAngwAAAE1HjMp2qAAAAACZDgAAAD5UkTE1UgZEUExqYynN1qZvqIOREEFmBcJQkwdxiFtw0qEOkGYfRDifBui9MQg4QAHAqWtAWHoCxu1Yf4VfWLPIM2mHDFsbQEVGwyqQoQcwnfHeIkNt9YnkiaS1oizycqJrx4KOQjahZxWbcZgztj2c49nKmkId44S71j0c8eV9yDK6uPRzx5X18eDvjvQ6yKo9ZSS6l//8elePK/Lf//IInrOF/FvDoADYAGBMGb7FtErm5MXMlmPAJQVgWta7Zx2go+8xJ0UiCb8LHHdftWyLJE0QIAIsI+UbXu67dZMjmgDGCGl1H+vpF4NSDckSIkk7Vd+sxEhBQMRU8j/12UIRhzSaUdQ+rQU5kGeFxm+hb1oh6pWWmv3uvmReDl0UnvtapVaIzo1jZbf/pD6ElLqSX+rUmOQNpJFa/r+sa4e/pBlAABoAAAAA3CUgShLdGIxsY7AUABPRrgCABdDuQ5GC7DqPQCgbbJUAoRSUj+NIEig0YfyWUho1VBBBA//uQZB4ABZx5zfMakeAAAAmwAAAAF5F3P0w9GtAAACfAAAAAwLhMDmAYWMgVEG1U0FIGCBgXBXAtfMH10000EEEEEECUBYln03TTTdNBDZopopYvrTTdNa325mImNg3TTPV9q3pmY0xoO6bv3r00y+IDGid/9aaaZTGMuj9mpu9Mpio1dXrr5HERTZSmqU36A3CumzN/9Robv/Xx4v9ijkSRSNLQhAWumap82WRSBUqXStV/YcS+XVLnSS+WLDroqArFkMEsAS+eWmrUzrO0oEmE40RlMZ5+ODIkAyKAGUwZ3mVKmcamcJnMW26MRPgUw6j+LkhyHGVGYjSUUKNpuJUQoOIAyDvEyG8S5yfK6dhZc0Tx1KI/gviKL6qvvFs1+bWtaz58uUNnryq6kt5RzOCkPWlVqVX2a/EEBUdU1KrXLf40GoiiFXK///qpoiDXrOgqDR38JB0bw7SoL+ZB9o1RCkQjQ2CBYZKd/+VJxZRRZlqSkKiws0WFxUyCwsKiMy7hUVFhIaCrNQsKkTIsLivwKKigsj8XYlwt/WKi2N4d//uQRCSAAjURNIHpMZBGYiaQPSYyAAABLAAAAAAAACWAAAAApUF/Mg+0aohSIRobBAsMlO//Kk4soosy1JSFRYWaLC4qZBYWFRGZdwqKiwkNBVmoWFSJkWFxX4FFRQWR+LsS4W/rFRb/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////VEFHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAU291bmRib3kuZGUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjAwNGh0dHA6Ly93d3cuc291bmRib3kuZGUAAAAAAAAAACU=");  </span></span>
+<span id="cb79-5"><a href="#cb79-5" aria-hidden="true" tabindex="-1"></a><span class="st">    snd.play();</span></span>
+<span id="cb79-6"><a href="#cb79-6" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
+<span id="cb79-7"><a href="#cb79-7" aria-hidden="true" tabindex="-1"></a><span class="st">window.$beep = beep;</span></span>
+<span id="cb79-8"><a href="#cb79-8" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span>})</span>
+<span id="cb79-9"><a href="#cb79-9" aria-hidden="true" tabindex="-1"></a>display(HTML(<span class="st">'&lt;button type="button" onclick="window.$beep()"&gt;Beep!&lt;/button&gt;'</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<button type="button" onclick="window.$beep()">Beep!</button>
+</div>
+</div>
+</section>
+<section id="htmx-plugin" class="level1">
+<h1>HTMX plugin</h1>
+<hr>
+<p><a href="https://github.com/civvic/bridget/blob/main/bridget/bridge.py#L437" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="htmxplugin" class="level3">
+<h3 class="anchored" data-anchor-id="htmxplugin">HTMXPlugin</h3>
+<blockquote class="blockquote">
+<pre><code> HTMXPlugin (ctx:str='', src:str|pathlib.Path='', bridge=None)</code></pre>
+</blockquote>
+<p><em>Inherit from this to have all attr accesses in <code>self._xtra</code> passed down to <code>self.default</code></em></p>
+<div id="cell-107" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb81"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a>brd.logger.show(clear<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="brd-logger_14-1764771240" class="brd-logger" style="width: 100%; max-height: 200px;"></div>
+</div>
+</div>
+<div id="cell-108" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb82"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a>brd.add_plugins(htmxp <span class="op">:=</span> HTMXPlugin())</span>
+<span id="cb82-2"><a href="#cb82-2" aria-hidden="true" tabindex="-1"></a>blocks(<span class="kw">lambda</span>: htmxp.is_initialized <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>, <span class="dv">2</span>, show<span class="op">=</span>_show)  <span class="co"># needed when running all above/below cells</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>._.</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>True</code></pre>
+</div>
+</div>
+<div id="cell-109" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb85"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a>htmxp.setup()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+</section>
+<section id="observermanager" class="level1">
+<h1>ObserverManager</h1>
+<blockquote class="blockquote">
+<p><code>MutationObserver</code> manager for <code>bridget</code></p>
+</blockquote>
+<div id="cell-111" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb86"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a>bundled(observer_js)(debugger<span class="op">=</span>DEBUG(), ts<span class="op">=</span><span class="va">True</span>)<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-112" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb87"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a>brd.logger.show(clear<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="brd-logger_15-1764771240" class="brd-logger" style="width: 100%; max-height: 200px;"></div>
+</div>
+</div>
+<div id="cell-113" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb88"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a>observer_scr <span class="op">=</span> Script(bundled(<span class="st">'''</span></span>
+<span id="cb88-2"><a href="#cb88-2" aria-hidden="true" tabindex="-1"></a><span class="st">import { getObserverManager } from './observer.js';</span></span>
+<span id="cb88-3"><a href="#cb88-3" aria-hidden="true" tabindex="-1"></a><span class="st">getObserverManager();</span></span>
+<span id="cb88-4"><a href="#cb88-4" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span>)(), </span>
+<span id="cb88-5"><a href="#cb88-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">type</span><span class="op">=</span><span class="st">'module'</span>, <span class="bu">id</span><span class="op">=</span><span class="st">'brd-get-observer-manager'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-114" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb89"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb89-1"><a href="#cb89-1" aria-hidden="true" tabindex="-1"></a>loader.load_links({<span class="st">'get_observer'</span>: observer_scr})  <span class="co"># load_links is async</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>ObserverManager is a normal ES module, just import it. But for local development in notebooks, or until we register it, we can use the <code>loader</code> or whatever of the many methods we now have to load JS code..</p>
+<div id="cell-116" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb90"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb90-1"><a href="#cb90-1" aria-hidden="true" tabindex="-1"></a>loader.loaded()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'test': script(('// debugger;\nconsole.log("test")',),{'id': 'test-script'}),
+ 'test3': script(('// debugger;\nbridge.logger.log("test3")',),{'id': 'test-script3'}),
+ 'htmx1': None,
+ 'confetti': None,
+ 'beep': None,
+ 'get_observer': script(('\nconst {getObserverManager} = await brdimport("./observer.js");\ngetObserverManager();\n',),{'type': 'module', 'id': 'brd-get-observer-manager'})}</code></pre>
+</div>
+</div>
+<div id="cell-117" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb92"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb92-1"><a href="#cb92-1" aria-hidden="true" tabindex="-1"></a>brd.logger.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="brd-logger_16-1764771240" class="brd-logger" style="width: 100%; max-height: 200px;"></div>
+</div>
+</div>
+<div id="cell-118" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb93"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb93-1"><a href="#cb93-1" aria-hidden="true" tabindex="-1"></a>brd.loader.brdimport(<span class="st">'./observer.js'</span>)</span>
+<span id="cb93-2"><a href="#cb93-2" aria-hidden="true" tabindex="-1"></a>blocks(<span class="kw">lambda</span>: loader.loaded(<span class="st">'./observer.js'</span>), <span class="dv">2</span>, show<span class="op">=</span>_show)  <span class="co"># needed when running all above/below cells</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>._.</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>True</code></pre>
+</div>
+</div>
+<div id="cell-119" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb96"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb96-1"><a href="#cb96-1" aria-hidden="true" tabindex="-1"></a>test_eq(loader.loaded(<span class="st">'./observer.js'</span>), <span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We can also use with Python the equivalent to ES5 relative import declaration (don’t forget to <a href="https://civvic.github.io/bridget/bridge_widget.html#bundled"><code>bundled</code></a> your source or use <a href="https://civvic.github.io/bridget/bridge.html#brdimport"><code>brdimport</code></a> directly).</p>
+<p><strong>Front-end</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb97"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript"><span id="cb97-1"><a href="#cb97-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { getObserverManager } <span class="im">from</span> <span class="st">'./observer.js'</span><span class="op">;</span></span>
+<span id="cb97-2"><a href="#cb97-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> observer<span class="op">=</span> <span class="fu">getObserverManager</span>()<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Kernel</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb98"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb98-1"><a href="#cb98-1" aria-hidden="true" tabindex="-1"></a>get_bridge().loader.brdimport(<span class="st">'./observer.js'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="cell-121" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb99"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb99-1"><a href="#cb99-1" aria-hidden="true" tabindex="-1"></a>observer_plugin <span class="op">=</span> anysource(<span class="st">'''</span></span>
+<span id="cb99-2"><a href="#cb99-2" aria-hidden="true" tabindex="-1"></a><span class="st">export default async function initializeObserverPlugin(bridge) {</span></span>
+<span id="cb99-3"><a href="#cb99-3" aria-hidden="true" tabindex="-1"></a><span class="st">    const { getObserverManager } = await brdimport('./observer.js');</span></span>
+<span id="cb99-4"><a href="#cb99-4" aria-hidden="true" tabindex="-1"></a><span class="st">    return [null, { getObserverManager }]</span></span>
+<span id="cb99-5"><a href="#cb99-5" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
+<span id="cb99-6"><a href="#cb99-6" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>or:</p>
+<div id="cell-123" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb100"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb100-1"><a href="#cb100-1" aria-hidden="true" tabindex="-1"></a>brd.logger.show(clear<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="brd-logger_17-1764771240" class="brd-logger" style="width: 100%; max-height: 200px;"></div>
+</div>
+</div>
+<div id="cell-124" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb101"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb101-1"><a href="#cb101-1" aria-hidden="true" tabindex="-1"></a>brd.add_plugins(kwplugins<span class="op">=</span>{<span class="st">'observer'</span>:observer_plugin})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-125" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb102"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb102-1"><a href="#cb102-1" aria-hidden="true" tabindex="-1"></a>[<span class="op">*</span>brd.plugins.keys()]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>['loader', 'htmx', 'fasthtmljs', 'badp', 'inspect', 'observer']</code></pre>
+</div>
+</div>
+<p>We could also add observerManager as a plugin.</p>
+</section>
+<section id="brd-mark" class="level1">
+<h1>brd-mark</h1>
+<blockquote class="blockquote">
+<p>Bridge plugin that defines a custom element that adds data- attributes to its parent and remove itself. It also processes the parent with htmx.</p>
+</blockquote>
+<div id="cell-128" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb104"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb104-1"><a href="#cb104-1" aria-hidden="true" tabindex="-1"></a>brdmark_plugin <span class="op">=</span> bundled(brdmark_js)()<span class="co">#(debugger=DEBUG(), ts=True)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We could load <code>brd_mark</code> directly, but as it depends on the bridge (for logging), better to load it as a plugin.</p>
+<div id="cell-130" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb105"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb105-1"><a href="#cb105-1" aria-hidden="true" tabindex="-1"></a>brd.logger.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="brd-logger_18-1764771240" class="brd-logger" style="width: 100%; max-height: 200px;"></div>
+</div>
+</div>
+<div id="cell-131" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb106"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb106-1"><a href="#cb106-1" aria-hidden="true" tabindex="-1"></a>brd.add_plugins(kwplugins<span class="op">=</span>{<span class="st">'brd_mark'</span>:brdmark_plugin})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-132" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb107"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb107-1"><a href="#cb107-1" aria-hidden="true" tabindex="-1"></a>marker <span class="op">=</span> <span class="st">'aaaa&lt;brd-mark id="marker-123"&gt;'</span></span>
+<span id="cb107-2"><a href="#cb107-2" aria-hidden="true" tabindex="-1"></a>display(HTML(marker))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+aaaa<brd-mark id="marker-123">
+</brd-mark></div>
+</div>
+<div id="cell-133" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb108"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb108-1"><a href="#cb108-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'asdf</span><span class="ch">\n</span><span class="st">werwqert'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>asdf
+werwqert</code></pre>
+</div>
+</div>
+<div id="cell-134" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb110"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb110-1"><a href="#cb110-1" aria-hidden="true" tabindex="-1"></a>display(HTML(<span class="st">'&lt;div class="bridge"&gt;aaaa&lt;/div&gt;&lt;brd-mark id="marker-1234"&gt;&lt;/brd-mark&gt;'</span>))</span>
+<span id="cb110-2"><a href="#cb110-2" aria-hidden="true" tabindex="-1"></a>display(HTML(<span class="st">'&lt;div class="bridge"&gt;bbbb&lt;/div&gt;&lt;brd-mark id="marker-12345"&gt;&lt;/brd-mark&gt;'</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="bridge">aaaa</div><brd-mark id="marker-1234"></brd-mark>
+</div>
+<div class="cell-output cell-output-display">
+<div class="bridge">bbbb</div><brd-mark id="marker-12345"></brd-mark>
+</div>
+</div>
+<div id="cell-135" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb111"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb111-1"><a href="#cb111-1" aria-hidden="true" tabindex="-1"></a>HTML(Brd_Mark(<span class="bu">id</span><span class="op">=</span>new_id()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<brd-mark id="b47fda80c-3decdde4-66c637a1-b4d7911a"></brd-mark>
+</div>
+</div>
+</section>
+<section id="get_bridge" class="level1">
+<h1>get_bridge</h1>
+<hr>
+<p><a href="https://github.com/civvic/bridget/blob/main/bridget/bridge.py#L486" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="show_summary" class="level3">
+<h3 class="anchored" data-anchor-id="show_summary">show_summary</h3>
+<blockquote class="blockquote">
+<pre><code> show_summary (brd:__main__.Bridge)</code></pre>
+</blockquote>
+<div id="cell-138" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb113"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb113-1"><a href="#cb113-1" aria-hidden="true" tabindex="-1"></a>brd.logger.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="brd-logger_19-1764771240" class="brd-logger" style="width: 100%; max-height: 200px;"></div>
+</div>
+</div>
+<div id="cell-139" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb114"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb114-1"><a href="#cb114-1" aria-hidden="true" tabindex="-1"></a>brd.loader.load_links({</span>
+<span id="cb114-2"><a href="#cb114-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">'surreal'</span>:bridge_scripts()[<span class="st">'surreal'</span>],</span>
+<span id="cb114-3"><a href="#cb114-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">'css_scope_inline'</span>:bridge_scripts()[<span class="st">'css_scope_inline'</span>],</span>
+<span id="cb114-4"><a href="#cb114-4" aria-hidden="true" tabindex="-1"></a>    })</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<hr>
+<p><a href="https://github.com/civvic/bridget/blob/main/bridget/bridge.py#L499" target="_blank" style="float:right; font-size:smaller">source</a></p>
+</section>
+<section id="get_bridge-1" class="level3">
+<h3 class="anchored" data-anchor-id="get_bridge-1">get_bridge</h3>
+<blockquote class="blockquote">
+<pre><code> get_bridge (logger:NBLogger|None=None, show_logger:bool=False,
+             lnks:dict[str,FT]|None=None,
+             esms:dict[str,str|Path]|None=None,
+             plugins:Sequence[BridgePlugin]|None=None,
+             kwplugins:dict[str,str]|None=None, wait:int=0,
+             summary:bool=False, factory:Callable[...,Any]|None=None,
+             timeout:float=10, sleep:float=0.2, n:int=10,
+             show:Callable[[bool],None]|None=None, **kwargs)</code></pre>
+</blockquote>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Default</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>logger</td>
+<td>NBLogger | None</td>
+<td>None</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>show_logger</td>
+<td>bool</td>
+<td>False</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>lnks</td>
+<td>dict[str, FT] | None</td>
+<td>None</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>esms</td>
+<td>dict[str, str | Path] | None</td>
+<td>None</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>plugins</td>
+<td>Sequence<a href="#bridgeplugin">BridgePlugin</a> | None</td>
+<td>None</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>kwplugins</td>
+<td>dict[str, str] | None</td>
+<td>None</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>wait</td>
+<td>int</td>
+<td>0</td>
+<td>seconds to wait for plugins/links/modules to load</td>
+</tr>
+<tr class="even">
+<td>summary</td>
+<td>bool</td>
+<td>False</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>factory</td>
+<td>Callable[…, Any] | None</td>
+<td>None</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>timeout</td>
+<td>float</td>
+<td>10</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>sleep</td>
+<td>float</td>
+<td>0.2</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>n</td>
+<td>int</td>
+<td>10</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>show</td>
+<td>Callable[[bool], None] | None</td>
+<td>None</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>kwargs</td>
+<td>VAR_KEYWORD</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<div id="cell-141" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb116"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb116-1"><a href="#cb116-1" aria-hidden="true" tabindex="-1"></a>nbdev.show_doc(get_bridge)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<hr>
+<p><a href="https://github.com/civvic/bridget/blob/main/bridget/bridge.py#L499" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="get_bridge-2" class="level3">
+<h3 class="anchored" data-anchor-id="get_bridge-2">get_bridge</h3>
+<blockquote class="blockquote">
+<pre><code> get_bridge (logger:NBLogger|None=None, show_logger:bool=False,
+             lnks:dict[str,FT]|None=None,
+             esms:dict[str,str|Path]|None=None,
+             plugins:Sequence[BridgePlugin]|None=None,
+             kwplugins:dict[str,str]|None=None, wait:int=0,
+             summary:bool=False, factory:Callable[...,Any]|None=None,
+             timeout:float=10, sleep:float=0.2, n:int=10,
+             show:Callable[[bool],None]|None=None, **kwargs)</code></pre>
+</blockquote>
+<table class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Default</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>logger</td>
+<td>NBLogger | None</td>
+<td>None</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>show_logger</td>
+<td>bool</td>
+<td>False</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>lnks</td>
+<td>dict[str, FT] | None</td>
+<td>None</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>esms</td>
+<td>dict[str, str | Path] | None</td>
+<td>None</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>plugins</td>
+<td>Sequence<a href="#bridgeplugin">BridgePlugin</a> | None</td>
+<td>None</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>kwplugins</td>
+<td>dict[str, str] | None</td>
+<td>None</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>wait</td>
+<td>int</td>
+<td>0</td>
+<td>seconds to wait for plugins/links/modules to load</td>
+</tr>
+<tr class="even">
+<td>summary</td>
+<td>bool</td>
+<td>False</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>factory</td>
+<td>Callable[…, Any] | None</td>
+<td>None</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>timeout</td>
+<td>float</td>
+<td>10</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>sleep</td>
+<td>float</td>
+<td>0.2</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>n</td>
+<td>int</td>
+<td>10</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>show</td>
+<td>Callable[[bool], None] | None</td>
+<td>None</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>kwargs</td>
+<td>VAR_KEYWORD</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</section>
+</div>
+</div>
+<div id="cell-142" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb118"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb118-1"><a href="#cb118-1" aria-hidden="true" tabindex="-1"></a>test_is(get_bridge(show_logger<span class="op">=</span><span class="va">True</span>), brd)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="brd-logger_20-1764771240" class="brd-logger" style="width: 100%; max-height: 200px;"></div>
+</div>
+</div>
+<div id="cell-143" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb119"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb119-1"><a href="#cb119-1" aria-hidden="true" tabindex="-1"></a>brd.close()</span>
+<span id="cb119-2"><a href="#cb119-2" aria-hidden="true" tabindex="-1"></a>test_is(__brd__, <span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-144" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb120"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb120-1"><a href="#cb120-1" aria-hidden="true" tabindex="-1"></a>brd.logger.clear_log()</span>
+<span id="cb120-2"><a href="#cb120-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb120-3"><a href="#cb120-3" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> bridge_cfg(bootstrap<span class="op">=</span><span class="va">True</span>):</span>
+<span id="cb120-4"><a href="#cb120-4" aria-hidden="true" tabindex="-1"></a>    brd <span class="op">=</span> get_bridge(show_logger<span class="op">=</span><span class="va">True</span>, wait<span class="op">=</span><span class="dv">5</span>, summary<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="brd-logger_21-1764771240" class="brd-logger" style="width: 100%; max-height: 200px;"></div>
+</div>
+<div class="cell-output cell-output-display">
+<details open=""><summary><b>Loaded scripts</b></summary><pre>loader
+htmx
+fasthtmljs
+observer
+brd_mark
+&lt;script src="https://cdn.jsdelivr.net/gh/answerdotai/surreal@main/surreal.js"&gt;&lt;/script&gt;
+&lt;script src="https://cdn.jsdelivr.net/gh/gnat/css-scope-inline@main/script.js"&gt;&lt;/script&gt;</pre></details>
+</div>
+</div>
+<div id="cell-145" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb121"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb121-1"><a href="#cb121-1" aria-hidden="true" tabindex="-1"></a>html <span class="op">=</span> <span class="st">'''</span></span>
+<span id="cb121-2"><a href="#cb121-2" aria-hidden="true" tabindex="-1"></a><span class="st">&lt;div&gt;💩 👻 No style.&lt;/div&gt;</span></span>
+<span id="cb121-3"><a href="#cb121-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb121-4"><a href="#cb121-4" aria-hidden="true" tabindex="-1"></a><span class="st">&lt;div&gt;</span></span>
+<span id="cb121-5"><a href="#cb121-5" aria-hidden="true" tabindex="-1"></a><span class="st">    &lt;style&gt; /* Simple example. */</span></span>
+<span id="cb121-6"><a href="#cb121-6" aria-hidden="true" tabindex="-1"></a><span class="st">        me { margin: 20px; }</span></span>
+<span id="cb121-7"><a href="#cb121-7" aria-hidden="true" tabindex="-1"></a><span class="st">        me div { font-size: 5rem; }</span></span>
+<span id="cb121-8"><a href="#cb121-8" aria-hidden="true" tabindex="-1"></a><span class="st">    &lt;/style&gt;</span></span>
+<span id="cb121-9"><a href="#cb121-9" aria-hidden="true" tabindex="-1"></a><span class="st">    &lt;div&gt;👻&lt;/div&gt;</span></span>
+<span id="cb121-10"><a href="#cb121-10" aria-hidden="true" tabindex="-1"></a><span class="st">&lt;/div&gt;</span></span>
+<span id="cb121-11"><a href="#cb121-11" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span></span>
+<span id="cb121-12"><a href="#cb121-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb121-13"><a href="#cb121-13" aria-hidden="true" tabindex="-1"></a>display(HTML(html))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+
+<div>💩 👻 No style.</div>
+
+<div>
+    <style> /* Simple example. */
+        me { margin: 20px; }
+        me div { font-size: 5rem; }
+    </style>
+    <div>👻</div>
+</div>
+</div>
+</div>
+<p>Bridge automatically loads some JavaScript libraries:</p>
+<ol type="1">
+<li>HTMX</li>
+<li>FastHTML core scripts</li>
+<li>Awesome gnat’s Scope and Surreal scripts</li>
+</ol>
+<p>When importing <code>bridge</code>, if <code>bridge_cfg.bootstrap</code> is <code>True</code> or there is an environment variable <code>BRIDGET_BOOTSTRAP</code> set to a true-ish value, it will automatically create a bridge.</p>
+<hr>
+<!-- # Colophon -->
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/civvic\.github\.io\/bridget");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/civvic/bridget/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
